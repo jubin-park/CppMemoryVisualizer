@@ -16,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Reflection;
 
 namespace CppMemoryVisualizer
 {
@@ -53,6 +54,43 @@ namespace CppMemoryVisualizer
             DataContext = this;
 
             Closing += OnWindowClosing;
+
+            {
+                Debug.WriteLine("Loading vswhere.exe...");
+
+                Process process = new Process();
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+
+                startInfo.FileName = "vswhere.exe";
+                startInfo.CreateNoWindow = true;
+                startInfo.UseShellExecute = false;
+                startInfo.RedirectStandardOutput = true;
+
+                process.StartInfo = startInfo;
+                process.Start();
+
+                string propertyName = "installationPath: ";
+                string line;
+                string vsPathOrNull = null;
+                while ((line = process.StandardOutput.ReadLine()) != null)
+                {
+                    if (line.Contains(propertyName))
+                    {
+                        vsPathOrNull = line.Substring(propertyName.Length);
+                        break;
+                    }
+                }
+                if (vsPathOrNull == null)
+                {
+                    MessageBoxResult result = MessageBox.Show("Visual Studio가 설치되지 않았습니다. 다운로드 페이지로 이동하시겠습니까?", "caption", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        Process.Start("https://visualstudio.microsoft.com/ko/vs/older-downloads/");
+                    }
+                }
+
+                process.WaitForExit();
+            }
 
             mStartInfo.FileName = "C:/Program Files (x86)/Windows Kits/10/Debuggers/x64/cdb.exe";
             //mStartInfo.Arguments = "-o \"C:/myapp/myapp/Debug/myapp.exe\" -y \"C:/myapp/myapp/Debug/myapp.pdb\" -srcpath \"C:/myapp/myapp/Debug/myapp.cpp\"";
