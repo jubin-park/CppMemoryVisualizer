@@ -4,39 +4,59 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CppMemoryVisualizer"
+        xmlns:vm="clr-namespace:CppMemoryVisualizer.ViewModels"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="1*"/>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="1*"/>
-        </Grid.RowDefinitions>
-        <TextBox
+    <Window.Resources>
+        <vm:MainViewModel x:Key="mainViewModel" />
+    </Window.Resources>
+
+    <DockPanel DataContext="{StaticResource mainViewModel}">
+        <ToolBarPanel
+            DockPanel.Dock="Top"
+            ToolBarTray.IsLocked="True"
+            >
+            <ToolBar>
+                <Button Content="소스파일 열기" 
+                        Command="{Binding Path=LoadSourceFileCommand}"
+                        />
+                <Button Content="디버그" />
+            </ToolBar>
+        </ToolBarPanel>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <TextBox
             Grid.Row="0"
             TextWrapping="Wrap"
             AcceptsReturn="True"
             VerticalScrollBarVisibility="Visible"
             Text="{Binding Log}"
             >
-        </TextBox>
-        <Grid
-            Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="64"/>
-            </Grid.ColumnDefinitions>
-            <TextBox x:Name="xText"
-                >
             </TextBox>
-                
-            <Button
+            <Grid
+            Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="64"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="xText"
+                >
+                </TextBox>
+
+                <Button
             Grid.Column="1"
             Click="Button_Click"
             >
 
-            </Button>
-        </Grid>
+                </Button>
+            </Grid>
 
-    </Grid>
+        </Grid>
+    </DockPanel>
+    
 </Window>

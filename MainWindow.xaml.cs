@@ -49,9 +49,6 @@ namespace CppMemoryVisualizer
             }
         }
 
-        private string mVsPathOrNull;
-        private string mCdbPathOrNull;
-
         public MainWindow()
         {
             InitializeComponent();
@@ -59,72 +56,9 @@ namespace CppMemoryVisualizer
 
             Closing += OnWindowClosing;
 
-            {
-                Debug.WriteLine("Loading vswhere.exe...");
+            App app = Application.Current as App;
 
-                Process process = new Process();
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-
-                startInfo.FileName = "vswhere.exe";
-                startInfo.CreateNoWindow = true;
-                startInfo.UseShellExecute = false;
-                startInfo.RedirectStandardOutput = true;
-
-                process.StartInfo = startInfo;
-                process.Start();
-
-                string propertyName = "installationPath: ";
-                string line;
-                while ((line = process.StandardOutput.ReadLine()) != null)
-                {
-                    if (line.Contains(propertyName))
-                    {
-                        mVsPathOrNull = line.Substring(propertyName.Length);
-                        break;
-                    }
-                }
-                if (mVsPathOrNull == null)
-                {
-                    MessageBoxResult result = MessageBox.Show("Visual Studio가 설치되지 않았습니다. 다운로드 페이지로 이동하시겠습니까?", "caption", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        Process.Start("https://visualstudio.microsoft.com/ko/vs/older-downloads/");
-                    }
-                }
-
-                process.WaitForExit();
-            }
-
-            {
-                RegistryKey regKeyOrNull = Environment.Is64BitOperatingSystem ?
-                    Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Microsoft\\Windows Kits\\Installed Roots", false) :
-                    Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots", false);
-                
-                if (regKeyOrNull == null)
-                {
-                    MessageBoxResult result = MessageBox.Show("WinDbg 가 설치되지 않았습니다. Windows 10 SDK 다운로드 페이지로 이동하시겠습니까?", "caption", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        Process.Start("https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/");
-                    }
-                }
-                object valueOrNull = regKeyOrNull.GetValue("KitsRoot10");
-                if (valueOrNull == null)
-                {
-                    MessageBox.Show("레지스트리 KitsRoot10 키가 존재하지 않습니다.", "caption", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                else
-                {
-                    mCdbPathOrNull = System.IO.Path.Combine(valueOrNull.ToString(), "Debuggers\\x86\\cdb.exe");
-                    if (!File.Exists(mCdbPathOrNull))
-                    {
-                        MessageBox.Show(string.Format("`{0}' 파일이 존재하지 않습니다.", mCdbPathOrNull), "caption", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-            }
-
-            mStartInfo.FileName = mCdbPathOrNull;
-            //mStartInfo.Arguments = "-o \"C:/myapp/myapp/Debug/myapp.exe\" -y \"C:/myapp/myapp/Debug/myapp.pdb\" -srcpath \"C:/myapp/myapp/Debug/myapp.cpp\"";
+            mStartInfo.FileName = app.CdbPath;
             mStartInfo.WorkingDirectory = "C:/myapp/myapp/Debug/";
             mStartInfo.Arguments = "-o myapp.exe -y myapp.pdb -srcpath myapp.cpp -c \".expr /s c++;.lines -e;bu myapp!main;g;g\"";
             mStartInfo.CreateNoWindow = false;
