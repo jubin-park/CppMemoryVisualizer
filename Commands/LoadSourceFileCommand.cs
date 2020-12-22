@@ -38,7 +38,7 @@ namespace CppMemoryVisualizer.Commands
             if (openFileDialog.ShowDialog() == true)
             {
                 mMainViewModel.SourcePathOrNull = openFileDialog.FileName;
-                string dirName = Path.GetDirectoryName(openFileDialog.FileName);
+                string dirPath = Path.GetDirectoryName(openFileDialog.FileName);
                 string fileName = Path.GetFileName(openFileDialog.FileName);
                 string fileNameOnly = Path.GetFileNameWithoutExtension(openFileDialog.FileName);
 
@@ -47,7 +47,7 @@ namespace CppMemoryVisualizer.Commands
                 // compile
                 ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.FileName = "cmd.exe";
-                startInfo.WorkingDirectory = dirName;
+                startInfo.WorkingDirectory = dirPath;
                 startInfo.CreateNoWindow = true;
                 startInfo.UseShellExecute = false;
                 startInfo.RedirectStandardInput = true;

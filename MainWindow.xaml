@@ -7,12 +7,12 @@
         xmlns:vm="clr-namespace:CppMemoryVisualizer.ViewModels"
         xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
-        Title="C++ Memory Visualizer" Height="600" Width="800">
-    <Window.Resources>
-        <vm:MainViewModel x:Key="mainViewModel" />
-    </Window.Resources>
-
-    <DockPanel DataContext="{StaticResource mainViewModel}">
+        Title="C/C++ Memory Visualizer" Height="600" Width="800">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+    
+    <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Open" Command="{Binding Path=LoadSourceFileCommand}" />
             <MenuItem Header="Debug" Command="{Binding Path=DebugCommand}" />
@@ -24,7 +24,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*"/>
                 <RowDefinition Height="1*"/>
-                <RowDefinition Height="40"/>
+                <RowDefinition Height="24"/>
             </Grid.RowDefinitions>
 
             <Grid>
@@ -50,14 +50,14 @@
                     HorizontalAlignment="Stretch"
                     />
             </Grid>
-            
-            
+                       
             <TextBox
                 Grid.Row="1"
                 TextWrapping="Wrap"
                 AcceptsReturn="True"
                 VerticalScrollBarVisibility="Visible"
                 Text="{Binding Log}"
+                IsReadOnly="True"
                 />
 
             <Grid Grid.Row="2">
@@ -65,14 +65,13 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="64"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="xText" />
-
+                <TextBox x:Name="xTextInput" />
                 <Button
+                    Content="Send"
                     Grid.Column="1"
                     Click="Button_Click"
                     />
             </Grid>
-
         </Grid>
     </DockPanel>
     

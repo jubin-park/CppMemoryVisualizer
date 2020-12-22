@@ -18,94 +18,48 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Reflection;
 using Microsoft.Win32;
+using CppMemoryVisualizer.ViewModels;
 
 namespace CppMemoryVisualizer
 {
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : Window
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        private ProcessStartInfo mStartInfo = new ProcessStartInfo();
-        private Process mProcess = new Process();
-
-        private Thread mThreadCdb;
-
-        private string mLog;
-        public string Log
-        {
-            get
-            {
-                return mLog;
-            }
-            set
-            {
-                mLog = value;
-                OnPropertyChanged("Log");
-            }
-        }
-
+        private readonly MainViewModel mMainViewModel;
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = this;
-
+            mMainViewModel = (MainViewModel)DataContext;
             Closing += OnWindowClosing;
-            /*
-            App app = Application.Current as App;
-
-            mStartInfo.FileName = app.CdbPath;
-            mStartInfo.WorkingDirectory = "C:/myapp/myapp/Debug/";
-            mStartInfo.Arguments = "-o myapp.exe -y myapp.pdb -srcpath myapp.cpp -c \".expr /s c++;.lines -e;bu myapp!main;g;g\"";
-            mStartInfo.CreateNoWindow = false;
-            mStartInfo.UseShellExecute = false;
-            mStartInfo.RedirectStandardInput = true;
-            mStartInfo.RedirectStandardOutput = true;
-            mStartInfo.RedirectStandardError = true;
-
-            mProcess.StartInfo = mStartInfo;
-            mProcess.OutputDataReceived += onOutputDataReceived;
-            mProcess.ErrorDataReceived += onErrorDataReceived;
-
-            mThreadCdb = new Thread(new ThreadStart(cmd));
-            mThreadCdb.Start();
-            */
         }
 
         private void OnWindowClosing(object sender, CancelEventArgs e)
         {
-            //mProcess.StandardInput.WriteLine("q");
-            //mThreadCdb.Join();
-        }
+            Process processOrNull = mMainViewModel.ProcessCdbOrNull;
+            if (processOrNull != null)
+            {
+                processOrNull.StandardInput.WriteLine("q");
+                processOrNull.WaitForExit();
+            }
 
-        private void cmd()
-        {
-            mProcess.Start();
-            mProcess.BeginErrorReadLine();
-            mProcess.BeginOutputReadLine();
-            mProcess.WaitForExit();
+            Thread threadOrNull = mMainViewModel.ThreadCdbOrNull;
+            if (threadOrNull != null)
+            {
+                threadOrNull.Join();
+            }
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            mProcess.StandardInput.WriteLine(xText.Text);
-            xText.Text = string.Empty;
-            // .expr /s c++
-        }
-
-        void onOutputDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            Log += e.Data;
-            Log += Environment.NewLine;
-        }
-
-        void onErrorDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            //MessageBox.Show(e.Data);
+            Process processOrNull = mMainViewModel.ProcessCdbOrNull;
+            if (processOrNull != null)
+            {
+                processOrNull.StandardInput.WriteLine(xTextInput.Text);
+            }
+            else
+            {
+                Debug.WriteLine("Error");
+            }
+            xTextInput.Text = string.Empty;
         }
     }
 }
