@@ -33,7 +33,7 @@ namespace CppMemoryVisualizer
         private ProcessStartInfo mStartInfo = new ProcessStartInfo();
         private Process mProcess = new Process();
 
-        private Thread mThreadCDB;
+        private Thread mThreadCdb;
 
         private string mLog;
         public string Log
@@ -55,7 +55,7 @@ namespace CppMemoryVisualizer
             DataContext = this;
 
             Closing += OnWindowClosing;
-
+            /*
             App app = Application.Current as App;
 
             mStartInfo.FileName = app.CdbPath;
@@ -71,14 +71,15 @@ namespace CppMemoryVisualizer
             mProcess.OutputDataReceived += onOutputDataReceived;
             mProcess.ErrorDataReceived += onErrorDataReceived;
 
-            mThreadCDB = new Thread(new ThreadStart(cmd));
-            mThreadCDB.Start();
+            mThreadCdb = new Thread(new ThreadStart(cmd));
+            mThreadCdb.Start();
+            */
         }
 
         private void OnWindowClosing(object sender, CancelEventArgs e)
         {
-            mProcess.StandardInput.WriteLine("q");
-            mThreadCDB.Join();
+            //mProcess.StandardInput.WriteLine("q");
+            //mThreadCdb.Join();
         }
 
         private void cmd()

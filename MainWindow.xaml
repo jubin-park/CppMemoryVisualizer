@@ -5,55 +5,72 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CppMemoryVisualizer"
         xmlns:vm="clr-namespace:CppMemoryVisualizer.ViewModels"
+        xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="C++ Memory Visualizer" Height="600" Width="800">
     <Window.Resources>
         <vm:MainViewModel x:Key="mainViewModel" />
     </Window.Resources>
 
     <DockPanel DataContext="{StaticResource mainViewModel}">
-        <ToolBarPanel
-            DockPanel.Dock="Top"
-            ToolBarTray.IsLocked="True"
-            >
-            <ToolBar>
-                <Button Content="소스파일 열기" 
-                        Command="{Binding Path=LoadSourceFileCommand}"
-                        />
-                <Button Content="디버그" />
-            </ToolBar>
-        </ToolBarPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Open" Command="{Binding Path=LoadSourceFileCommand}" />
+            <MenuItem Header="Debug" Command="{Binding Path=DebugCommand}" />
+            <MenuItem Header="Step-in" Command="{Binding Path=DebugCommand}" />
+            <MenuItem Header="Step-over" Command="{Binding Path=DebugCommand}" />
+            <MenuItem Header="Start-over" Command="{Binding Path=DebugCommand}" />
+        </Menu>
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="2*"/>
                 <RowDefinition Height="1*"/>
                 <RowDefinition Height="40"/>
-                <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
 
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+                <local:BindableAvalonEditor
+                    x:Name="xTextEditor"
+                    SyntaxHighlighting="C#"
+                    ShowLineNumbers="True"
+                    IsReadOnly="True"
+                    FontSize="14"
+                    FontFamily="Consolas"
+                    Text="{Binding SourceCode}"
+                    />
+                <GridSplitter
+                    Grid.Column="1"
+                    Width="5"
+                    Background="Gray"
+                    ShowsPreview="true"
+                    HorizontalAlignment="Stretch"
+                    />
+            </Grid>
+            
+            
             <TextBox
-            Grid.Row="0"
-            TextWrapping="Wrap"
-            AcceptsReturn="True"
-            VerticalScrollBarVisibility="Visible"
-            Text="{Binding Log}"
-            >
-            </TextBox>
-            <Grid
-            Grid.Row="1">
+                Grid.Row="1"
+                TextWrapping="Wrap"
+                AcceptsReturn="True"
+                VerticalScrollBarVisibility="Visible"
+                Text="{Binding Log}"
+                />
+
+            <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="64"/>
                 </Grid.ColumnDefinitions>
-                <TextBox x:Name="xText"
-                >
-                </TextBox>
+                <TextBox x:Name="xText" />
 
                 <Button
-            Grid.Column="1"
-            Click="Button_Click"
-            >
-
-                </Button>
+                    Grid.Column="1"
+                    Click="Button_Click"
+                    />
             </Grid>
 
         </Grid>
