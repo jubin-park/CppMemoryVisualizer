@@ -50,16 +50,10 @@ namespace CppMemoryVisualizer
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            Process processOrNull = mMainViewModel.ProcessCdbOrNull;
-            if (processOrNull != null)
+            if (mMainViewModel.SendInstruction(xTextInput.Text))
             {
-                processOrNull.StandardInput.WriteLine(xTextInput.Text);
+                xTextInput.Text = string.Empty;
             }
-            else
-            {
-                Debug.WriteLine("Error");
-            }
-            xTextInput.Text = string.Empty;
         }
     }
 }

@@ -68,8 +68,13 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="BindableAvalonEditor.cs" />
+    <Compile Include="Commands\BreakPointCommand.cs" />
+    <Compile Include="EDebugInstructionType.cs" />
     <Compile Include="Commands\DebugCommand.cs" />
     <Compile Include="Commands\LoadSourceFileCommand.cs" />
+    <Compile Include="Commands\ResumeCommand.cs" />
+    <Compile Include="Commands\StepInCommand.cs" />
+    <Compile Include="Commands\StepOverCommand.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

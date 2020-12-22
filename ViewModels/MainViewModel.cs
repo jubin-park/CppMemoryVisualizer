@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -23,6 +24,10 @@ namespace CppMemoryVisualizer.ViewModels
 
         public ICommand LoadSourceFileCommand { get; }
         public ICommand DebugCommand { get; }
+        public ICommand ResumeCommand { get; }
+        public ICommand StepOverCommand { get; }
+        public ICommand StepInCommand { get; }
+        public ICommand BreakPointCommand { get; }
 
         private Process mProcessCdbOrNull;
         public Process ProcessCdbOrNull
@@ -49,6 +54,8 @@ namespace CppMemoryVisualizer.ViewModels
                 mThreadCdbOrNull = value;
             }
         }
+
+        public EDebugInstructionType Instruction { get; set; }
 
         private string mLog;
         public string Log
@@ -91,6 +98,10 @@ namespace CppMemoryVisualizer.ViewModels
         {
             LoadSourceFileCommand = new LoadSourceFileCommand(this);
             DebugCommand = new DebugCommand(this);
+            ResumeCommand = new ResumeCommand(this);
+            StepOverCommand = new StepOverCommand(this);
+            StepInCommand = new StepInCommand(this);
+            BreakPointCommand = new BreakPointCommand(this);
         }
 
         public void ExecuteCdb(ProcessStartInfo processInfo)
@@ -104,22 +115,56 @@ namespace CppMemoryVisualizer.ViewModels
             mThreadCdbOrNull.Start();
         }
 
+        public bool SendInstruction(string instruction)
+        {
+            if (mProcessCdbOrNull != null)
+            {
+                mProcessCdbOrNull.StandardInput.WriteLine(instruction);
+                return true;
+            }
+
+            return false;
+        }
+
         private void cmd()
         {
             mProcessCdbOrNull.Start();
-            mProcessCdbOrNull.BeginErrorReadLine();
             mProcessCdbOrNull.BeginOutputReadLine();
+            mProcessCdbOrNull.BeginErrorReadLine();
+
+            string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
+
+            SendInstruction(".expr /s c++");
+            SendInstruction(".lines -e");
+            SendInstruction("l+*");
+            SendInstruction(".settings set Sources.SkipCrtCode=true"); // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-settings--set-debug-settings-
+            SendInstruction($"bu {fileNameOnly}!main");
+            SendInstruction("g");
         }
 
         private void onOutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            Log += e.Data;
+            if (e.Data == null)
+            {
+                return;
+            }
+
+            int lastIndex = e.Data.LastIndexOf("0:000> "); // prevent duplicate string
+            if (lastIndex != -1)
+            {
+                Log += e.Data.Substring(lastIndex);
+            }
+            else
+            {
+                Log += e.Data;
+            }
             Log += Environment.NewLine;
         }
 
         private void onErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            //MessageBox.Show(e.Data);
+            Debug.WriteLine(e.Data);
+            //Debug.Assert(false);
         }
     }
 }

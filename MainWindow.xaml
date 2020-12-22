@@ -16,9 +16,22 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Open" Command="{Binding Path=LoadSourceFileCommand}" />
             <MenuItem Header="Debug" Command="{Binding Path=DebugCommand}" />
-            <MenuItem Header="Step-in" Command="{Binding Path=DebugCommand}" />
-            <MenuItem Header="Step-over" Command="{Binding Path=DebugCommand}" />
-            <MenuItem Header="Start-over" Command="{Binding Path=DebugCommand}" />
+            <MenuItem Header="Resume (F5)" Command="{Binding Path=ResumeCommand}" />
+            <MenuItem Header="Step-Over (F10)" Command="{Binding Path=StepOverCommand}" />
+            <MenuItem Header="Step-In (F11)" Command="{Binding Path=StepInCommand}" />
+            <MenuItem Command="{Binding Path=BreakPointCommand}" CommandParameter="{Binding Text, ElementName=xLineTextBox}">
+                <MenuItem.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="xLineTextBox" Width="24"/>
+                        <TextBlock Grid.Column="1" Text="BreakPoint" />
+                    </Grid>
+                </MenuItem.Header>
+            </MenuItem>
+
         </Menu>
         <Grid>
             <Grid.RowDefinitions>
