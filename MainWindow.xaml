@@ -8,17 +8,36 @@
         xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
         Title="C/C++ Memory Visualizer" Height="600" Width="800">
+    
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
+
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding Path=GoCommand}" />
+        <KeyBinding Key="F10" Command="{Binding Path=StepOverCommand}" />
+        <KeyBinding Key="F11" Command="{Binding Path=StepInCommand}" />
+    </Window.InputBindings>
     
     <DockPanel>
         <Menu DockPanel.Dock="Top">
-            <MenuItem Header="Open" Command="{Binding Path=LoadSourceFileCommand}" />
-            <MenuItem Header="Debug" Command="{Binding Path=DebugCommand}" />
-            <MenuItem Header="Resume (F5)" Command="{Binding Path=ResumeCommand}" />
-            <MenuItem Header="Step-Over (F10)" Command="{Binding Path=StepOverCommand}" />
-            <MenuItem Header="Step-In (F11)" Command="{Binding Path=StepInCommand}" />
+            <MenuItem Header="O_pen" Command="{Binding Path=LoadSourceFileCommand}" />
+            <MenuItem Header="D_ebug" Command="{Binding Path=DebugCommand}" />
+            <MenuItem Header="Go (F5)" Command="{Binding Path=GoCommand}" InputGestureText="F5" >
+                <MenuItem.InputBindings>
+                    <KeyBinding Key="F5" Modifiers="Control" Command="{Binding Path=GoCommand}"/>
+                </MenuItem.InputBindings>
+            </MenuItem>
+            <MenuItem Header="Step-Over (F10)" Command="{Binding Path=StepOverCommand}">
+                <MenuItem.InputBindings>
+                    <KeyBinding Key="F10" Modifiers="Control" Command="{Binding Path=StepOverCommand}"/>
+                </MenuItem.InputBindings>
+            </MenuItem>
+            <MenuItem Header="Step-In (F11)" Command="{Binding Path=StepInCommand}">
+                <MenuItem.InputBindings>
+                    <KeyBinding Key="F11" Modifiers="Control" Command="{Binding Path=StepInCommand}"/>
+                </MenuItem.InputBindings>
+            </MenuItem>
             <MenuItem Command="{Binding Path=BreakPointCommand}" CommandParameter="{Binding Text, ElementName=xLineTextBox}">
                 <MenuItem.Header>
                     <Grid>
@@ -46,6 +65,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
+                
                 <local:BindableAvalonEditor
                     x:Name="xTextEditor"
                     SyntaxHighlighting="C#"
@@ -62,27 +82,28 @@
                     ShowsPreview="true"
                     HorizontalAlignment="Stretch"
                     />
+                <avalonedit:TextEditor
+                    Name="xEditor"
+                    Grid.Column="2"
+                    ShowLineNumbers="True"
+                    />
             </Grid>
                        
             <TextBox
+                x:Name="xTextBoxLog"
                 Grid.Row="1"
                 TextWrapping="Wrap"
                 AcceptsReturn="True"
                 VerticalScrollBarVisibility="Visible"
                 Text="{Binding Log}"
                 IsReadOnly="True"
+                TextChanged="xTextBoxLog_TextChanged"
                 />
 
             <Grid Grid.Row="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="64"/>
-                </Grid.ColumnDefinitions>
-                <TextBox x:Name="xTextInput" />
-                <Button
-                    Content="Send"
-                    Grid.Column="1"
-                    Click="Button_Click"
+                <TextBox
+                    x:Name="xTextBoxInput"
+                    KeyDown="xTextBoxInput_KeyDown"
                     />
             </Grid>
         </Grid>

@@ -24,7 +24,7 @@ namespace CppMemoryVisualizer.ViewModels
 
         public ICommand LoadSourceFileCommand { get; }
         public ICommand DebugCommand { get; }
-        public ICommand ResumeCommand { get; }
+        public ICommand GoCommand { get; }
         public ICommand StepOverCommand { get; }
         public ICommand StepInCommand { get; }
         public ICommand BreakPointCommand { get; }
@@ -57,7 +57,7 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        public EDebugInstructionState Instruction { get; set; }
+        public EDebugInstructionState LastInstruction { get; set; }
 
         private string mLog;
         public string Log
@@ -99,7 +99,7 @@ namespace CppMemoryVisualizer.ViewModels
         {
             LoadSourceFileCommand = new LoadSourceFileCommand(this);
             DebugCommand = new DebugCommand(this);
-            ResumeCommand = new ResumeCommand(this);
+            GoCommand = new GoCommand(this);
             StepOverCommand = new StepOverCommand(this);
             StepInCommand = new StepInCommand(this);
             BreakPointCommand = new BreakPointCommand(this);
@@ -107,19 +107,6 @@ namespace CppMemoryVisualizer.ViewModels
 
         public void ExecuteCdb(ProcessStartInfo processInfo)
         {
-            if (ProcessCdbOrNull != null)
-            {
-                SendInstruction(CdbInstructionSet.QUIT);
-                ProcessCdbOrNull.WaitForExit();
-                ProcessCdbOrNull = null;
-            }
-
-            if (ThreadCdbOrNull != null)
-            {
-                ThreadCdbOrNull.Join();
-                ThreadCdbOrNull = null;
-            }
-
             ProcessCdbOrNull = new Process();
             ProcessCdbOrNull.StartInfo = processInfo;
             ProcessCdbOrNull.OutputDataReceived += onOutputDataReceived;
@@ -140,6 +127,24 @@ namespace CppMemoryVisualizer.ViewModels
             return false;
         }
 
+        public void ShutdownCdb()
+        {
+            if (ProcessCdbOrNull != null)
+            {
+                SendInstruction(CdbInstructionSet.QUIT);
+                ProcessCdbOrNull.WaitForExit();
+                ProcessCdbOrNull = null;
+            }
+
+            if (ThreadCdbOrNull != null)
+            {
+                ThreadCdbOrNull.Join();
+                ThreadCdbOrNull = null;
+            }
+
+            Log = string.Empty;
+        }
+
         private void cmd()
         {
             mProcessCdbOrNull.Start();
@@ -148,12 +153,14 @@ namespace CppMemoryVisualizer.ViewModels
 
             string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
 
-            SendInstruction(".expr /s c++");
-            SendInstruction(".lines -e");
-            SendInstruction("l+*");
-            SendInstruction(".settings set Sources.SkipCrtCode=true"); // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-settings--set-debug-settings-
-            SendInstruction($"bu {fileNameOnly}!main");
-            SendInstruction("g");
+            SendInstruction(CdbInstructionSet.CPP_EXPRESSION_EVALUATOR);
+            SendInstruction(CdbInstructionSet.ENABLE_SOURCE_LINE_SUPPORT);
+            SendInstruction(CdbInstructionSet.SET_SOURCE_OPTIONS);
+            SendInstruction(CdbInstructionSet.SET_DEBUG_SETTINGS_SKIP_CRT_CODE);
+            SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_MAIN, fileNameOnly));
+            
+            LastInstruction = EDebugInstructionState.GO;
+            SendInstruction(CdbInstructionSet.GO);
         }
 
         private void onOutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -163,22 +170,49 @@ namespace CppMemoryVisualizer.ViewModels
                 return;
             }
 
-            int lastIndex = e.Data.LastIndexOf("0:000> "); // prevent duplicate string
+            string data = e.Data;
+
+            int lastIndex = data.LastIndexOf("0:000> ");
             if (lastIndex != -1)
             {
-                Log += e.Data.Substring(lastIndex);
+                data = data.Substring(lastIndex + 7);
             }
-            else
+
+            switch (LastInstruction)
             {
-                Log += e.Data;
+                case EDebugInstructionState.STEP_IN:
+                case EDebugInstructionState.STEP_OVER:
+                case EDebugInstructionState.GO:
+                    if (data.Length == 0 || data[0] != '>')
+                    {
+                        break;
+                    }
+
+                    uint line = 0;
+                    UInt32.TryParse(data.Substring(1, 5).Trim(), out line);
+                    Debug.Assert(line > 0);
+                    
+                    string code = data.Substring(8);
+
+                    Debug.WriteLine("Line {0}: `{1}`", line, code);
+
+                    break;
+
+                case EDebugInstructionState.BREAK_POINT:
+                    break;
+
+                default:
+                    Debug.Assert(false);
+                    break;
             }
+
+            Log += data;
             Log += Environment.NewLine;
         }
 
         private void onErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
             Debug.WriteLine(e.Data);
-            //Debug.Assert(false);
         }
     }
 }

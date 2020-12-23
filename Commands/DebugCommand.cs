@@ -36,7 +36,7 @@ namespace CppMemoryVisualizer.Commands
         {
             Debug.Assert(mMainViewModel.SourcePathOrNull != null);
 
-            mMainViewModel.Log = string.Empty;
+            mMainViewModel.ShutdownCdb();
 
             string dirPath = Path.GetDirectoryName(mMainViewModel.SourcePathOrNull);
             string fileName = Path.GetFileName(mMainViewModel.SourcePathOrNull);

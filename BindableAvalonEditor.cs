@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 
 namespace CppMemoryVisualizer
 {
@@ -53,7 +54,7 @@ namespace CppMemoryVisualizer
 
                 if (newValue == null)
                 {
-                    newValue = "";
+                    newValue = string.Empty;
                 }
 
                 target.Document.Text = (string)newValue;

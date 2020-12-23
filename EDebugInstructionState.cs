@@ -10,7 +10,7 @@ namespace CppMemoryVisualizer
     {
         STEP_IN,
         STEP_OVER,
-        RESUME,
+        GO,
         BREAK_POINT,
     }
 }

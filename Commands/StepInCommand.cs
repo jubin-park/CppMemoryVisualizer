@@ -32,7 +32,7 @@ namespace CppMemoryVisualizer.Commands
 
         public void Execute(object parameter)
         {
-            mMainViewModel.Instruction = EDebugInstructionState.STEP_IN;
+            mMainViewModel.LastInstruction = EDebugInstructionState.STEP_IN;
             mMainViewModel.SendInstruction(CdbInstructionSet.STEP_IN);
         }
     }

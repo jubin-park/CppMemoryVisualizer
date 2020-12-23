@@ -19,40 +19,39 @@ using System.Windows.Shapes;
 using System.Reflection;
 using Microsoft.Win32;
 using CppMemoryVisualizer.ViewModels;
+using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Rendering;
 
 namespace CppMemoryVisualizer
 {
     public partial class MainWindow : Window
     {
         private readonly MainViewModel mMainViewModel;
+
         public MainWindow()
         {
             InitializeComponent();
             mMainViewModel = (MainViewModel)DataContext;
             Closing += OnWindowClosing;
+            xTextEditor.TextArea.LeftMargins.Insert(0, new BreakPointMargin());
         }
 
         private void OnWindowClosing(object sender, CancelEventArgs e)
         {
-            Process processOrNull = mMainViewModel.ProcessCdbOrNull;
-            if (processOrNull != null)
-            {
-                processOrNull.StandardInput.WriteLine(CdbInstructionSet.QUIT);
-                processOrNull.WaitForExit();
-            }
-
-            Thread threadOrNull = mMainViewModel.ThreadCdbOrNull;
-            if (threadOrNull != null)
-            {
-                threadOrNull.Join();
-            }
+            mMainViewModel.ShutdownCdb();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void xTextBoxLog_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (mMainViewModel.SendInstruction(xTextInput.Text))
+            xTextBoxLog.CaretIndex = xTextBoxLog.Text.Length;
+            xTextBoxLog.ScrollToEnd();
+        }
+
+        private void xTextBoxInput_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Return && xTextBoxInput.Text.Length > 0 && mMainViewModel.SendInstruction(xTextBoxInput.Text))
             {
-                xTextInput.Text = string.Empty;
+                xTextBoxInput.Text = string.Empty;
             }
         }
     }

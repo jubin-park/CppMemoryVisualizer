@@ -41,6 +41,8 @@ namespace CppMemoryVisualizer.Commands
 
             if (openFileDialog.ShowDialog() == true)
             {
+                mMainViewModel.ShutdownCdb();
+
                 mMainViewModel.SourcePathOrNull = openFileDialog.FileName;
                 string dirPath = Path.GetDirectoryName(openFileDialog.FileName);
                 string fileName = Path.GetFileName(openFileDialog.FileName);
@@ -62,7 +64,7 @@ namespace CppMemoryVisualizer.Commands
                 process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "obj"));
                 process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "pdb"));
                 process.StandardInput.WriteLine(string.Format("cl /EHsc /Zi {0}", fileName));
-                process.StandardInput.WriteLine("dir");
+                process.StandardInput.WriteLine(string.Format("dir {0}.*", fileNameOnly));
                 process.StandardInput.Close();
 
                 process.WaitForExit();

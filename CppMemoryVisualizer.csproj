@@ -35,6 +35,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DiffPlex, Version=1.6.3.0, Culture=neutral, PublicKeyToken=1d35e91d1bd7bc0f, processorArchitecture=MSIL">
+      <HintPath>packages\DiffPlex.1.6.3\lib\net40\DiffPlex.dll</HintPath>
+    </Reference>
     <Reference Include="ICSharpCode.AvalonEdit, Version=6.0.1.278, Culture=neutral, PublicKeyToken=9cc39be672370310, processorArchitecture=MSIL">
       <HintPath>packages\AvalonEdit.6.0.1\lib\net45\ICSharpCode.AvalonEdit.dll</HintPath>
     </Reference>
@@ -72,10 +75,11 @@
     <Compile Include="EDebugInstructionState.cs" />
     <Compile Include="Commands\DebugCommand.cs" />
     <Compile Include="Commands\LoadSourceFileCommand.cs" />
-    <Compile Include="Commands\ResumeCommand.cs" />
+    <Compile Include="Commands\GoCommand.cs" />
     <Compile Include="Commands\StepInCommand.cs" />
     <Compile Include="Commands\StepOverCommand.cs" />
     <Compile Include="CdbInstructionSet.cs" />
+    <Compile Include="BreakPointMargin.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

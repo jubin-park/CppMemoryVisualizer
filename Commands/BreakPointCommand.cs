@@ -38,8 +38,8 @@ namespace CppMemoryVisualizer.Commands
 
             Debug.Assert(line > 0);
 
-            mMainViewModel.Instruction = EDebugInstructionState.BREAK_POINT;
-            mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.BREAK_POINT, fileName, line));
+            mMainViewModel.LastInstruction = EDebugInstructionState.BREAK_POINT;
+            mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, line));
         }
     }
 }

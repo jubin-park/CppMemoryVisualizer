@@ -10,7 +10,7 @@ using System.Windows.Input;
 
 namespace CppMemoryVisualizer.Commands
 {
-    class ResumeCommand : ICommand
+    class GoCommand : ICommand
     {
         public event EventHandler CanExecuteChanged
         {
@@ -20,7 +20,7 @@ namespace CppMemoryVisualizer.Commands
 
         private readonly MainViewModel mMainViewModel;
 
-        public ResumeCommand(MainViewModel mainViewModel)
+        public GoCommand(MainViewModel mainViewModel)
         {
             mMainViewModel = mainViewModel;
         }
@@ -32,8 +32,8 @@ namespace CppMemoryVisualizer.Commands
 
         public void Execute(object parameter)
         {
-            mMainViewModel.Instruction = EDebugInstructionState.RESUME;
-            mMainViewModel.SendInstruction(CdbInstructionSet.RESUME);
+            mMainViewModel.LastInstruction = EDebugInstructionState.GO;
+            mMainViewModel.SendInstruction(CdbInstructionSet.GO);
         }
     }
 }
