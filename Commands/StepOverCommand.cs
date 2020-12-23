@@ -12,7 +12,11 @@ namespace CppMemoryVisualizer.Commands
 {
     class StepOverCommand : ICommand
     {
-        public event EventHandler CanExecuteChanged;
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
 
         private readonly MainViewModel mMainViewModel;
 
@@ -23,13 +27,13 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return true;
+            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.ThreadCdbOrNull != null;
         }
 
         public void Execute(object parameter)
         {
-            mMainViewModel.Instruction = EDebugInstructionType.STEP_OVER;
-            mMainViewModel.SendInstruction("p");
+            mMainViewModel.Instruction = EDebugInstructionState.STEP_OVER;
+            mMainViewModel.SendInstruction(CdbInstructionSet.STEP_OVER);
         }
     }
 }

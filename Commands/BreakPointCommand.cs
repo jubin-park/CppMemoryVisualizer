@@ -12,7 +12,11 @@ namespace CppMemoryVisualizer.Commands
 {
     class BreakPointCommand : ICommand
     {
-        public event EventHandler CanExecuteChanged;
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
 
         private readonly MainViewModel mMainViewModel;
 
@@ -23,7 +27,7 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return true;
+            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.ThreadCdbOrNull != null;
         }
 
         public void Execute(object parameter)
@@ -32,8 +36,10 @@ namespace CppMemoryVisualizer.Commands
             uint line = 0;
             Debug.Assert(uint.TryParse((string)parameter, out line));
 
-            mMainViewModel.Instruction = EDebugInstructionType.BREAK_POINT;
-            mMainViewModel.SendInstruction($"bp (@@masm(`{fileName}:{line}+`))");
+            Debug.Assert(line > 0);
+
+            mMainViewModel.Instruction = EDebugInstructionState.BREAK_POINT;
+            mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.BREAK_POINT, fileName, line));
         }
     }
 }

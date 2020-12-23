@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer
 {
-    public enum EDebugInstructionType
+    public enum EDebugInstructionState
     {
         STEP_IN,
         STEP_OVER,

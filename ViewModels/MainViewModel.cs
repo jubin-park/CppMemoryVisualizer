@@ -39,6 +39,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mProcessCdbOrNull = value;
+                OnPropertyChanged("ProcessCdbOrNull");
             }
         }
 
@@ -52,10 +53,11 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mThreadCdbOrNull = value;
+                OnPropertyChanged("ThreadCdbOrNull");
             }
         }
 
-        public EDebugInstructionType Instruction { get; set; }
+        public EDebugInstructionState Instruction { get; set; }
 
         private string mLog;
         public string Log
@@ -70,7 +72,6 @@ namespace CppMemoryVisualizer.ViewModels
                 OnPropertyChanged("Log");
             }
         }
-
 
         private string mSourcePathOrNull;
         public string SourcePathOrNull
@@ -106,13 +107,26 @@ namespace CppMemoryVisualizer.ViewModels
 
         public void ExecuteCdb(ProcessStartInfo processInfo)
         {
-            mProcessCdbOrNull = new Process();
-            mProcessCdbOrNull.StartInfo = processInfo;
-            mProcessCdbOrNull.OutputDataReceived += onOutputDataReceived;
-            mProcessCdbOrNull.ErrorDataReceived += onErrorDataReceived;
+            if (ProcessCdbOrNull != null)
+            {
+                SendInstruction(CdbInstructionSet.QUIT);
+                ProcessCdbOrNull.WaitForExit();
+                ProcessCdbOrNull = null;
+            }
 
-            mThreadCdbOrNull = new Thread(new ThreadStart(cmd));
-            mThreadCdbOrNull.Start();
+            if (ThreadCdbOrNull != null)
+            {
+                ThreadCdbOrNull.Join();
+                ThreadCdbOrNull = null;
+            }
+
+            ProcessCdbOrNull = new Process();
+            ProcessCdbOrNull.StartInfo = processInfo;
+            ProcessCdbOrNull.OutputDataReceived += onOutputDataReceived;
+            ProcessCdbOrNull.ErrorDataReceived += onErrorDataReceived;
+
+            ThreadCdbOrNull = new Thread(new ThreadStart(cmd));
+            ThreadCdbOrNull.Start();
         }
 
         public bool SendInstruction(string instruction)

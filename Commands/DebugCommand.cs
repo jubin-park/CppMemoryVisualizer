@@ -14,7 +14,11 @@ namespace CppMemoryVisualizer.Commands
 {
     class DebugCommand : ICommand
     {
-        public event EventHandler CanExecuteChanged;
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
 
         private readonly MainViewModel mMainViewModel;
 
@@ -25,28 +29,12 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return true;//mMainViewModel.SourcePathOrNull != null &&
-                //File.Exists(mMainViewModel.SourcePathOrNull);
+            return mMainViewModel.SourcePathOrNull != null;
         }
 
         public void Execute(object parameter)
         {
             Debug.Assert(mMainViewModel.SourcePathOrNull != null);
-
-            Process processOrNull = mMainViewModel.ProcessCdbOrNull;
-            if (processOrNull != null)
-            {
-                processOrNull.StandardInput.WriteLine("q");
-                processOrNull.WaitForExit();
-                mMainViewModel.ProcessCdbOrNull = null;
-            }
-
-            Thread threadOrNull = mMainViewModel.ThreadCdbOrNull;
-            if (threadOrNull != null)
-            {
-                threadOrNull.Join();
-                mMainViewModel.ThreadCdbOrNull = null;
-            }
 
             mMainViewModel.Log = string.Empty;
 

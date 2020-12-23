@@ -37,7 +37,7 @@ namespace CppMemoryVisualizer
             Process processOrNull = mMainViewModel.ProcessCdbOrNull;
             if (processOrNull != null)
             {
-                processOrNull.StandardInput.WriteLine("q");
+                processOrNull.StandardInput.WriteLine(CdbInstructionSet.QUIT);
                 processOrNull.WaitForExit();
             }
 
