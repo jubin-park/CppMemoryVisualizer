@@ -34,6 +34,8 @@ namespace CppMemoryVisualizer.Commands
         {
             mMainViewModel.LastInstruction = EDebugInstructionState.GO;
             mMainViewModel.SendInstruction(CdbInstructionSet.GO);
+            mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
+            mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE);
         }
     }
 }

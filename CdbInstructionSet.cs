@@ -20,6 +20,12 @@ namespace CppMemoryVisualizer
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/g--go-
         public static readonly string GO = "g";
 
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dv--display-local-variables-
+        public static readonly string DISPLAY_LOCAL_VARIABLE = "dv /i /t /a /v";
+
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/k--kb--kc--kd--kp--kp--kv--display-stack-backtrace-
+        public static readonly string DISPLAY_STACK_BACKTRACE = "kn";
+
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/bp--bu--bm--set-breakpoint-
         public static readonly string SET_BREAK_POINT_SOURCE_LEVEL = "bp (@@masm(`{0}:{1}+`))";
         public static readonly string SET_BREAK_POINT_MAIN = "bu {0}!main";

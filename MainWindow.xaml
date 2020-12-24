@@ -7,7 +7,11 @@
         xmlns:vm="clr-namespace:CppMemoryVisualizer.ViewModels"
         xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
-        Title="C/C++ Memory Visualizer" Height="600" Width="800">
+        Title="C/C++ Memory Visualizer"
+        Height="800"
+        Width="800"
+        WindowStartupLocation="CenterScreen"
+        >
     
     <Window.DataContext>
         <vm:MainViewModel />

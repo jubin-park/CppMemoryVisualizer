@@ -161,6 +161,8 @@ namespace CppMemoryVisualizer.ViewModels
             
             LastInstruction = EDebugInstructionState.GO;
             SendInstruction(CdbInstructionSet.GO);
+            SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
+            SendInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE);
         }
 
         private void onOutputDataReceived(object sender, DataReceivedEventArgs e)
