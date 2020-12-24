@@ -59,30 +59,25 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Views\MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\WindowTitleConverter.cs" />
-    <Page Include="MainWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="BindableAvalonEditor.cs" />
+    <Compile Include="Views\BindableAvalonEditor.cs" />
     <Compile Include="Commands\BreakPointCommand.cs" />
-    <Compile Include="EDebugInstructionState.cs" />
+    <Compile Include="Constants\EDebugInstructionState.cs" />
     <Compile Include="Commands\DebugCommand.cs" />
     <Compile Include="Commands\LoadSourceFileCommand.cs" />
     <Compile Include="Commands\GoCommand.cs" />
     <Compile Include="Commands\StepInCommand.cs" />
     <Compile Include="Commands\StepOverCommand.cs" />
-    <Compile Include="CdbInstructionSet.cs" />
-    <Compile Include="BreakPointMargin.cs" />
+    <Compile Include="Constants\CdbInstructionSet.cs" />
+    <Compile Include="Views\BreakPointMargin.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -110,6 +105,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="Views\MainWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

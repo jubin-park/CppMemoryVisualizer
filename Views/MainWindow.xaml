@@ -1,6 +1,5 @@
 ﻿<Window
-    x:Name="xMainWindow"
-    x:Class="CppMemoryVisualizer.MainWindow"
+    x:Class="CppMemoryVisualizer.Views.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -14,7 +13,7 @@
     Width="800"
     WindowStartupLocation="CenterScreen"
     >
-    
+
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
@@ -79,8 +78,8 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
-                
-                <local:BindableAvalonEditor
+
+                <v:BindableAvalonEditor
                     x:Name="xTextEditor"
                     SyntaxHighlighting="C#"
                     ShowLineNumbers="True"
@@ -102,7 +101,7 @@
                     ShowLineNumbers="True"
                     />
             </Grid>
-                       
+
             <TextBox
                 x:Name="xTextBoxLog"
                 Grid.Row="1"
@@ -122,5 +121,5 @@
             </Grid>
         </Grid>
     </DockPanel>
-    
+
 </Window>

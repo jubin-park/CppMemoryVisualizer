@@ -22,7 +22,7 @@ using CppMemoryVisualizer.ViewModels;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Rendering;
 
-namespace CppMemoryVisualizer
+namespace CppMemoryVisualizer.Views
 {
     public partial class MainWindow : Window
     {

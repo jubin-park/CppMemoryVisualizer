@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows;
 
-namespace CppMemoryVisualizer
+namespace CppMemoryVisualizer.Views
 {
     class BreakPointMargin : AbstractMargin
     {
