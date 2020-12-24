@@ -51,19 +51,39 @@ namespace CppMemoryVisualizer.Commands
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
 
                 // compile
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.FileName = "cmd.exe";
-                startInfo.WorkingDirectory = dirPath;
-                startInfo.CreateNoWindow = true;
-                startInfo.UseShellExecute = false;
-                startInfo.RedirectStandardInput = true;
+                ProcessStartInfo processInfo = new ProcessStartInfo();
+                processInfo.FileName = "cmd.exe";
+                processInfo.WorkingDirectory = dirPath;
+                processInfo.CreateNoWindow = true;
+                processInfo.UseShellExecute = false;
+                processInfo.RedirectStandardInput = true;
 
-                Process process = Process.Start(startInfo);
+                Process process = Process.Start(processInfo);
+
+                // Execute MSVC x86 compiler
+                {
+                    Debug.Write("Loading vcvars32.bat ... ");
+                    App app = Application.Current as App;
+                    string compilerPath = Path.Combine(app.VsPath, "VC\\Auxiliary\\Build\\vcvars32.bat");
+
+                    if (!File.Exists(compilerPath))
+                    {
+                        MessageBox.Show("vcvar32.bat 파일을 찾을 수 없습니다.", "caption", MessageBoxButton.OK, MessageBoxImage.Error);
+                        Debug.WriteLine("FAILED");
+                    }
+                    else
+                    {
+                        process.StandardInput.WriteLine("\"" + compilerPath + "\"");
+                        Debug.WriteLine("SUCCESS");
+                    }                    
+                }
+
+                process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "exe"));
                 process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "exe"));
                 process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "ilk"));
                 process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "obj"));
                 process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "pdb"));
-                process.StandardInput.WriteLine(string.Format("cl /EHsc /Zi {0}", fileName));
+                process.StandardInput.WriteLine(string.Format("cl /std:c++17 /EHsc /Zi {0}", fileName));
                 process.StandardInput.WriteLine(string.Format("dir {0}.*", fileNameOnly));
                 process.StandardInput.Close();
 

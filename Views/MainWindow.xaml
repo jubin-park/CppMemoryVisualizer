@@ -9,7 +9,7 @@
     xmlns:v="clr-namespace:CppMemoryVisualizer.Views"
     xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
     mc:Ignorable="d"
-    Height="800"
+    Height="600"
     Width="800"
     WindowStartupLocation="CenterScreen"
     >

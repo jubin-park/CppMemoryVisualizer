@@ -37,14 +37,14 @@ namespace CppMemoryVisualizer
                 Debug.Write("Loading vswhere.exe ... ");
 
                 Process process = new Process();
-                ProcessStartInfo startInfo = new ProcessStartInfo();
+                ProcessStartInfo processInfo = new ProcessStartInfo();
 
-                startInfo.FileName = "vswhere.exe";
-                startInfo.CreateNoWindow = true;
-                startInfo.UseShellExecute = false;
-                startInfo.RedirectStandardOutput = true;
+                processInfo.FileName = "vswhere.exe";
+                processInfo.CreateNoWindow = true;
+                processInfo.UseShellExecute = false;
+                processInfo.RedirectStandardOutput = true;
 
-                process.StartInfo = startInfo;
+                process.StartInfo = processInfo;
                 process.Start();
 
                 string propertyName = "installationPath: ";
@@ -110,24 +110,6 @@ namespace CppMemoryVisualizer
                         Current.Shutdown();
                     }
                 }
-
-                Debug.WriteLine("SUCCESS");
-            }
-
-            // Register cl x86 compiler environment variable
-            {
-                Debug.Write("Loading vcvars32.bat ... ");
-
-                string command = Path.Combine(VsPath, "VC\\Auxiliary\\Build\\vcvars32.bat");
-
-                ProcessStartInfo startInfo = new ProcessStartInfo("cmd.exe", "/c \"" + command + "\"");
-                startInfo.CreateNoWindow = true;
-                startInfo.UseShellExecute = false;
-
-                Process process = Process.Start(startInfo);
-
-                process.WaitForExit();
-                process.Close();
 
                 Debug.WriteLine("SUCCESS");
             }
