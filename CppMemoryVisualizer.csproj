@@ -59,9 +59,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Enums\EStandardCppVersion.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\StandardCppVersionEnumToBooleanConverter.cs" />
     <Compile Include="Views\WindowTitleConverter.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
@@ -69,7 +71,7 @@
     </Compile>
     <Compile Include="Views\BindableAvalonEditor.cs" />
     <Compile Include="Commands\BreakPointCommand.cs" />
-    <Compile Include="Constants\EDebugInstructionState.cs" />
+    <Compile Include="Enums\EDebugInstructionState.cs" />
     <Compile Include="Commands\DebugCommand.cs" />
     <Compile Include="Commands\LoadSourceFileCommand.cs" />
     <Compile Include="Commands\GoCommand.cs" />

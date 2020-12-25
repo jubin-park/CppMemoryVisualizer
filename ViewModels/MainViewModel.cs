@@ -1,4 +1,5 @@
 ﻿using CppMemoryVisualizer.Commands;
+using CppMemoryVisualizer.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -59,6 +60,13 @@ namespace CppMemoryVisualizer.ViewModels
 
         public EDebugInstructionState LastInstruction { get; set; }
 
+        private EStandardCppVersion mStandardCppVersion = EStandardCppVersion.CPP17;
+        public EStandardCppVersion StandardCppVersion
+        {
+            get { return mStandardCppVersion; }
+            set { mStandardCppVersion = value; OnPropertyChanged("StandardCppVersion"); }
+        }
+
         private string mLog;
         public string Log
         {
@@ -93,6 +101,19 @@ namespace CppMemoryVisualizer.ViewModels
                 mSourceCode = value;
                 OnPropertyChanged("SourceCode");
             }
+        }
+
+        private SortedSet<uint> mBreakPoints = new SortedSet<uint>();
+        public SortedSet<uint> BreakPoints
+        {
+            get { return mBreakPoints; }
+        }
+
+        private uint mLinePointer;
+        public uint LinePointer
+        {
+            get { return mLinePointer; }
+            set { mLinePointer = value; OnPropertyChanged("LinePointer"); }
         }
 
         public MainViewModel()

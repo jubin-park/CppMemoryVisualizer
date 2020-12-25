@@ -32,8 +32,6 @@ namespace CppMemoryVisualizer.Views
         {
             InitializeComponent();
             mMainViewModel = (MainViewModel)DataContext;
-            Closing += OnWindowClosing;
-            xTextEditor.TextArea.LeftMargins.Insert(0, new BreakPointMargin());
         }
 
         private void OnWindowClosing(object sender, CancelEventArgs e)
