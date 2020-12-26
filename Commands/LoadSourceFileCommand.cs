@@ -42,13 +42,35 @@ namespace CppMemoryVisualizer.Commands
 
             if (openFileDialog.ShowDialog() == true)
             {
+                string fileName = Path.GetFileName(openFileDialog.FileName);
+                if (fileName.Contains(' '))
+                {
+                    MessageBox.Show("파일 이름에 공백문자가 들어갈 수 없습니다.");
+                    return;
+                }
+
+                string dirPath = Path.GetDirectoryName(openFileDialog.FileName);
+                string fileNameOnly = Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                mMainViewModel.SourcePathOrNull = openFileDialog.FileName;
+
                 mMainViewModel.ShutdownCdb();
 
-                mMainViewModel.SourcePathOrNull = openFileDialog.FileName;
-                string dirPath = Path.GetDirectoryName(openFileDialog.FileName);
-                string fileName = Path.GetFileName(openFileDialog.FileName);
-                string fileNameOnly = Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                uint lineCount = 1;
+                {
+                    string line;
+                    TextReader reader = new StreamReader(openFileDialog.FileName);
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        lineCount++;
+                    }
+                    reader.Close();
+                }
 
+                mMainViewModel.BreakPointLines = new int[lineCount + 1];
+                for (int i = 1; i <= lineCount; ++i)
+                {
+                    mMainViewModel.BreakPointLines[i] = -1;
+                }
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
 
                 // compile
@@ -79,13 +101,12 @@ namespace CppMemoryVisualizer.Commands
                     }                    
                 }
 
-                process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "exe"));
-                process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "exe"));
-                process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "ilk"));
-                process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "obj"));
-                process.StandardInput.WriteLine(string.Format("del {0}.{1}", fileNameOnly, "pdb"));
-                process.StandardInput.WriteLine(string.Format("cl{0} /EHsc /Zi {1}", STANDARD_CPP_OPTIONS[(uint)mMainViewModel.StandardCppVersion], fileName));
-                process.StandardInput.WriteLine(string.Format("dir {0}.*", fileNameOnly));
+                process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "exe"));
+                process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "ilk"));
+                process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "obj"));
+                process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "pdb"));
+                process.StandardInput.WriteLine(string.Format("cl{0} /EHsc /Zi \"{1}\"", STANDARD_CPP_OPTIONS[(uint)mMainViewModel.StandardCppVersion], fileName));
+                process.StandardInput.WriteLine(string.Format("dir \"{0}.*\"", fileNameOnly));
                 process.StandardInput.Close();
 
                 process.WaitForExit();

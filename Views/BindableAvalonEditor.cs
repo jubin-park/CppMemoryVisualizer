@@ -17,14 +17,14 @@ namespace CppMemoryVisualizer.Views
 {
     public class BindableAvalonEditor : ICSharpCode.AvalonEdit.TextEditor, INotifyPropertyChanged
     {
-        public SortedSet<uint> BreakPointLines
+        public int[] BreakPointLines
         {
-            get { return (SortedSet<uint>)GetValue(BreakPointLinesProperty); }
+            get { return (int[])GetValue(BreakPointLinesProperty); }
             set { SetValue(BreakPointLinesProperty, value); }
         }
 
         public static readonly DependencyProperty BreakPointLinesProperty =
-            DependencyProperty.Register("BreakPointLines", typeof(SortedSet<uint>), typeof(BindableAvalonEditor), new PropertyMetadata(null));
+            DependencyProperty.Register("BreakPointLines", typeof(int[]), typeof(BindableAvalonEditor), new PropertyMetadata(null));
 
         public uint LinePointer
         {

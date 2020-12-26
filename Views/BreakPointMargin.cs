@@ -1,4 +1,5 @@
-﻿using ICSharpCode.AvalonEdit;
+﻿using CppMemoryVisualizer.ViewModels;
+using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.AvalonEdit.Editing;
 using System;
@@ -8,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows;
+using System.Windows.Input;
 using System.Diagnostics;
 
 namespace CppMemoryVisualizer.Views
@@ -16,10 +18,18 @@ namespace CppMemoryVisualizer.Views
     {
         private static int MARGIN_WIDTH = 24;
         private BindableAvalonEditor mEditor;
+        public BindableAvalonEditor Editor
+        {
+            get
+            {
+                return mEditor;
+            }
+        }
 
         public BreakPointMargin(BindableAvalonEditor editor)
         {
             mEditor = editor;
+            MouseLeftButtonDown += MainViewModel.BreakPointMargin_OnMouseLeftButtonDown;
         }
 
         protected override void OnRender(DrawingContext drawingContext)

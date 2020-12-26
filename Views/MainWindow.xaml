@@ -57,7 +57,7 @@
                     <KeyBinding Key="F11" Modifiers="Control" Command="{Binding Path=StepInCommand}"/>
                 </MenuItem.InputBindings>
             </MenuItem>
-            <MenuItem Command="{Binding Path=BreakPointCommand}" CommandParameter="{Binding Text, ElementName=xLineTextBox}">
+            <MenuItem Command="{Binding Path=AddOrRemoveBreakPointCommand}" CommandParameter="{Binding Text, ElementName=xLineTextBox}">
                 <MenuItem.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -99,7 +99,7 @@
                     FontSize="14"
                     FontFamily="Consolas"
                     Text="{Binding SourceCode}"
-                    BreakPointLines="{Binding BreakPoints}"
+                    BreakPointLines="{Binding BreakPointLines}"
                     LinePointer="{Binding LinePointer}"
                     />
                 <GridSplitter

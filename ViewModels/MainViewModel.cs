@@ -1,5 +1,6 @@
 ﻿using CppMemoryVisualizer.Commands;
 using CppMemoryVisualizer.Enums;
+using CppMemoryVisualizer.Views;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -28,7 +29,7 @@ namespace CppMemoryVisualizer.ViewModels
         public ICommand GoCommand { get; }
         public ICommand StepOverCommand { get; }
         public ICommand StepInCommand { get; }
-        public ICommand BreakPointCommand { get; }
+        public ICommand AddOrRemoveBreakPointCommand { get; }
 
         private Process mProcessCdbOrNull;
         public Process ProcessCdbOrNull
@@ -103,10 +104,11 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private SortedSet<uint> mBreakPoints = new SortedSet<uint>();
-        public SortedSet<uint> BreakPoints
+        private int[] mBreakPointLines;
+        public int[] BreakPointLines
         {
-            get { return mBreakPoints; }
+            get { return mBreakPointLines; }
+            set { mBreakPointLines = value; }
         }
 
         private uint mLinePointer;
@@ -123,7 +125,7 @@ namespace CppMemoryVisualizer.ViewModels
             GoCommand = new GoCommand(this);
             StepOverCommand = new StepOverCommand(this);
             StepInCommand = new StepInCommand(this);
-            BreakPointCommand = new BreakPointCommand(this);
+            AddOrRemoveBreakPointCommand = new AddOrRemoveBreakPointCommand(this);
         }
 
         public void ExecuteCdb(ProcessStartInfo processInfo)
@@ -152,6 +154,7 @@ namespace CppMemoryVisualizer.ViewModels
         {
             if (ProcessCdbOrNull != null)
             {
+                ProcessCdbOrNull.OutputDataReceived -= onOutputDataReceived;
                 SendInstruction(CdbInstructionSet.QUIT);
                 ProcessCdbOrNull.WaitForExit();
                 ProcessCdbOrNull = null;
@@ -182,6 +185,7 @@ namespace CppMemoryVisualizer.ViewModels
             
             LastInstruction = EDebugInstructionState.GO;
             SendInstruction(CdbInstructionSet.GO);
+            SendInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT_MAIN, fileNameOnly));
             SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
             SendInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE);
         }
@@ -201,12 +205,19 @@ namespace CppMemoryVisualizer.ViewModels
                 data = data.Substring(lastIndex + 7);
             }
 
+            if (data.Length == 0 || data == "quit:")
+            {
+                return;
+            }
+
             switch (LastInstruction)
             {
                 case EDebugInstructionState.STEP_IN:
+                    // intentional fallthrough
                 case EDebugInstructionState.STEP_OVER:
+                    // intentional fallthrough
                 case EDebugInstructionState.GO:
-                    if (data.Length == 0 || data[0] != '>')
+                    if (data[0] != '>')
                     {
                         break;
                     }
@@ -221,7 +232,18 @@ namespace CppMemoryVisualizer.ViewModels
 
                     break;
 
-                case EDebugInstructionState.BREAK_POINT:
+                case EDebugInstructionState.ADD_BREAK_POINT:
+                    // intentional fallthrough
+                case EDebugInstructionState.REMOVE_BREAK_POINT:
+                    string[] bpInfos = data.Split(' ');
+
+                    int bpIndex = -1;
+                    Debug.Assert(int.TryParse(bpInfos[1], out bpIndex));
+
+                    uint lineNumber = 0;
+                    Debug.Assert(uint.TryParse(bpInfos[6].Remove(bpInfos[6].Length - 1), out lineNumber));
+
+                    mBreakPointLines[lineNumber] = bpIndex;
                     break;
 
                 default:
@@ -236,6 +258,28 @@ namespace CppMemoryVisualizer.ViewModels
         private void onErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
             Debug.WriteLine(e.Data);
+        }
+
+        public static void BreakPointMargin_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            BreakPointMargin margin = sender as BreakPointMargin;
+            BindableAvalonEditor editor = margin.Editor;
+            MainViewModel viewModel = (MainViewModel)margin.DataContext;
+
+            var positionOrNull = editor.GetPositionFromPoint(e.GetPosition(margin));
+            if (positionOrNull == null)
+            {
+                return;
+            }
+
+            uint line = (uint)positionOrNull.Value.Location.Line;
+
+            if (viewModel.AddOrRemoveBreakPointCommand.CanExecute(line))
+            {
+                viewModel.AddOrRemoveBreakPointCommand.Execute(line);
+            }
+
+            margin.InvalidateVisual();
         }
     }
 }

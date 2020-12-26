@@ -26,9 +26,16 @@ namespace CppMemoryVisualizer
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/k--kb--kc--kd--kp--kp--kv--display-stack-backtrace-
         public static readonly string DISPLAY_STACK_BACKTRACE = "kn";
 
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/bl--breakpoint-list-
+        public static readonly string DISPLAY_BREAK_POINT_LIST = "bl";
+
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/bp--bu--bm--set-breakpoint-
-        public static readonly string SET_BREAK_POINT_SOURCE_LEVEL = "bp (@@masm(`{0}:{1}+`))";
+        public static readonly string SET_BREAK_POINT_SOURCE_LEVEL = "bp (@@masm(`{0}:{1}`))";
         public static readonly string SET_BREAK_POINT_MAIN = "bu {0}!main";
+
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/bc--breakpoint-clear-
+        public static readonly string CLEAR_BREAK_POINT = "bc {0}";
+        public static readonly string CLEAR_BREAK_POINT_MAIN = "bc \"{0}!main\"";
 
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-expr--choose-expression-evaluator-
         public static readonly string CPP_EXPRESSION_EVALUATOR = ".expr /s c++";

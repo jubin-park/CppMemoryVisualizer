@@ -11,6 +11,7 @@ namespace CppMemoryVisualizer
         STEP_IN,
         STEP_OVER,
         GO,
-        BREAK_POINT,
+        ADD_BREAK_POINT,
+        REMOVE_BREAK_POINT,
     }
 }

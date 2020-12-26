@@ -70,7 +70,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Views\BindableAvalonEditor.cs" />
-    <Compile Include="Commands\BreakPointCommand.cs" />
+    <Compile Include="Commands\AddOrRemoveBreakPointCommand.cs" />
     <Compile Include="Enums\EDebugInstructionState.cs" />
     <Compile Include="Commands\DebugCommand.cs" />
     <Compile Include="Commands\LoadSourceFileCommand.cs" />
