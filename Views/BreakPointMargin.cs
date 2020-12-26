@@ -35,23 +35,46 @@ namespace CppMemoryVisualizer.Views
         protected override void OnRender(DrawingContext drawingContext)
         {
             TextView textView = this.TextView;
+            MainViewModel mainViewModel = (MainViewModel)DataContext;
             Size renderSize = this.RenderSize;
 
-            if (textView != null && textView.VisualLinesValid)
+            var breakPoints = mainViewModel.BreakPointLines;
+
+            drawingContext.DrawRectangle(Brushes.LightGray, null, new Rect(0, 0, MARGIN_WIDTH, RenderSize.Height));
+
+            if (breakPoints != null && textView != null && textView.VisualLinesValid)
             {
                 foreach (VisualLine line in textView.VisualLines)
                 {
                     int lineNumber = line.FirstDocumentLine.LineNumber;
-                    Debug.Write(lineNumber + " ");
+                    double y = line.GetTextLineVisualYPosition(line.TextLines[0], VisualYPosition.TextTop);
+
+                    if (breakPoints[lineNumber] >= 0)
+                    {
+                        drawingContext.DrawRectangle(Brushes.Red, null, new Rect(7, 3 + y - textView.VerticalOffset, 9, 9));
+                    }
                 }
-                Debug.WriteLine("");
             }
 
-            drawingContext.DrawRectangle(Brushes.LightGray, null, new Rect(0, 0, MARGIN_WIDTH, RenderSize.Height));
+        }
+
+        void TextViewVisualLinesChanged(object sender, EventArgs e)
+        {
+            InvalidateVisual();
         }
 
         protected override void OnTextViewChanged(TextView oldTextView, TextView newTextView)
         {
+            if (oldTextView != null)
+            {
+                oldTextView.VisualLinesChanged -= TextViewVisualLinesChanged;
+            }
+            base.OnTextViewChanged(oldTextView, newTextView);
+            if (newTextView != null)
+            {
+                newTextView.VisualLinesChanged += TextViewVisualLinesChanged;
+            }
+
             InvalidateVisual();
         }
 

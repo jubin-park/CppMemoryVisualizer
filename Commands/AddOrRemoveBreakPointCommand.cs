@@ -47,6 +47,12 @@ namespace CppMemoryVisualizer.Commands
             Debug.Assert(line > 0u);
 
             int breakpointIndex = mMainViewModel.BreakPointLines[line];
+
+            for (int i = 1; i < mMainViewModel.BreakPointLines.Length; ++i)
+            {
+                mMainViewModel.BreakPointLines[i] = -1;
+            }
+
             if (breakpointIndex < 0)
             {
                 mMainViewModel.LastInstruction = EDebugInstructionState.ADD_BREAK_POINT;
@@ -56,11 +62,6 @@ namespace CppMemoryVisualizer.Commands
             {
                 mMainViewModel.LastInstruction = EDebugInstructionState.REMOVE_BREAK_POINT;
                 mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT, breakpointIndex));
-            }
-
-            for (int i = 1; i < mMainViewModel.BreakPointLines.Length; ++i)
-            {
-                mMainViewModel.BreakPointLines[i] = -1;
             }
 
             mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_BREAK_POINT_LIST);

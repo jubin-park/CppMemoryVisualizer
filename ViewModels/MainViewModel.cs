@@ -236,12 +236,18 @@ namespace CppMemoryVisualizer.ViewModels
                     // intentional fallthrough
                 case EDebugInstructionState.REMOVE_BREAK_POINT:
                     string[] bpInfos = data.Split(' ');
+                    if (bpInfos[2] == "redefined")
+                    {
+                        break;
+                    }
 
                     int bpIndex = -1;
                     Debug.Assert(int.TryParse(bpInfos[1], out bpIndex));
+                    Debug.Assert(bpIndex >= 0);
 
                     uint lineNumber = 0;
                     Debug.Assert(uint.TryParse(bpInfos[6].Remove(bpInfos[6].Length - 1), out lineNumber));
+                    Debug.Assert(lineNumber != 0);
 
                     mBreakPointLines[lineNumber] = bpIndex;
                     break;
