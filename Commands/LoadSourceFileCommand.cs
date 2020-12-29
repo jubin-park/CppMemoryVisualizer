@@ -20,8 +20,8 @@ namespace CppMemoryVisualizer.Commands
             remove { CommandManager.RequerySuggested -= value; }
         }
 
+        private static readonly string[] STANDARD_CPP_OPTIONS = { string.Empty, " /std:c++14", " /std:c++17" };
         private readonly MainViewModel mMainViewModel;
-        private static readonly string[] STANDARD_CPP_OPTIONS = { string.Empty,  " /std:c++14", " /std:c++17" };
 
         public LoadSourceFileCommand(MainViewModel mainViewModel)
         {
@@ -66,10 +66,10 @@ namespace CppMemoryVisualizer.Commands
                     reader.Close();
                 }
 
-                mMainViewModel.BreakPointLines = new int[lineCount + 1];
+                mMainViewModel.BreakPointIndices = new int[lineCount + 1];
                 for (int i = 1; i <= lineCount; ++i)
                 {
-                    mMainViewModel.BreakPointLines[i] = -1;
+                    mMainViewModel.BreakPointIndices[i] = -1;
                 }
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
 

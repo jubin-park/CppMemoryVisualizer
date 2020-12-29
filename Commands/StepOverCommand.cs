@@ -27,7 +27,7 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.ThreadCdbOrNull != null;
+            return mMainViewModel.ThreadCdbOrNull != null;
         }
 
         public void Execute(object parameter)

@@ -27,7 +27,7 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.ThreadCdbOrNull != null;
+            return mMainViewModel.ThreadCdbOrNull != null;
         }
 
         public void Execute(object parameter)
@@ -46,11 +46,11 @@ namespace CppMemoryVisualizer.Commands
 
             Debug.Assert(line > 0u);
 
-            int breakpointIndex = mMainViewModel.BreakPointLines[line];
+            int breakpointIndex = mMainViewModel.BreakPointIndices[line];
 
-            for (int i = 1; i < mMainViewModel.BreakPointLines.Length; ++i)
+            for (int i = 1; i < mMainViewModel.BreakPointIndices.Length; ++i)
             {
-                mMainViewModel.BreakPointLines[i] = -1;
+                mMainViewModel.BreakPointIndices[i] = -1;
             }
 
             if (breakpointIndex < 0)

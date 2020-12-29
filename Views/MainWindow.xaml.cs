@@ -47,8 +47,9 @@ namespace CppMemoryVisualizer.Views
 
         private void xTextBoxInput_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Return && xTextBoxInput.Text.Length > 0 && mMainViewModel.SendInstruction(xTextBoxInput.Text))
+            if (e.Key == Key.Return && xTextBoxInput.Text.Length > 0)
             {
+                mMainViewModel.SendInstruction(xTextBoxInput.Text);
                 xTextBoxInput.Text = string.Empty;
             }
         }

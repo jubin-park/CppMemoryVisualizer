@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace CppMemoryVisualizer.ViewModels
 {
@@ -31,17 +32,12 @@ namespace CppMemoryVisualizer.ViewModels
         public ICommand StepInCommand { get; }
         public ICommand AddOrRemoveBreakPointCommand { get; }
 
-        private Process mProcessCdbOrNull;
-        public Process ProcessCdbOrNull
+        private Process mProcessCdb = new Process();
+        public Process ProcessCdb
         {
             get
             {
-                return mProcessCdbOrNull;
-            }
-            set
-            {
-                mProcessCdbOrNull = value;
-                OnPropertyChanged("ProcessCdbOrNull");
+                return mProcessCdb;
             }
         }
 
@@ -104,11 +100,11 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private int[] mBreakPointLines;
-        public int[] BreakPointLines
+        private int[] mBreakPointIndices;
+        public int[] BreakPointIndices
         {
-            get { return mBreakPointLines; }
-            set { mBreakPointLines = value; }
+            get { return mBreakPointIndices; }
+            set { mBreakPointIndices = value; }
         }
 
         private uint mLinePointer;
@@ -128,40 +124,31 @@ namespace CppMemoryVisualizer.ViewModels
             AddOrRemoveBreakPointCommand = new AddOrRemoveBreakPointCommand(this);
         }
 
-        public void ExecuteCdb(ProcessStartInfo processInfo)
+        public void ExecuteCdb()
         {
-            ProcessCdbOrNull = new Process();
-            ProcessCdbOrNull.StartInfo = processInfo;
-            ProcessCdbOrNull.OutputDataReceived += onOutputDataReceived;
-            ProcessCdbOrNull.ErrorDataReceived += onErrorDataReceived;
-
+            mProcessCdb.OutputDataReceived += onOutputDataReceived;
+            mProcessCdb.ErrorDataReceived += onErrorDataReceived;
             ThreadCdbOrNull = new Thread(new ThreadStart(cmd));
             ThreadCdbOrNull.Start();
         }
 
-        public bool SendInstruction(string instruction)
+        public void SendInstruction(string instruction)
         {
-            if (mProcessCdbOrNull != null)
+            Debug.Assert(instruction != null);
+            
+            if (ThreadCdbOrNull != null)
             {
-                mProcessCdbOrNull.StandardInput.WriteLine(instruction);
-                return true;
+                mProcessCdb.StandardInput.WriteLine(instruction);
             }
-
-            return false;
         }
 
         public void ShutdownCdb()
         {
-            if (ProcessCdbOrNull != null)
-            {
-                ProcessCdbOrNull.OutputDataReceived -= onOutputDataReceived;
-                SendInstruction(CdbInstructionSet.QUIT);
-                ProcessCdbOrNull.WaitForExit();
-                ProcessCdbOrNull = null;
-            }
-
             if (ThreadCdbOrNull != null)
             {
+                SendInstruction(CdbInstructionSet.QUIT);
+                mProcessCdb.WaitForExit();
+
                 ThreadCdbOrNull.Join();
                 ThreadCdbOrNull = null;
             }
@@ -171,9 +158,9 @@ namespace CppMemoryVisualizer.ViewModels
 
         private void cmd()
         {
-            mProcessCdbOrNull.Start();
-            mProcessCdbOrNull.BeginOutputReadLine();
-            mProcessCdbOrNull.BeginErrorReadLine();
+            mProcessCdb.Start();
+            mProcessCdb.BeginOutputReadLine();
+            mProcessCdb.BeginErrorReadLine();
 
             string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
 
@@ -182,7 +169,7 @@ namespace CppMemoryVisualizer.ViewModels
             SendInstruction(CdbInstructionSet.SET_SOURCE_OPTIONS);
             SendInstruction(CdbInstructionSet.SET_DEBUG_SETTINGS_SKIP_CRT_CODE);
             SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_MAIN, fileNameOnly));
-            
+
             LastInstruction = EDebugInstructionState.GO;
             SendInstruction(CdbInstructionSet.GO);
             SendInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT_MAIN, fileNameOnly));
@@ -229,6 +216,7 @@ namespace CppMemoryVisualizer.ViewModels
                     string code = data.Substring(8);
 
                     Debug.WriteLine("Line {0}: `{1}`", line, code);
+                    mLinePointer = line;
 
                     break;
 
@@ -249,7 +237,7 @@ namespace CppMemoryVisualizer.ViewModels
                     Debug.Assert(uint.TryParse(bpInfos[6].Remove(bpInfos[6].Length - 1), out lineNumber));
                     Debug.Assert(lineNumber != 0);
 
-                    mBreakPointLines[lineNumber] = bpIndex;
+                    mBreakPointIndices[lineNumber] = bpIndex;
                     break;
 
                 default:
@@ -264,28 +252,6 @@ namespace CppMemoryVisualizer.ViewModels
         private void onErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
             Debug.WriteLine(e.Data);
-        }
-
-        public static void BreakPointMargin_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            BreakPointMargin margin = sender as BreakPointMargin;
-            BindableAvalonEditor editor = margin.Editor;
-            MainViewModel viewModel = (MainViewModel)margin.DataContext;
-
-            var positionOrNull = editor.GetPositionFromPoint(e.GetPosition(margin));
-            if (positionOrNull == null)
-            {
-                return;
-            }
-
-            uint line = (uint)positionOrNull.Value.Location.Line;
-
-            if (viewModel.AddOrRemoveBreakPointCommand.CanExecute(line))
-            {
-                viewModel.AddOrRemoveBreakPointCommand.Execute(line);
-            }
-
-            margin.InvalidateVisual();
         }
     }
 }
