@@ -19,6 +19,7 @@ namespace CppMemoryVisualizer.ViewModels
     class MainViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+        public event DataReceivedEventHandler MarginOnOutputDataReceived;
 
         protected void OnPropertyChanged(string propertyName)
         {
@@ -32,12 +33,17 @@ namespace CppMemoryVisualizer.ViewModels
         public ICommand StepInCommand { get; }
         public ICommand AddOrRemoveBreakPointCommand { get; }
 
-        private Process mProcessCdb = new Process();
-        public Process ProcessCdb
+        private Process mProcessCdbOrNull;
+        public Process ProcessCdbOrNull
         {
             get
             {
-                return mProcessCdb;
+                return mProcessCdbOrNull;
+            }
+            set
+            {
+                mProcessCdbOrNull = value;
+                OnPropertyChanged("ProcessCdbOrNull");
             }
         }
 
@@ -126,8 +132,10 @@ namespace CppMemoryVisualizer.ViewModels
 
         public void ExecuteCdb()
         {
-            mProcessCdb.OutputDataReceived += onOutputDataReceived;
-            mProcessCdb.ErrorDataReceived += onErrorDataReceived;
+            mProcessCdbOrNull.OutputDataReceived += onOutputDataReceived;
+            mProcessCdbOrNull.OutputDataReceived += MarginOnOutputDataReceived;
+            mProcessCdbOrNull.ErrorDataReceived += onErrorDataReceived;
+
             ThreadCdbOrNull = new Thread(new ThreadStart(cmd));
             ThreadCdbOrNull.Start();
         }
@@ -138,17 +146,20 @@ namespace CppMemoryVisualizer.ViewModels
             
             if (ThreadCdbOrNull != null)
             {
-                mProcessCdb.StandardInput.WriteLine(instruction);
+                mProcessCdbOrNull.StandardInput.WriteLine(instruction);
             }
         }
 
         public void ShutdownCdb()
         {
-            if (ThreadCdbOrNull != null)
+            if (ProcessCdbOrNull != null)
             {
                 SendInstruction(CdbInstructionSet.QUIT);
-                mProcessCdb.WaitForExit();
+                ProcessCdbOrNull = null;
+            }
 
+            if (ThreadCdbOrNull != null)
+            {
                 ThreadCdbOrNull.Join();
                 ThreadCdbOrNull = null;
             }
@@ -158,9 +169,9 @@ namespace CppMemoryVisualizer.ViewModels
 
         private void cmd()
         {
-            mProcessCdb.Start();
-            mProcessCdb.BeginOutputReadLine();
-            mProcessCdb.BeginErrorReadLine();
+            mProcessCdbOrNull.Start();
+            mProcessCdbOrNull.BeginOutputReadLine();
+            mProcessCdbOrNull.BeginErrorReadLine();
 
             string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
 

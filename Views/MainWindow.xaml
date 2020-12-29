@@ -57,19 +57,6 @@
                     <KeyBinding Key="F11" Modifiers="Control" Command="{Binding Path=StepInCommand}"/>
                 </MenuItem.InputBindings>
             </MenuItem>
-            <MenuItem Command="{Binding Path=AddOrRemoveBreakPointCommand}" CommandParameter="{Binding Text, ElementName=xLineTextBox}">
-                <MenuItem.Header>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="xLineTextBox" Width="24"/>
-                        <TextBlock Grid.Column="1" Text="BreakPoint" />
-                    </Grid>
-                </MenuItem.Header>
-            </MenuItem>
-
             <MenuItem x:Name="MenuItem_Root" Header="std">
                 <MenuItem x:Name="MenuItem_Item1" IsCheckable="True" Header="C++11" IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP11}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
                 <MenuItem x:Name="MenuItem_Item2" IsCheckable="True" Header="C++14" IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP14}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />

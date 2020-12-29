@@ -34,8 +34,8 @@ namespace CppMemoryVisualizer.Views
 
             mEditor = editor;
             mMainViewModel = (MainViewModel)editor.DataContext;
-            mMainViewModel.ProcessCdb.OutputDataReceived += onOutputDataReceived;
 
+            mMainViewModel.MarginOnOutputDataReceived += new DataReceivedEventHandler(onOutputDataReceived);
             MouseLeftButtonDown += onMouseLeftButtonDown;
         }
 
@@ -113,7 +113,7 @@ namespace CppMemoryVisualizer.Views
 
         private void onOutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            Dispatcher.Invoke((Action)(() =>
+            Dispatcher.Invoke(() =>
             {
                 switch (mMainViewModel.LastInstruction)
                 {
@@ -125,7 +125,7 @@ namespace CppMemoryVisualizer.Views
                         InvalidateVisual();
                         break;
                 }
-            }));
+            });
         }
     }
 }

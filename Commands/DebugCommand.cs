@@ -54,7 +54,8 @@ namespace CppMemoryVisualizer.Commands
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardError = true;
 
-            mMainViewModel.ProcessCdb.StartInfo = processInfo;
+            mMainViewModel.ProcessCdbOrNull = new Process();
+            mMainViewModel.ProcessCdbOrNull.StartInfo = processInfo;
             mMainViewModel.ExecuteCdb();
         }
     }

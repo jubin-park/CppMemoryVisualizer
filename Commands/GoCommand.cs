@@ -32,6 +32,8 @@ namespace CppMemoryVisualizer.Commands
 
         public void Execute(object parameter)
         {
+            mMainViewModel.Log = string.Empty;
+
             mMainViewModel.LastInstruction = EDebugInstructionState.GO;
             mMainViewModel.SendInstruction(CdbInstructionSet.GO);
             mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
