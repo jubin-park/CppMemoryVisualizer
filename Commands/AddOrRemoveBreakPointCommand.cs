@@ -1,4 +1,5 @@
 ﻿using CppMemoryVisualizer.ViewModels;
+using CppMemoryVisualizer.Models;
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -46,14 +47,10 @@ namespace CppMemoryVisualizer.Commands
 
             Debug.Assert(line > 0u);
 
-            int breakpointIndex = mMainViewModel.BreakPointIndices[line];
+            uint breakpointIndex = mMainViewModel.BreakPointInfoOrNull.Indices[line];
+            mMainViewModel.BreakPointInfoOrNull.Clear();
 
-            for (int i = 1; i < mMainViewModel.BreakPointIndices.Length; ++i)
-            {
-                mMainViewModel.BreakPointIndices[i] = -1;
-            }
-
-            if (breakpointIndex < 0)
+            if (breakpointIndex == uint.MaxValue)
             {
                 mMainViewModel.LastInstruction = EDebugInstructionState.ADD_BREAK_POINT;
                 mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, line));

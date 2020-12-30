@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+﻿using CppMemoryVisualizer.ViewModels;
+using CppMemoryVisualizer.Models;
+using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -8,7 +10,6 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Diagnostics;
 using System.Windows;
-using CppMemoryVisualizer.ViewModels;
 
 namespace CppMemoryVisualizer.Commands
 {
@@ -66,11 +67,7 @@ namespace CppMemoryVisualizer.Commands
                     reader.Close();
                 }
 
-                mMainViewModel.BreakPointIndices = new int[lineCount + 1];
-                for (int i = 1; i <= lineCount; ++i)
-                {
-                    mMainViewModel.BreakPointIndices[i] = -1;
-                }
+                mMainViewModel.BreakPointInfoOrNull = new BreakPointInfo(lineCount + 1);
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
 
                 // compile

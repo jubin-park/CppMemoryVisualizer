@@ -1,5 +1,6 @@
 ﻿using CppMemoryVisualizer.Commands;
 using CppMemoryVisualizer.Enums;
+using CppMemoryVisualizer.Models;
 using CppMemoryVisualizer.Views;
 using System;
 using System.Collections.Generic;
@@ -106,11 +107,11 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private int[] mBreakPointIndices;
-        public int[] BreakPointIndices
+        private BreakPointInfo mBreakPointInfoOrNull;
+        public BreakPointInfo BreakPointInfoOrNull
         {
-            get { return mBreakPointIndices; }
-            set { mBreakPointIndices = value; }
+            get { return mBreakPointInfoOrNull; }
+            set { mBreakPointInfoOrNull = value; OnPropertyChanged("BreakPointInfoOrNull"); }
         }
 
         private uint mLinePointer;
@@ -234,21 +235,7 @@ namespace CppMemoryVisualizer.ViewModels
                 case EDebugInstructionState.ADD_BREAK_POINT:
                     // intentional fallthrough
                 case EDebugInstructionState.REMOVE_BREAK_POINT:
-                    string[] bpInfos = data.Trim().Split(' ');
-                    if (bpInfos[2] == "redefined")
-                    {
-                        break;
-                    }
-
-                    int bpIndex = -1;
-                    Debug.Assert(int.TryParse(bpInfos[0], out bpIndex));
-                    Debug.Assert(bpIndex >= 0);
-
-                    uint lineNumber = 0;
-                    Debug.Assert(uint.TryParse(bpInfos[5].Remove(bpInfos[5].Length - 1), out lineNumber));
-                    Debug.Assert(lineNumber != 0);
-
-                    mBreakPointIndices[lineNumber] = bpIndex;
+                    mBreakPointInfoOrNull.ProcessLine(data);
                     break;
 
                 default:

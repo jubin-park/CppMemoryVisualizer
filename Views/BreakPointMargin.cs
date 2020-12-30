@@ -43,26 +43,35 @@ namespace CppMemoryVisualizer.Views
         {
             TextView textView = this.TextView;
             Size renderSize = this.RenderSize;
-
-            var breakPoints = mMainViewModel.BreakPointIndices;
+            var breakPointInfoOrNull = mMainViewModel.BreakPointInfoOrNull;
 
             drawingContext.DrawRectangle(Brushes.LightGray, null, new Rect(0, 0, MARGIN_WIDTH, RenderSize.Height));
 
-            if (breakPoints != null && textView != null && textView.VisualLinesValid)
+            if (breakPointInfoOrNull != null && textView != null && textView.VisualLinesValid)
             {
+                if (breakPointInfoOrNull.IsUpdatable())
+                {
+                    foreach (VisualLine line in textView.VisualLines)
+                    {
+                        int lineNumber = line.FirstDocumentLine.LineNumber;
+                        double y = line.GetTextLineVisualYPosition(line.TextLines[0], VisualYPosition.TextTop);
+
+                        if (breakPointInfoOrNull.Indices[lineNumber] != uint.MaxValue)
+                        {
+                            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(7, 3 + y - textView.VerticalOffset, 9, 9));
+                        }
+                    }
+                }
+
                 foreach (VisualLine line in textView.VisualLines)
                 {
                     int lineNumber = line.FirstDocumentLine.LineNumber;
                     double y = line.GetTextLineVisualYPosition(line.TextLines[0], VisualYPosition.TextTop);
 
-                    if (breakPoints[lineNumber] >= 0)
-                    {
-                        drawingContext.DrawRectangle(Brushes.Red, null, new Rect(7, 3 + y - textView.VerticalOffset, 9, 9));
-                    }
-
                     if ((uint)lineNumber == mMainViewModel.LinePointer)
                     {
                         drawingContext.DrawRectangle(Brushes.Yellow, null, new Rect(7, 5 + y - textView.VerticalOffset, 9, 4));
+                        break;
                     }
                 }
             }
