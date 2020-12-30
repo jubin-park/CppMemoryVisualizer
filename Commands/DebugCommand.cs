@@ -1,4 +1,5 @@
 ﻿using CppMemoryVisualizer.ViewModels;
+using CppMemoryVisualizer.Models;
 using System;
 using System.IO;
 using System.Collections.Generic;

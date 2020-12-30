@@ -134,6 +134,13 @@ namespace CppMemoryVisualizer.Views
                     case EDebugInstructionState.REMOVE_BREAK_POINT:
                         InvalidateVisual();
                         break;
+
+                    case EDebugInstructionState.NULL:
+                        return;
+
+                    default:
+                        Debug.Assert(false);
+                        break;
                 }
             });
         }

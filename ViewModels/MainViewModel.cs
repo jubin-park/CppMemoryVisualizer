@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -155,6 +156,7 @@ namespace CppMemoryVisualizer.ViewModels
         {
             if (ProcessCdbOrNull != null)
             {
+                LastInstruction = EDebugInstructionState.NULL;
                 SendInstruction(CdbInstructionSet.QUIT);
                 ProcessCdbOrNull = null;
             }
@@ -187,6 +189,20 @@ namespace CppMemoryVisualizer.ViewModels
             SendInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT_MAIN, fileNameOnly));
             SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
             SendInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE);
+
+            if (mBreakPointInfoOrNull.Count > 0)
+            {
+                LastInstruction = EDebugInstructionState.ADD_BREAK_POINT;
+                string fileName = Path.GetFileName(mSourcePathOrNull);
+
+                for (uint line = 1; line < mBreakPointInfoOrNull.Indices.Length; ++line)
+                {
+                    if (mBreakPointInfoOrNull.Indices[line] < uint.MaxValue)
+                    {
+                        SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, line));
+                    }
+                }
+            }
         }
 
         private void onOutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -216,27 +232,78 @@ namespace CppMemoryVisualizer.ViewModels
                 case EDebugInstructionState.STEP_OVER:
                     // intentional fallthrough
                 case EDebugInstructionState.GO:
-                    if (data[0] != '>')
-                    {
-                        break;
+
+                    {// line and code
+                        Regex rx = new Regex(@"^>\s*(\d*):\s(.+)$");
+                        Match match = rx.Match(data);
+
+                        if (match.Success)
+                        {
+                            Debug.WriteLine("Line {0}: `{1}`", match.Groups[1].Value, match.Groups[2].Value);
+
+                            uint line = 0;
+                            uint.TryParse(match.Groups[1].Value, out line);
+                            Debug.Assert(line > 0);
+                            mLinePointer = line;
+                            break;
+                        }
                     }
 
-                    uint line = 0;
-                    UInt32.TryParse(data.Substring(1, 5).Trim(), out line);
-                    Debug.Assert(line > 0);
-                    
-                    string code = data.Substring(8);
+                    {// stack trace
+                        string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
+                        Regex rx = new Regex(@"^\d+\s[(Inline)|0-9a-f]{8}\s[--------|0-9a-f]{8}\s" + fileNameOnly + @"!(.*)\s\[(.*)\s@\s(\d+)\]");
+                        //Regex rx = new Regex($"^\\d+\\s[(Inline)|0-9a-f]{8}\\s[--------|0-9a-f]{8}\\s{fileNameOnly}!(.*)\\s\\[(.*)\\s@\\s(\\d+)\\]");
+                        Match match = rx.Match(data);
 
-                    Debug.WriteLine("Line {0}: `{1}`", line, code);
-                    mLinePointer = line;
+                        if (match.Success)
+                        {
+                            Debug.WriteLine("Function Name: {0}, Line: {1}", match.Groups[1].Value, match.Groups[3].Value);
+                            break;
+                        }
+                    }
 
+                    {
+                        Regex rx = new Regex(@"^prv\s(local|param)\s+([0-9a-f]{8})\s+(.*)\s=\s(.*)$");
+                        Match match = rx.Match(data);
+
+                        if (match.Success)
+                        {
+                            lastIndex = match.Groups[3].Value.LastIndexOf(' ');
+                            string type = match.Groups[3].Value.Substring(0, lastIndex);
+                            string name = match.Groups[3].Value.Substring(lastIndex + 1);
+
+                            Debug.WriteLine("Memory: {0}, Address: {1}, Type: {2}, Name: {3}, Value: {4}",
+                                match.Groups[1].Value, match.Groups[2].Value, type, name, match.Groups[4].Value);
+                            break;
+                        }
+                    }
                     break;
 
                 case EDebugInstructionState.ADD_BREAK_POINT:
                     // intentional fallthrough
                 case EDebugInstructionState.REMOVE_BREAK_POINT:
-                    mBreakPointInfoOrNull.ProcessLine(data);
+                    {
+                        Regex rx = new Regex(@"^\s?(\d+)\se\s[0-9a-f]{8}\s\[(.+|:|\\)\s@\s(\d+)\]");
+                        Match match = rx.Match(data);
+
+                        if (match.Success)
+                        {
+                            uint bpIndex = uint.MaxValue;
+                            Debug.Assert(uint.TryParse(match.Groups[1].Value, out bpIndex));
+                            Debug.Assert(bpIndex < uint.MaxValue);
+
+                            uint lineNumber = 0;
+                            Debug.Assert(uint.TryParse(match.Groups[3].Value, out lineNumber));
+                            Debug.Assert(lineNumber > 0);
+
+                            ++mBreakPointInfoOrNull.Count;
+                            BreakPointInfoOrNull.Indices[lineNumber] = bpIndex;
+                        }
+                    }
                     break;
+
+                case EDebugInstructionState.NULL:
+                    return;
 
                 default:
                     Debug.Assert(false);

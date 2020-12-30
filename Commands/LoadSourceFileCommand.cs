@@ -66,7 +66,6 @@ namespace CppMemoryVisualizer.Commands
                     }
                     reader.Close();
                 }
-
                 mMainViewModel.BreakPointInfoOrNull = new BreakPointInfo(lineCount + 1);
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
 

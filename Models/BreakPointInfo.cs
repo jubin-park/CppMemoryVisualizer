@@ -56,27 +56,7 @@ namespace CppMemoryVisualizer.Models
 
         public bool IsUpdatable()
         {
-            return OldCount == 0 || Count + 1 >= OldCount && Count <= OldCount + 1;
-        }
-
-        public void ProcessLine(string line)
-        {
-            string[] bpInfos = line.Trim().Split(' ');
-            if (bpInfos[2] == "redefined")
-            {
-                return;
-            }
-
-            uint bpIndex = uint.MaxValue;
-            Debug.Assert(uint.TryParse(bpInfos[0], out bpIndex));
-            Debug.Assert(bpIndex < uint.MaxValue);
-
-            uint lineNumber = 0;
-            Debug.Assert(uint.TryParse(bpInfos[5].Remove(bpInfos[5].Length - 1), out lineNumber));
-            Debug.Assert(lineNumber != 0);
-
-            ++Count;
-            mIndices[lineNumber] = bpIndex;
+            return Count + 1 >= OldCount && Count <= OldCount + 1;
         }
     }
 }
