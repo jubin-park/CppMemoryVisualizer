@@ -6,7 +6,7 @@ namespace CppMemoryVisualizer.Views
 {
     class WindowTitleConverter : IValueConverter
     {
-        private static string WINDOW_TITLE = "C/C++ Memory Visualizer";
+        private static string WINDOW_TITLE = "C++ Memory Visualizer";
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

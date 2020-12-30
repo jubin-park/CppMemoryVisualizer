@@ -84,7 +84,6 @@ namespace CppMemoryVisualizer.Views
             {
                 newTextView.VisualLinesChanged += TextViewVisualLinesChanged;
             }
-
             InvalidateVisual();
         }
 
@@ -107,8 +106,6 @@ namespace CppMemoryVisualizer.Views
             {
                 mMainViewModel.AddOrRemoveBreakPointCommand.Execute(line);
             }
-
-            InvalidateVisual();
         }
 
         private void onOutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -122,6 +119,10 @@ namespace CppMemoryVisualizer.Views
                     case EDebugInstructionState.STEP_OVER:
                     // intentional fallthrough
                     case EDebugInstructionState.GO:
+                    // intentional fallthrough
+                    case EDebugInstructionState.ADD_BREAK_POINT:
+                    // intentional fallthrough
+                    case EDebugInstructionState.REMOVE_BREAK_POINT:
                         InvalidateVisual();
                         break;
                 }
