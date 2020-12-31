@@ -3,6 +3,7 @@ using CppMemoryVisualizer.Enums;
 using CppMemoryVisualizer.Models;
 using CppMemoryVisualizer.Views;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -122,6 +123,12 @@ namespace CppMemoryVisualizer.ViewModels
             set { mLinePointer = value; OnPropertyChanged("LinePointer"); }
         }
 
+        private CallStack mCallStackOrNull;
+        public CallStack CallStackOrNull
+        {
+            get { return mCallStackOrNull; }
+        }
+
         public MainViewModel()
         {
             LoadSourceFileCommand = new LoadSourceFileCommand(this);
@@ -137,6 +144,8 @@ namespace CppMemoryVisualizer.ViewModels
             mProcessCdbOrNull.OutputDataReceived += onOutputDataReceived;
             mProcessCdbOrNull.OutputDataReceived += MarginOnOutputDataReceived;
             mProcessCdbOrNull.ErrorDataReceived += onErrorDataReceived;
+
+            mCallStackOrNull = new CallStack();
 
             ThreadCdbOrNull = new Thread(new ThreadStart(cmd));
             ThreadCdbOrNull.Start();
@@ -220,7 +229,7 @@ namespace CppMemoryVisualizer.ViewModels
                 data = data.Substring(lastIndex + 7);
             }
 
-            if (data.Length == 0 || data == "quit:")
+            if (data.Length == 0)
             {
                 return;
             }
@@ -245,19 +254,33 @@ namespace CppMemoryVisualizer.ViewModels
                             uint.TryParse(match.Groups[1].Value, out line);
                             Debug.Assert(line > 0);
                             mLinePointer = line;
+
                             break;
                         }
                     }
 
                     {// stack trace
                         string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
-                        Regex rx = new Regex(@"^\d+\s[(Inline)|0-9a-f]{8}\s[--------|0-9a-f]{8}\s" + fileNameOnly + @"!(.*)\s\[(.*)\s@\s(\d+)\]");
-                        //Regex rx = new Regex($"^\\d+\\s[(Inline)|0-9a-f]{8}\\s[--------|0-9a-f]{8}\\s{fileNameOnly}!(.*)\\s\\[(.*)\\s@\\s(\\d+)\\]");
+                        Regex rx = new Regex(@"^\d+\s([0-9a-f]{8})\s([0-9a-f]{8})\s" + fileNameOnly + @"!(.*)\s\[(.*)\s@\s(\d+)\]");
                         Match match = rx.Match(data);
 
                         if (match.Success)
                         {
-                            Debug.WriteLine("Function Name: {0}, Line: {1}", match.Groups[1].Value, match.Groups[3].Value);
+                            //string stackAddress = match.Groups[1].Value;
+                            string name = match.Groups[3].Value;
+                            string path = match.Groups[4].Value;
+                            //string line = match.Groups[5].Value;
+
+                            uint functionAddr = 0;
+                            uint.TryParse(match.Groups[2].Value, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out functionAddr);
+                            Debug.Assert(functionAddr > 0);
+
+                            if (path == mSourcePathOrNull)
+                            {
+                                Debug.WriteLine("Function addr: {0}, name: {1}", functionAddr, name);
+                                mCallStackOrNull.Push(functionAddr, name);
+                            }
+
                             break;
                         }
                     }
@@ -268,12 +291,21 @@ namespace CppMemoryVisualizer.ViewModels
 
                         if (match.Success)
                         {
-                            lastIndex = match.Groups[3].Value.LastIndexOf(' ');
-                            string type = match.Groups[3].Value.Substring(0, lastIndex);
-                            string name = match.Groups[3].Value.Substring(lastIndex + 1);
+                            int index = match.Groups[3].Value.LastIndexOf(' ');
+                            string name = match.Groups[3].Value.Substring(index + 1);
+
+                            CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
+                            stackFrame.TryAdd(name);
+
+                            LocalVariable local = stackFrame.GetLocalVariable(name);
+                            local.Address = match.Groups[2].Value;
+                            local.Type = match.Groups[3].Value.Substring(0, index);
+                            local.Name = name;
+                            local.Value = match.Groups[4].Value;
 
                             Debug.WriteLine("Memory: {0}, Address: {1}, Type: {2}, Name: {3}, Value: {4}",
-                                match.Groups[1].Value, match.Groups[2].Value, type, name, match.Groups[4].Value);
+                                match.Groups[1].Value, local.Address, local.Type, local.Name, local.Value);
+                            
                             break;
                         }
                     }

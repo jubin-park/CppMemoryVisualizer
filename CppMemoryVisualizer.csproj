@@ -61,6 +61,10 @@
     </ApplicationDefinition>
     <Compile Include="Enums\EStandardCppVersion.cs" />
     <Compile Include="Models\BreakPointInfo.cs" />
+    <Compile Include="Models\CallStack.cs" />
+    <Compile Include="Models\HeapMemory.cs" />
+    <Compile Include="Models\LocalVariable.cs" />
+    <Compile Include="Models\StackFrame.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>

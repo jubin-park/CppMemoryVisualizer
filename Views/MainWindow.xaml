@@ -86,7 +86,6 @@
                     FontSize="14"
                     FontFamily="Consolas"
                     Text="{Binding SourceCode}"
-                    BreakPointIndices="{Binding BreakPointIndices}"
                     LinePointer="{Binding LinePointer}"
                     />
                 <GridSplitter

@@ -37,6 +37,10 @@ namespace CppMemoryVisualizer
         public static readonly string CLEAR_BREAK_POINT = "bc {0}";
         public static readonly string CLEAR_BREAK_POINT_MAIN = "bc \"{0}!main\"";
 
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-address
+        public static readonly string DISPLAY_ADDRESS = "!address {0}";
+        public static readonly string DISPLAY_HEAP = "!heap -x {0}";
+
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-expr--choose-expression-evaluator-
         public static readonly string CPP_EXPRESSION_EVALUATOR = ".expr /s c++";
         
@@ -48,5 +52,7 @@ namespace CppMemoryVisualizer
 
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-settings--set-debug-settings-
         public static readonly string SET_DEBUG_SETTINGS_SKIP_CRT_CODE = ".settings set Sources.SkipCrtCode=true";
+
+        public static readonly string ECHO = ".echo \"{0}\"";
     }
 }

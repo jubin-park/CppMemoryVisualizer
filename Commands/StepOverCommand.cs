@@ -32,10 +32,14 @@ namespace CppMemoryVisualizer.Commands
 
         public void Execute(object parameter)
         {
+            mMainViewModel.CallStackOrNull.Clear();
+
             mMainViewModel.LastInstruction = EDebugInstructionState.STEP_OVER;
             mMainViewModel.SendInstruction(CdbInstructionSet.STEP_OVER);
             mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
             mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE);
+
+            mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.ECHO, "STEPOVER END"));
         }
     }
 }
