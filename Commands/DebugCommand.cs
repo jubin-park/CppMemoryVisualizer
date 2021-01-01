@@ -38,25 +38,6 @@ namespace CppMemoryVisualizer.Commands
             Debug.Assert(mMainViewModel.SourcePathOrNull != null);
 
             mMainViewModel.ShutdownCdb();
-
-            string dirPath = Path.GetDirectoryName(mMainViewModel.SourcePathOrNull);
-            string fileName = Path.GetFileName(mMainViewModel.SourcePathOrNull);
-            string fileNameOnly = Path.GetFileNameWithoutExtension(mMainViewModel.SourcePathOrNull);
-
-            App app = Application.Current as App;
-
-            ProcessStartInfo processInfo = new ProcessStartInfo();
-            processInfo.FileName = app.CdbPath;
-            processInfo.WorkingDirectory = dirPath;
-            processInfo.Arguments = $"-o {fileNameOnly}.exe -y {fileNameOnly}.pdb -srcpath {fileName}";
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            processInfo.RedirectStandardInput = true;
-            processInfo.RedirectStandardOutput = true;
-            processInfo.RedirectStandardError = true;
-
-            mMainViewModel.ProcessCdbOrNull = new Process();
-            mMainViewModel.ProcessCdbOrNull.StartInfo = processInfo;
             mMainViewModel.ExecuteCdb();
         }
     }

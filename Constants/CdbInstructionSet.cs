@@ -54,5 +54,6 @@ namespace CppMemoryVisualizer
         public static readonly string SET_DEBUG_SETTINGS_SKIP_CRT_CODE = ".settings set Sources.SkipCrtCode=true";
 
         public static readonly string ECHO = ".echo \"{0}\"";
+        public static readonly string ECHO_GET_SIZEOF = "@SIZEOF";
     }
 }

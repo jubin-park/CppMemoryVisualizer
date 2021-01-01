@@ -52,12 +52,12 @@ namespace CppMemoryVisualizer.Commands
 
             if (breakpointIndex == uint.MaxValue)
             {
-                mMainViewModel.LastInstruction = EDebugInstructionState.ADD_BREAK_POINT;
+                mMainViewModel.CurrentInstruction = EDebugInstructionState.ADD_BREAK_POINT;
                 mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, line));
             }
             else
             {
-                mMainViewModel.LastInstruction = EDebugInstructionState.REMOVE_BREAK_POINT;
+                mMainViewModel.CurrentInstruction = EDebugInstructionState.REMOVE_BREAK_POINT;
                 mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT, breakpointIndex));
             }
 

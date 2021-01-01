@@ -121,7 +121,7 @@ namespace CppMemoryVisualizer.Views
         {
             Dispatcher.Invoke(() =>
             {
-                switch (mMainViewModel.LastInstruction)
+                switch (mMainViewModel.CurrentInstruction)
                 {
                     case EDebugInstructionState.STEP_IN:
                     // intentional fallthrough
@@ -136,6 +136,7 @@ namespace CppMemoryVisualizer.Views
                         break;
 
                     case EDebugInstructionState.NULL:
+                    case EDebugInstructionState.SIZEOF:
                         return;
 
                     default:

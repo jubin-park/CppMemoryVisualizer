@@ -34,7 +34,7 @@ namespace CppMemoryVisualizer.Commands
         {
             mMainViewModel.CallStackOrNull.Clear();
 
-            mMainViewModel.LastInstruction = EDebugInstructionState.STEP_IN;
+            mMainViewModel.CurrentInstruction = EDebugInstructionState.STEP_IN;
             mMainViewModel.SendInstruction(CdbInstructionSet.STEP_IN);
             mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
             mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE);
