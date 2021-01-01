@@ -146,19 +146,42 @@ namespace CppMemoryVisualizer.ViewModels
             mProcessCdbOrNull.ErrorDataReceived += onErrorDataReceived;
 
             mCallStackOrNull = new CallStack();
-
-            ThreadCdbOrNull = new Thread(new ThreadStart(cmd));
-            ThreadCdbOrNull.Start();
-        }
-
-        public void SendInstruction(string instruction)
-        {
-            Debug.Assert(instruction != null);
-            
-            if (ThreadCdbOrNull != null)
+            ThreadCdbOrNull = new Thread(new ThreadStart(() =>
             {
-                mProcessCdbOrNull.StandardInput.WriteLine(instruction);
-            }
+                mProcessCdbOrNull.Start();
+                mProcessCdbOrNull.BeginOutputReadLine();
+                mProcessCdbOrNull.BeginErrorReadLine();
+
+                string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
+
+                SendInstruction(CdbInstructionSet.CPP_EXPRESSION_EVALUATOR);
+                SendInstruction(CdbInstructionSet.ENABLE_SOURCE_LINE_SUPPORT);
+                SendInstruction(CdbInstructionSet.SET_SOURCE_OPTIONS);
+                SendInstruction(CdbInstructionSet.SET_DEBUG_SETTINGS_SKIP_CRT_CODE);
+                SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_MAIN, fileNameOnly));
+
+                LastInstruction = EDebugInstructionState.GO;
+                SendInstruction(CdbInstructionSet.GO);
+                SendInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT_MAIN, fileNameOnly));
+                SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
+                SendInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE);
+
+                if (mBreakPointInfoOrNull.Count > 0)
+                {
+                    LastInstruction = EDebugInstructionState.ADD_BREAK_POINT;
+                    string fileName = Path.GetFileName(mSourcePathOrNull);
+
+                    for (uint line = 1; line < mBreakPointInfoOrNull.Indices.Length; ++line)
+                    {
+                        if (mBreakPointInfoOrNull.Indices[line] < uint.MaxValue)
+                        {
+                            SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, line));
+                        }
+                    }
+                }
+            }));
+
+            ThreadCdbOrNull.Start();
         }
 
         public void ShutdownCdb()
@@ -179,38 +202,14 @@ namespace CppMemoryVisualizer.ViewModels
             Log = string.Empty;
         }
 
-        private void cmd()
+
+        public void SendInstruction(string instruction)
         {
-            mProcessCdbOrNull.Start();
-            mProcessCdbOrNull.BeginOutputReadLine();
-            mProcessCdbOrNull.BeginErrorReadLine();
+            Debug.Assert(instruction != null);
 
-            string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
-
-            SendInstruction(CdbInstructionSet.CPP_EXPRESSION_EVALUATOR);
-            SendInstruction(CdbInstructionSet.ENABLE_SOURCE_LINE_SUPPORT);
-            SendInstruction(CdbInstructionSet.SET_SOURCE_OPTIONS);
-            SendInstruction(CdbInstructionSet.SET_DEBUG_SETTINGS_SKIP_CRT_CODE);
-            SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_MAIN, fileNameOnly));
-
-            LastInstruction = EDebugInstructionState.GO;
-            SendInstruction(CdbInstructionSet.GO);
-            SendInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT_MAIN, fileNameOnly));
-            SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
-            SendInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE);
-
-            if (mBreakPointInfoOrNull.Count > 0)
+            if (ThreadCdbOrNull != null)
             {
-                LastInstruction = EDebugInstructionState.ADD_BREAK_POINT;
-                string fileName = Path.GetFileName(mSourcePathOrNull);
-
-                for (uint line = 1; line < mBreakPointInfoOrNull.Indices.Length; ++line)
-                {
-                    if (mBreakPointInfoOrNull.Indices[line] < uint.MaxValue)
-                    {
-                        SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, line));
-                    }
-                }
+                mProcessCdbOrNull.StandardInput.WriteLine(instruction);
             }
         }
 
