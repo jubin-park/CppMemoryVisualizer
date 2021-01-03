@@ -76,6 +76,7 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 mLastInstruction = mCurrentInstruction;
                 mCurrentInstruction = value;
+                OnPropertyChanged("CurrentInstruction");
             }
         }
 
@@ -86,7 +87,8 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 return mStandardCppVersion;
             }
-            set {
+            set
+            {
                 mStandardCppVersion = value;
                 OnPropertyChanged("StandardCppVersion");
             }
@@ -281,18 +283,17 @@ namespace CppMemoryVisualizer.ViewModels
             }
 
             string data = e.Data;
-
             {
                 int lastIndex = data.LastIndexOf("0:000> ");
+
                 if (lastIndex != -1)
                 {
                     data = data.Substring(lastIndex + 7);
                 }
-
-                if (data.Length == 0)
-                {
-                    return;
-                }
+            }
+            if (data.Length == 0)
+            {
+                return;
             }
 
             switch (CurrentInstruction)
@@ -304,10 +305,34 @@ namespace CppMemoryVisualizer.ViewModels
                 case EDebugInstructionState.GO:
 
                     #region Get sizeof
-                    if (data.StartsWith(CdbInstructionSet.ECHO_GET_SIZEOF))
+                    if (data.StartsWith(CdbInstructionSet.REQUEST_SIZEOF))
                     {
-                        mTargetLocalVariableName = data.Substring(CdbInstructionSet.ECHO_GET_SIZEOF.Length);
                         CurrentInstruction = EDebugInstructionState.SIZEOF;
+                        mTargetLocalVariableName = data.Substring(CdbInstructionSet.REQUEST_SIZEOF.Length);
+
+                        break;
+                    }
+                    #endregion
+
+                    #region Get Memory words
+                    else if (data.StartsWith(CdbInstructionSet.REQUEST_DISPLAY_MEMORY))
+                    {
+                        CurrentInstruction = EDebugInstructionState.DISPLAY_MEMORY;
+                        mTargetLocalVariableName = data.Substring(CdbInstructionSet.REQUEST_DISPLAY_MEMORY.Length);
+
+                        CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
+                        LocalVariable local = stackFrame.GetLocalVariable(mTargetLocalVariableName);
+
+                        break;
+                    }
+                    #endregion
+
+                    #region Get Expression
+                    else if (data.StartsWith(CdbInstructionSet.REQUEST_DISPLAY_EXPRESSION))
+                    {
+                        mTargetLocalVariableName = data.Substring(CdbInstructionSet.REQUEST_DISPLAY_EXPRESSION.Length);
+                        CurrentInstruction = EDebugInstructionState.DISPLAY_EXPRESSION;
+
                         break;
                     }
                     #endregion
@@ -361,6 +386,7 @@ namespace CppMemoryVisualizer.ViewModels
 
                     #region Get Local Variable Info
                     {
+                        // name(fix), address, type(fix)
                         Regex rx = new Regex(@"^prv\s(local|param)\s+([0-9a-f]{8})\s+(.*)\s=\s(.*)$");
                         Match match = rx.Match(data);
 
@@ -373,28 +399,46 @@ namespace CppMemoryVisualizer.ViewModels
                             stackFrame.TryAdd(name);
 
                             LocalVariable local = stackFrame.GetLocalVariable(name);
-                            local.Address = match.Groups[2].Value;
-                            local.Type = match.Groups[3].Value.Substring(0, lastIndex);
-                            local.Name = name;
-                            string oldValue = local.Value;
-                            local.Value = match.Groups[4].Value;
-
-                            Debug.WriteLine("Memory: {0}, Address: {1}, Type: {2}, Name: {3}, Value: {4}",
-                                match.Groups[1].Value, local.Address, local.Type, local.Name, local.Value);
-
-                            //SendInstruction($"dx {name}");
-
-                            if (local.Size == uint.MaxValue)
+                            if (local.Name == string.Empty)
                             {
-                                SendInstruction(string.Format(CdbInstructionSet.ECHO, CdbInstructionSet.ECHO_GET_SIZEOF + name) + $";?? sizeof({name})");
+                                local.Name = name;
                             }
 
-                            if (oldValue != local.Value && local.Value.StartsWith("0x"))
+                            uint address = 0;
+                            Debug.Assert(uint.TryParse(match.Groups[2].Value, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address));
+                            local.StackMemory.Address = address;
+                            
+                            if (local.StackMemory.Type == string.Empty)
                             {
-                                SendInstruction($".echo \"!heap started ...\"");
-                                SendInstruction($"!heap -x {local.Value}");
+                                local.StackMemory.Type = match.Groups[3].Value.Substring(0, lastIndex);
                             }
 
+                            if (local.StackMemory.ByteValues == null)
+                            {
+                                SendInstruction(string.Format(CdbInstructionSet.ECHO, CdbInstructionSet.REQUEST_SIZEOF + name));
+                                SendInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, name));
+                            }
+                            else
+                            {
+                                SendInstruction(string.Format(CdbInstructionSet.ECHO, CdbInstructionSet.REQUEST_DISPLAY_MEMORY + name));
+                                SendInstruction(string.Format(CdbInstructionSet.DISPLAY_MEMORY, local.StackMemory.ByteValues.Length, "0x" + address.ToString("x")));
+                            }
+
+                            //SendInstruction(string.Format(CdbInstructionSet.ECHO, CdbInstructionSet.REQUEST_DISPLAY_EXPRESSION + name));
+                            //SendInstruction(string.Format(CdbInstructionSet.DISPLAY_EXPRESSION, name));
+
+                            /*
+                            string oldValue = local.StackMemory.Value;
+                            local.StackMemory.Value = match.Groups[4].Value;
+
+                            Debug.WriteLine("Memory: {0}, Address: {1}, Type: {2}, Name: {3}, Value: {4}", match.Groups[1].Value, local.StackMemory.Address, local.StackMemory.Type, local.Name, local.StackMemory.Value);
+
+                            if (oldValue != local.StackMemory.Value && local.StackMemory.Value.StartsWith("0x"))
+                            {
+                                //SendInstruction($".echo \"!heap started ...\"");
+                                //SendInstruction($"!heap -x {local.StackMemory.Value}");
+                            }
+                            */
                             break;
                         }
                     }
@@ -429,11 +473,12 @@ namespace CppMemoryVisualizer.ViewModels
                         int lastIndex = data.LastIndexOf(' ');
                         string value = data.Substring(lastIndex + 1);
                         uint size = uint.MaxValue;
+
                         if (value.StartsWith("0x"))
                         {
                             uint.TryParse(value.Substring(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out size);
                         }
-                        else
+                        else // decimal
                         {
                             uint.TryParse(value, out size);
                         }
@@ -441,10 +486,30 @@ namespace CppMemoryVisualizer.ViewModels
 
                         CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
                         LocalVariable local = stackFrame.GetLocalVariable(mTargetLocalVariableName);
-                        local.Size = size;
+
+                        local.StackMemory.Size = size;
+                        uint wordSize = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
+                        local.StackMemory.ByteValues = new byte[wordSize * 4];
+
+                        SendInstruction(string.Format(CdbInstructionSet.ECHO, CdbInstructionSet.REQUEST_DISPLAY_MEMORY + mTargetLocalVariableName));
+                        SendInstruction(string.Format(CdbInstructionSet.DISPLAY_MEMORY, wordSize, "0x" + local.StackMemory.Address.ToString("x")));
 
                         CurrentInstruction = mLastInstruction;
                     }
+                    break;
+
+                case EDebugInstructionState.DISPLAY_MEMORY:
+                    {
+                        CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
+                        LocalVariable local = stackFrame.GetLocalVariable(mTargetLocalVariableName);
+
+                        local.StackMemory.SetValue(data);
+
+                        CurrentInstruction = mLastInstruction;
+                    }
+                    break;
+
+                case EDebugInstructionState.DISPLAY_EXPRESSION:
                     break;
 
                 case EDebugInstructionState.NULL:

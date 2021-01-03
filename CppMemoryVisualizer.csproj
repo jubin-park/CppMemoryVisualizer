@@ -24,6 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -60,9 +61,10 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Enums\EStandardCppVersion.cs" />
+    <Compile Include="Enums\EVariableType.cs" />
     <Compile Include="Models\BreakPointInfo.cs" />
     <Compile Include="Models\CallStack.cs" />
-    <Compile Include="Models\HeapMemory.cs" />
+    <Compile Include="Models\MemoryInfo.cs" />
     <Compile Include="Models\LocalVariable.cs" />
     <Compile Include="Models\StackFrame.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">

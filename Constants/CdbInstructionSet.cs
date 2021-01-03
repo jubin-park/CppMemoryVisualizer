@@ -41,6 +41,15 @@ namespace CppMemoryVisualizer
         public static readonly string DISPLAY_ADDRESS = "!address {0}";
         public static readonly string DISPLAY_HEAP = "!heap -x {0}";
 
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dx--display-visualizer-variables-
+        public static readonly string DISPLAY_EXPRESSION = "dx {0}";
+
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/d--da--db--dc--dd--dd--df--dp--dq--du--dw--dw--dyb--dyd--display-memor
+        public static readonly string DISPLAY_MEMORY = "dd /c{0} {1} L{0}";
+
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/----evaluate-c---expression-
+        public static readonly string EVALUATE_SIZEOF = "?? sizeof({0})";
+
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-expr--choose-expression-evaluator-
         public static readonly string CPP_EXPRESSION_EVALUATOR = ".expr /s c++";
         
@@ -53,7 +62,13 @@ namespace CppMemoryVisualizer
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-settings--set-debug-settings-
         public static readonly string SET_DEBUG_SETTINGS_SKIP_CRT_CODE = ".settings set Sources.SkipCrtCode=true";
 
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-echo--echo-comment-
         public static readonly string ECHO = ".echo \"{0}\"";
-        public static readonly string ECHO_GET_SIZEOF = "@SIZEOF";
+
+        #region NOTIFYING ECHO
+        public static readonly string REQUEST_SIZEOF = "@SIZEOF";
+        public static readonly string REQUEST_DISPLAY_EXPRESSION = "@DX";
+        public static readonly string REQUEST_DISPLAY_MEMORY = "@DM";
+        #endregion
     }
 }

@@ -135,8 +135,13 @@ namespace CppMemoryVisualizer.Views
                         InvalidateVisual();
                         break;
 
-                    case EDebugInstructionState.NULL:
                     case EDebugInstructionState.SIZEOF:
+                    // intentional fallthrough
+                    case EDebugInstructionState.DISPLAY_EXPRESSION:
+                    // intentional fallthrough
+                    case EDebugInstructionState.DISPLAY_MEMORY:
+                    // intentional fallthrough
+                    case EDebugInstructionState.NULL:
                         return;
 
                     default:

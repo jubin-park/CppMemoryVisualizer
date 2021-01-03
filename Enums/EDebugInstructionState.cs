@@ -14,6 +14,8 @@ namespace CppMemoryVisualizer
         GO,
         ADD_BREAK_POINT,
         REMOVE_BREAK_POINT,
-        SIZEOF
+        SIZEOF,
+        DISPLAY_EXPRESSION,
+        DISPLAY_MEMORY,
     }
 }
