@@ -449,7 +449,7 @@ namespace CppMemoryVisualizer.ViewModels
 
             #endregion
 
-UpdateMemory:
+            // UpdateMemory:
 
             #region Get Memory Word Pattern
             {

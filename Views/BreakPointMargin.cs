@@ -124,6 +124,8 @@ namespace CppMemoryVisualizer.Views
             Dispatcher.Invoke(() =>
             {
                 InvalidateVisual();
+                double vertOffset = (this.TextView.DefaultLineHeight) * (mMainViewModel.LinePointer - 10);
+                mEditor.ScrollToVerticalOffset(vertOffset);
             });
         }
     }
