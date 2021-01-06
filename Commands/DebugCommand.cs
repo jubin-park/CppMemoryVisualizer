@@ -30,15 +30,19 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.SourcePathOrNull != null;
+            return mMainViewModel.SourcePathOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
         }
 
         public void Execute(object parameter)
         {
             Debug.Assert(mMainViewModel.SourcePathOrNull != null);
 
+            mMainViewModel.CurrentInstruction = EDebugInstructionState.DEBUG;
+
             mMainViewModel.ShutdownCdb();
             mMainViewModel.ExecuteCdb();
+
+            mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }
     }
 }

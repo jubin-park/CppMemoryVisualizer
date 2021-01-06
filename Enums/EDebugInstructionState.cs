@@ -8,14 +8,13 @@ namespace CppMemoryVisualizer
 {
     public enum EDebugInstructionState
     {
-        NULL,
+        STANDBY,
+        INIT,
+        DEBUG,
         STEP_IN,
         STEP_OVER,
         GO,
         ADD_BREAK_POINT,
         REMOVE_BREAK_POINT,
-        SIZEOF,
-        DISPLAY_EXPRESSION,
-        DISPLAY_MEMORY,
     }
 }

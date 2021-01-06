@@ -4,6 +4,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.AvalonEdit.Editing;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,7 +36,7 @@ namespace CppMemoryVisualizer.Views
             mEditor = editor;
             mMainViewModel = (MainViewModel)editor.DataContext;
 
-            mMainViewModel.MarginOnOutputDataReceived += new DataReceivedEventHandler(onOutputDataReceived);
+            mMainViewModel.LinePointerChanged += new PropertyChangedEventHandler(onOutputDataReceived);
             MouseLeftButtonDown += onMouseLeftButtonDown;
         }
 
@@ -114,40 +115,15 @@ namespace CppMemoryVisualizer.Views
             if (mMainViewModel.AddOrRemoveBreakPointCommand.CanExecute(line))
             {
                 mMainViewModel.AddOrRemoveBreakPointCommand.Execute(line);
+                InvalidateVisual();
             }
         }
 
-        private void onOutputDataReceived(object sender, DataReceivedEventArgs e)
+        private void onOutputDataReceived(object sender, PropertyChangedEventArgs e)
         {
             Dispatcher.Invoke(() =>
             {
-                switch (mMainViewModel.CurrentInstruction)
-                {
-                    case EDebugInstructionState.STEP_IN:
-                    // intentional fallthrough
-                    case EDebugInstructionState.STEP_OVER:
-                    // intentional fallthrough
-                    case EDebugInstructionState.GO:
-                    // intentional fallthrough
-                    case EDebugInstructionState.ADD_BREAK_POINT:
-                    // intentional fallthrough
-                    case EDebugInstructionState.REMOVE_BREAK_POINT:
-                        InvalidateVisual();
-                        break;
-
-                    case EDebugInstructionState.SIZEOF:
-                    // intentional fallthrough
-                    case EDebugInstructionState.DISPLAY_EXPRESSION:
-                    // intentional fallthrough
-                    case EDebugInstructionState.DISPLAY_MEMORY:
-                    // intentional fallthrough
-                    case EDebugInstructionState.NULL:
-                        return;
-
-                    default:
-                        Debug.Assert(false);
-                        break;
-                }
+                InvalidateVisual();
             });
         }
     }

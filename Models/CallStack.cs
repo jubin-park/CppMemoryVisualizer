@@ -45,5 +45,10 @@ namespace CppMemoryVisualizer.Models
 
             return stackFrame;
         }
+
+        public bool IsEmpty()
+        {
+            return mFunctionAddressList.Count == 0;
+        }
     }
 }

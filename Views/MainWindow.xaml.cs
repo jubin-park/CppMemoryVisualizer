@@ -19,6 +19,7 @@ using System.Windows.Shapes;
 using System.Reflection;
 using Microsoft.Win32;
 using CppMemoryVisualizer.ViewModels;
+using CppMemoryVisualizer.Constants;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Rendering;
 
@@ -49,7 +50,22 @@ namespace CppMemoryVisualizer.Views
         {
             if (e.Key == Key.Return && xTextBoxInput.Text.Length > 0)
             {
-                mMainViewModel.SendInstruction(xTextBoxInput.Text);
+                mMainViewModel.ProcessCdbOrNull.StandardInput.WriteLine(xTextBoxInput.Text);
+                mMainViewModel.ProcessCdbOrNull.StandardInput.WriteLine(string.Format(CdbInstructionSet.ECHO, string.Empty));
+
+                string line;
+                while (true)
+                {
+                    line = mMainViewModel.ProcessCdbOrNull.StandardOutput.ReadLine();
+
+                    mMainViewModel.Log += line + Environment.NewLine;
+
+                    if (CdbInstructionSet.OUTPUT_HEADER == line)
+                    {
+                        break;
+                    }
+                }
+
                 xTextBoxInput.Text = string.Empty;
             }
         }

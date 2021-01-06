@@ -37,10 +37,21 @@ namespace CppMemoryVisualizer.Models
             set { mType = value; }
         }
 
+        private bool mbChanged;
+        public bool IsChanged
+        {
+            get
+            {
+                return mbChanged;
+            }
+        }
+
         public void SetValue(string wordPattern)
         {
+            mbChanged = false;
+
             uint count = 0;
-            for (int i = 9; i < wordPattern.Length; i += 9)
+            for (int i = 9; i < wordPattern.Length && count < mSize; i += 9)
             {
                 for (int j = 0; j < 4; ++j)
                 {
@@ -51,11 +62,13 @@ namespace CppMemoryVisualizer.Models
                     }
                     else if (c >= 'a' && c <= 'f')
                     {
-                        c -= (char)('a' - (char)10);
+                        c -= 'a';
+                        c += (char)10;
                     }
                     else if (c >= 'A' && c <= 'F')
                     {
-                        c -= (char)('A' - (char)10);
+                        c -= 'A';
+                        c += (char)10;
                     }
                     else
                     {
@@ -69,11 +82,13 @@ namespace CppMemoryVisualizer.Models
                     }
                     else if (d >= 'a' && d <= 'f')
                     {
-                        d -= (char)('a' - (char)10);
+                        d -= 'a';
+                        d += (char)10;
                     }
                     else if (d >= 'A' && d <= 'F')
                     {
-                        d -= (char)('A' - (char)10);
+                        d -= 'A';
+                        d += (char)10;
                     }
                     else
                     {
@@ -81,10 +96,13 @@ namespace CppMemoryVisualizer.Models
                     }
 
                     byte val = (byte)((byte)(16 * c) + (byte)d);
+                    if (mByteValues[count] != val)
+                    {
+                        mbChanged = true;
+                    }
                     mByteValues[count++] = val;
                 }
             }
-            Debug.WriteLine("");
         }
     }
 }

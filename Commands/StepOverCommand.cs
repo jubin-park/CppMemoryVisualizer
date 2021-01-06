@@ -1,4 +1,6 @@
-﻿using CppMemoryVisualizer.ViewModels;
+﻿using CppMemoryVisualizer.Constants;
+using CppMemoryVisualizer.Enums;
+using CppMemoryVisualizer.ViewModels;
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -27,17 +29,21 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.ThreadCdbOrNull != null;
+            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
         }
 
         public void Execute(object parameter)
         {
-            mMainViewModel.CallStackOrNull.Clear();
-
             mMainViewModel.CurrentInstruction = EDebugInstructionState.STEP_OVER;
-            mMainViewModel.SendInstruction(CdbInstructionSet.STEP_OVER);
-            mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE);
-            mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE);
+
+            mMainViewModel.RequestInstruction(CdbInstructionSet.STEP_OVER,
+                CdbInstructionSet.REQUEST_START_STEP_OVER_COMMAND, CdbInstructionSet.REQUEST_END_STEP_OVER_COMMAND);
+            mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_STEP_OVER_COMMAND, CdbInstructionSet.REQUEST_END_STEP_OVER_COMMAND,
+                mMainViewModel.ActionLinePointer);
+
+            mMainViewModel.Update();
+
+            mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }
     }
 }

@@ -40,6 +40,8 @@ namespace CppMemoryVisualizer.Models
 
         public BreakPointInfo(uint capacity)
         {
+            Debug.Assert(capacity > 0);
+
             mIndices = new uint[capacity];
             Clear();
         }

@@ -64,6 +64,7 @@
     <Compile Include="Enums\EVariableType.cs" />
     <Compile Include="Models\BreakPointInfo.cs" />
     <Compile Include="Models\CallStack.cs" />
+    <Compile Include="Models\HeapManager.cs" />
     <Compile Include="Models\MemoryInfo.cs" />
     <Compile Include="Models\LocalVariable.cs" />
     <Compile Include="Models\StackFrame.cs" />

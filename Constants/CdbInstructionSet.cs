@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CppMemoryVisualizer
+namespace CppMemoryVisualizer.Constants
 {
     public sealed class CdbInstructionSet
     {
@@ -20,11 +20,11 @@ namespace CppMemoryVisualizer
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/g--go-
         public static readonly string GO = "g";
 
-        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dv--display-local-variables-
-        public static readonly string DISPLAY_LOCAL_VARIABLE = "dv /i /t /a /v";
-
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/k--kb--kc--kd--kp--kp--kv--display-stack-backtrace-
         public static readonly string DISPLAY_STACK_BACKTRACE = "kn";
+
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dv--display-local-variables-
+        public static readonly string DISPLAY_LOCAL_VARIABLE = "dv /i /t /a /v";
 
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/bl--breakpoint-list-
         public static readonly string DISPLAY_BREAK_POINT_LIST = "bl";
@@ -66,9 +66,36 @@ namespace CppMemoryVisualizer
         public static readonly string ECHO = ".echo \"{0}\"";
 
         #region NOTIFYING ECHO
-        public static readonly string REQUEST_SIZEOF = "@SIZEOF";
-        public static readonly string REQUEST_DISPLAY_EXPRESSION = "@DX";
-        public static readonly string REQUEST_DISPLAY_MEMORY = "@DM";
+        public static readonly string OUTPUT_HEADER = "0:000> ";
+        public static readonly string REQUEST_START = "@S=";
+        public static readonly string REQUEST_END = "@E=";
+
+        public static readonly string REQUEST_START_INIT = "@S=INIT";
+        public static readonly string REQUEST_END_INIT = "@E=INIT";
+
+        public static readonly string REQUEST_START_GET_CALL_STACK = "@S=GET_CALL_STACK";
+        public static readonly string REQUEST_END_GET_CALL_STACK = "@E=GET_CALL_STACK";
+
+        public static readonly string REQUEST_START_GET_LOCAL_VARS = "@S=GET_LOCAL_VARS";
+        public static readonly string REQUEST_END_GET_LOCAL_VARS = "@E=GET_LOCAL_VARS";
+
+        public static readonly string REQUEST_START_SIZEOF = "@S=SIZEOF";
+        public static readonly string REQUEST_END_SIZEOF = "@E=SIZEOF";
+
+        public static readonly string REQUEST_START_DISPLAY_MEMORY = "@S=DM";
+        public static readonly string REQUEST_END_DISPLAY_MEMORY = "@E=DM";
+
+        public static readonly string REQUEST_START_GO_COMMAND = "@S=GO";
+        public static readonly string REQUEST_END_GO_COMMAND = "@E=GO";
+
+        public static readonly string REQUEST_START_STEP_OVER_COMMAND = "@S=STEP_OVER";
+        public static readonly string REQUEST_END_STEP_OVER_COMMAND = "@E=STEP_OVER";
+
+        public static readonly string REQUEST_START_STEP_IN_COMMAND = "@S=STEP_IN";
+        public static readonly string REQUEST_END_STEP_IN_COMMAND = "@E=STEP_IN";
+
+        public static readonly string REQUEST_START_DISPLAY_BREAK_POINT_LIST = "@S=DBPL";
+        public static readonly string REQUEST_END_DISPLAY_BREAK_POINT_LIST = "@E=DBPL";
         #endregion
     }
 }

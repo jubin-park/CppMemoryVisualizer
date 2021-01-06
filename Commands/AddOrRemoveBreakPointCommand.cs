@@ -1,11 +1,13 @@
-﻿using CppMemoryVisualizer.ViewModels;
+﻿using CppMemoryVisualizer.Constants;
 using CppMemoryVisualizer.Models;
+using CppMemoryVisualizer.ViewModels;
 using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -28,40 +30,60 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.ThreadCdbOrNull != null;
+            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
         }
 
         public void Execute(object parameter)
         {
             string fileName = Path.GetFileName(mMainViewModel.SourcePathOrNull);
-            uint line = 0;
+            uint SelectedLineNumber = 0;
 
             if (parameter is string)
             {
-                Debug.Assert(uint.TryParse((string)parameter, out line));
+                Debug.Assert(uint.TryParse((string)parameter, out SelectedLineNumber));
             }
             else if (parameter is uint)
             {
-                line = (uint)parameter;
+                SelectedLineNumber = (uint)parameter;
             }
 
-            Debug.Assert(line > 0u);
+            Debug.Assert(SelectedLineNumber > 0u);
 
-            uint breakpointIndex = mMainViewModel.BreakPointInfoOrNull.Indices[line];
+            uint breakpointIndex = mMainViewModel.BreakPointInfoOrNull.Indices[SelectedLineNumber];
             mMainViewModel.BreakPointInfoOrNull.Clear();
 
             if (breakpointIndex == uint.MaxValue)
             {
-                mMainViewModel.CurrentInstruction = EDebugInstructionState.ADD_BREAK_POINT;
-                mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, line));
+                mMainViewModel.RequestInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, SelectedLineNumber),
+                    null, null);
             }
             else
             {
-                mMainViewModel.CurrentInstruction = EDebugInstructionState.REMOVE_BREAK_POINT;
-                mMainViewModel.SendInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT, breakpointIndex));
+                mMainViewModel.RequestInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT, breakpointIndex),
+                    null, null);
             }
 
-            mMainViewModel.SendInstruction(CdbInstructionSet.DISPLAY_BREAK_POINT_LIST);
+            mMainViewModel.RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_BREAK_POINT_LIST, fileName, SelectedLineNumber),
+                CdbInstructionSet.REQUEST_START_DISPLAY_BREAK_POINT_LIST, CdbInstructionSet.REQUEST_END_DISPLAY_BREAK_POINT_LIST);
+            mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_DISPLAY_BREAK_POINT_LIST, CdbInstructionSet.REQUEST_END_DISPLAY_BREAK_POINT_LIST, (string line) =>
+            {
+                Regex rx = new Regex(@"^\s?(\d+)\se\s[0-9a-f]{8}\s\[(.+|:|\\)\s@\s(\d+)\]");
+                Match match = rx.Match(line);
+
+                if (match.Success)
+                {
+                    uint bpIndex = uint.MaxValue;
+                    Debug.Assert(uint.TryParse(match.Groups[1].Value, out bpIndex));
+                    Debug.Assert(bpIndex < uint.MaxValue);
+
+                    uint realLineNumber = 0;
+                    Debug.Assert(uint.TryParse(match.Groups[3].Value, out realLineNumber));
+                    Debug.Assert(realLineNumber > 0);
+
+                    ++mMainViewModel.BreakPointInfoOrNull.Count;
+                    mMainViewModel.BreakPointInfoOrNull.Indices[realLineNumber] = bpIndex;
+                }
+            });
         }
     }
 }

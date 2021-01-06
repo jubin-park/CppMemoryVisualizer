@@ -9,10 +9,28 @@ namespace CppMemoryVisualizer.Models
 {
     class StackFrame
     {
+        public bool IsInitialized = false;
+
         private uint mAddress;
         private string mName;
-        private List<string> mLocalVariableNames = new List<string>();
+
+        private readonly List<string> mLocalVariableNames = new List<string>();
+        public List<string> LocalVariableNames
+        {
+            get
+            {
+                return mLocalVariableNames;
+            }
+        }
+
         private Dictionary<string, LocalVariable> mLocalVariables = new Dictionary<string, LocalVariable>();
+        public Dictionary<string, LocalVariable> LocalVariables
+        {
+            get
+            {
+                return mLocalVariables;
+            }
+        }
 
         public StackFrame(uint address, string name)
         {
