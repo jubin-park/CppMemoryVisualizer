@@ -218,6 +218,7 @@ namespace CppMemoryVisualizer.ViewModels
             #endregion
 
             GoCommand.Execute(null);
+            CurrentInstruction = EDebugInstructionState.INIT;
 
             #region Remove breakpoint
             {
@@ -389,6 +390,7 @@ namespace CppMemoryVisualizer.ViewModels
             }
             #endregion
 
+            /*
             // Check if initialized
             if (!mCallStackOrNull.IsEmpty())
             {
@@ -398,6 +400,7 @@ namespace CppMemoryVisualizer.ViewModels
                     goto UpdateMemory;
                 }
             }
+            */
 
             #region Get Local Variable SizeOf
             {
@@ -434,7 +437,11 @@ namespace CppMemoryVisualizer.ViewModels
                         local.StackMemory.Size = size;
 
                         uint wordSize = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
-                        local.StackMemory.ByteValues = new byte[wordSize * 4];
+
+                        if (local.StackMemory.ByteValues == null)
+                        {
+                            local.StackMemory.ByteValues = new byte[wordSize * 4];
+                        }
                     });
                 }
                 stackFrame.IsInitialized = true;

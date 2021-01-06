@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Input;
 
 namespace CppMemoryVisualizer.Commands
@@ -41,9 +41,14 @@ namespace CppMemoryVisualizer.Commands
             mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_STEP_IN_COMMAND, CdbInstructionSet.REQUEST_END_STEP_IN_COMMAND,
                 mMainViewModel.ActionLinePointer);
 
-            mMainViewModel.Update();
+            var thread = new Thread(() =>
+            {
+                mMainViewModel.Update();
+                mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
+            });
 
-            mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
+            thread.Start();
+            thread.Join(3000);
         }
     }
 }
