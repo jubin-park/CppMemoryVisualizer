@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace CppMemoryVisualizer.Models
 {
-    class BreakPointInfo
+    sealed class BreakPointInfo
     {
         private uint[] mIndices;
         public uint[] Indices

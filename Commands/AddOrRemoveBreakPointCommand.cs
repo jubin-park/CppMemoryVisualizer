@@ -13,7 +13,7 @@ using System.Windows.Input;
 
 namespace CppMemoryVisualizer.Commands
 {
-    class AddOrRemoveBreakPointCommand : ICommand
+    sealed class AddOrRemoveBreakPointCommand : ICommand
     {
         public event EventHandler CanExecuteChanged
         {

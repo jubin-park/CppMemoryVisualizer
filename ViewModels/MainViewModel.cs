@@ -20,14 +20,19 @@ using System.Windows.Threading;
 
 namespace CppMemoryVisualizer.ViewModels
 {
-    class MainViewModel : INotifyPropertyChanged
+    sealed class MainViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public event PropertyChangedEventHandler LinePointerChanged;
 
-        protected void OnPropertyChanged(string propertyName)
+        public void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void OnLinePointerChanged()
+        {
+            LinePointerChanged?.Invoke(this, new PropertyChangedEventArgs("LinePointer"));
         }
 
         public ICommand LoadSourceFileCommand { get; }
@@ -51,9 +56,9 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private EDebugInstructionState mLastInstruction = EDebugInstructionState.STANDBY;
+        private EDebugInstructionState mLastInstruction = EDebugInstructionState.DEAD;
 
-        private EDebugInstructionState mCurrentInstruction = EDebugInstructionState.STANDBY;
+        private EDebugInstructionState mCurrentInstruction = EDebugInstructionState.DEAD;
         public EDebugInstructionState CurrentInstruction
         {
             get
@@ -149,7 +154,7 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 mLinePointer = value;
                 OnPropertyChanged("LinePointer");
-                LinePointerChanged?.Invoke(this, new PropertyChangedEventArgs("LinePointer"));
+                OnLinePointerChanged();
             }
         }
 
@@ -161,6 +166,8 @@ namespace CppMemoryVisualizer.ViewModels
                 return mCallStackOrNull;
             }
         }
+
+        public readonly object LockObject = new object();
 
         public MainViewModel()
         {
@@ -192,11 +199,13 @@ namespace CppMemoryVisualizer.ViewModels
 
             ProcessCdbOrNull = new Process();
             mProcessCdbOrNull.StartInfo = processInfo;
+            Log = string.Empty;
+
             mProcessCdbOrNull.Start();
 
-            mCallStackOrNull = new CallStack();
-
             CurrentInstruction = EDebugInstructionState.INIT;
+            LinePointer = 0;
+            mCallStackOrNull = new CallStack();
 
             #region Initialize options and Set breakpoint in main function
             {
@@ -217,8 +226,14 @@ namespace CppMemoryVisualizer.ViewModels
             }
             #endregion
 
-            GoCommand.Execute(null);
-            CurrentInstruction = EDebugInstructionState.INIT;
+            #region Go
+            {
+                RequestInstruction(CdbInstructionSet.GO,
+                    CdbInstructionSet.REQUEST_START_GO_COMMAND, CdbInstructionSet.REQUEST_END_GO_COMMAND);
+                ReadResultLine(CdbInstructionSet.REQUEST_START_GO_COMMAND, CdbInstructionSet.REQUEST_END_GO_COMMAND,
+                    ActionLinePointer);
+            }
+            #endregion
 
             #region Remove breakpoint
             {
@@ -231,6 +246,8 @@ namespace CppMemoryVisualizer.ViewModels
             }
             #endregion
 
+            Update();
+
             CurrentInstruction = EDebugInstructionState.STANDBY;
         }
 
@@ -238,13 +255,11 @@ namespace CppMemoryVisualizer.ViewModels
         {
             if (mProcessCdbOrNull != null)
             {
-                CurrentInstruction = EDebugInstructionState.STANDBY;
+                CurrentInstruction = EDebugInstructionState.DEAD;
                 RequestInstruction(CdbInstructionSet.QUIT,
                     null, null);
                 ProcessCdbOrNull = null;
             }
-
-            Log = string.Empty;
         }
 
         public void RequestInstruction(string instructionOrNull, string startOrNull, string endOrNull)
@@ -287,8 +302,9 @@ namespace CppMemoryVisualizer.ViewModels
                         continue;
                     }
                 }
-
+#if DEBUG
                 Log += line + Environment.NewLine;
+#endif
 
             } while (!line.StartsWith(start));
 
@@ -306,9 +322,9 @@ namespace CppMemoryVisualizer.ViewModels
                         continue;
                     }
                 }
-
+#if DEBUG
                 Log += line + Environment.NewLine;
-
+#endif
                 if (line.StartsWith(end))
                 {
                     break;
@@ -357,63 +373,135 @@ namespace CppMemoryVisualizer.ViewModels
             }
             #endregion
 
+            if (mCallStackOrNull.IsEmpty())
+            {
+                ShutdownCdb();
+                return;
+            }
+
+            CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
+
             #region Get Local Variable Info
             {
                 RequestInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE,
                     CdbInstructionSet.REQUEST_START_GET_LOCAL_VARS, CdbInstructionSet.REQUEST_END_GET_LOCAL_VARS);
                 ReadResultLine(CdbInstructionSet.REQUEST_START_GET_LOCAL_VARS, CdbInstructionSet.REQUEST_END_GET_LOCAL_VARS, (string line) =>
                 {
-                    Regex rx = new Regex(@"^prv\s(local|param)\s+([0-9a-f]{8})\s+(.*)\s=\s(.*)$");
-                    Match match = rx.Match(line);
-
-                    if (match.Success)
+                    if (!stackFrame.IsInitialized)
                     {
-                        int lastIndex = match.Groups[3].Value.LastIndexOf(' ');
-                        string name = match.Groups[3].Value.Substring(lastIndex + 1);
+                        Regex rx = new Regex(@"^prv\s(local|param)\s+([0-9a-f]{8})\s+(\w+|\w+\s[a-zA-Z0-9_<>,: ]+|<function>)\s(\**)(\(\*+\))*(\[\d+\])*\s*(\w+)\s=\s");
+                        Match match = rx.Match(line);
 
-                        CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
-                        stackFrame.TryAdd(name);
-                        LocalVariable local = stackFrame.GetLocalVariable(name);
+                        if (match.Success)
+                        {
+                            string localOrParam = match.Groups[1].Value;
+                            string stackAddr = match.Groups[2].Value;
+                            string typeName = match.Groups[3].Value;
+                            string pointerChars = match.Groups[4].Value;
+                            string arrayOrFunctionPointerChars = match.Groups[5].Value;
+                            string dimensions = match.Groups[6].Value;
+                            string variableName = match.Groups[7].Value;
 
-                        // type (fix)
-                        local.StackMemory.Type = match.Groups[3].Value.Substring(0, lastIndex);
+                            stackFrame.TryAdd(variableName);
+                            LocalVariable local = stackFrame.GetLocalVariable(variableName);
 
-                        // name (fix)
-                        local.Name = name;
+                            // local or parameter
+                            if (localOrParam == "param")
+                            {
+                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.PARAMETER;
+                            }
 
-                        // address
-                        uint address = 0;
-                        Debug.Assert(uint.TryParse(match.Groups[2].Value, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address));
-                        local.StackMemory.Address = address;
+                            // address
+                            uint address = 0;
+                            Debug.Assert(uint.TryParse(stackAddr, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address));
+                            local.StackMemory.Address = address;
+
+                            // typename (fixed)
+                            if (typeName.StartsWith("struct "))
+                            {
+                                typeName = typeName.Substring(7);
+                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.STRUCT;
+                            }
+                            else if (typeName.StartsWith("class "))
+                            {
+                                typeName = typeName.Substring(6);
+                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.CLASS;
+                            }
+                            else if (typeName.StartsWith("enum "))
+                            {
+                                typeName = typeName.Substring(5);
+                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.ENUM;
+                            }
+                            else if (typeName.StartsWith("union "))
+                            {
+                                typeName = typeName.Substring(6);
+                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.UNION;
+                            }
+                            else if (typeName == "<function>")
+                            {
+                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.FUNCTION;
+                            }
+
+                            // STL
+                            if (typeName.Contains("std::"))
+                            {
+                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.STL;
+                            }
+
+                            // TypeName
+                            local.StackMemory.TypeName = typeName;
+
+                            // Pointer
+                            if (pointerChars.Length > 0 || arrayOrFunctionPointerChars.Length > 0)
+                            {
+                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.POINTER;
+                            }
+
+                            // Array
+                            if (dimensions.Length > 0)
+                            {
+                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.ARRAY;
+                            }
+
+                            // name (fixed)
+                            local.Name = variableName;
+                        }
+                    }
+                    else
+                    {
+                        Regex rx = new Regex(@"\s{2}([0-9a-f]{8}).*\s(\w+)\s=\s");
+                        Match match = rx.Match(line);
+
+                        if (match.Success)
+                        {
+                            string stackAddr = match.Groups[1].Value;
+                            string variableName = match.Groups[2].Value;
+                            LocalVariable local = stackFrame.GetLocalVariable(variableName);
+
+                            uint address = 0;
+                            Debug.Assert(uint.TryParse(stackAddr, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address));
+                            local.StackMemory.Address = address;
+                        }
                     }
                 });
             }
             #endregion
 
-            /*
             // Check if initialized
             if (!mCallStackOrNull.IsEmpty())
             {
-                CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
                 if (stackFrame.IsInitialized)
                 {
                     goto UpdateMemory;
                 }
             }
-            */
 
             #region Get Local Variable SizeOf
             {
-                CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
-
                 foreach (var name in stackFrame.LocalVariableNames)
                 {
                     RequestInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, name),
                         CdbInstructionSet.REQUEST_START_SIZEOF + ' ' + name, CdbInstructionSet.REQUEST_END_SIZEOF);
-                }
-
-                foreach (var name in stackFrame.LocalVariableNames)
-                {
                     ReadResultLine(CdbInstructionSet.REQUEST_START_SIZEOF, CdbInstructionSet.REQUEST_END_SIZEOF, (string line) =>
                     {
                         int lastIndex = line.LastIndexOf(' ');
@@ -438,33 +526,25 @@ namespace CppMemoryVisualizer.ViewModels
 
                         uint wordSize = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
 
-                        if (local.StackMemory.ByteValues == null)
-                        {
-                            local.StackMemory.ByteValues = new byte[wordSize * 4];
-                        }
+                        Debug.Assert(local.StackMemory.ByteValues == null);
+                        local.StackMemory.ByteValues = new byte[wordSize * 4];
                     });
                 }
+
                 stackFrame.IsInitialized = true;
             }
 
             #endregion
 
-            // UpdateMemory:
+UpdateMemory:
 
-            #region Get Memory Word Pattern
+            #region Get Memory Words
             {
-                CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
-
                 foreach (var name in stackFrame.LocalVariableNames)
                 {
                     LocalVariable local = stackFrame.GetLocalVariable(name);
                     RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_MEMORY, local.StackMemory.ByteValues.Length / 4, "0x" + local.StackMemory.Address.ToString("X")),
                         CdbInstructionSet.REQUEST_START_DISPLAY_MEMORY + ' ' + name, CdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
-                }
-
-                foreach (var name in stackFrame.LocalVariableNames)
-                {
-                    LocalVariable local = stackFrame.GetLocalVariable(name);
                     ReadResultLine(CdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, CdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
                     {
                         local.StackMemory.SetValue(line);
@@ -472,6 +552,55 @@ namespace CppMemoryVisualizer.ViewModels
                 }
             }
             #endregion
+
+
+            #region Get Heap Memory
+            {
+                foreach (var name in stackFrame.LocalVariableNames)
+                {
+                    LocalVariable local = stackFrame.GetLocalVariable(name);
+                    if (local.StackMemory.TypeFlags.HasFlag(EMemoryTypeFlags.POINTER) && local.StackMemory.IsChanged)
+                    {
+                        byte[] byteValues = local.StackMemory.ByteValues;
+                        uint wordValue = ((uint)byteValues[0] << 24) | ((uint)byteValues[1] << 16) | ((uint)byteValues[2] << 8) | (uint)byteValues[3];
+
+                        RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_HEAP, wordValue.ToString("X")),
+                            CdbInstructionSet.REQUEST_START_HEAP + ' ' + name, CdbInstructionSet.REQUEST_END_HEAP);
+                        ReadResultLine(CdbInstructionSet.REQUEST_START_HEAP, CdbInstructionSet.REQUEST_END_HEAP, (string line) =>
+                        {
+                            Regex rx = new Regex(@"^([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s+([0-9a-f]+)\s+([0-9a-f]+)\s+([0-9a-f]+)");
+                            Match match = rx.Match(line);
+
+                            //Entry     User      Heap      Segment       Size  PrevSize  Unused    Flags
+                            //-----------------------------------------------------------------------------
+                            //00f3d0f0  00f3d0f8  00f30000  00f30000        18      1f20         c  busy 
+
+                            if (match.Success)
+                            {
+                                //string entryAddr = match.Groups[1].Value;
+                                string userAddr = match.Groups[2].Value;
+                                //string heapAddr = match.Groups[3].Value;
+                                //string segmentAddr = match.Groups[4].Value;
+                                string sizeHex = match.Groups[5].Value;
+                                //string prevSizeStr = match.Groups[6].Value;
+                                string unusedHex = match.Groups[7].Value;
+
+                                uint size = 0;
+                                Debug.Assert(uint.TryParse(sizeHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out size));
+
+                                uint unused = 0;
+                                Debug.Assert(uint.TryParse(sizeHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out unused));
+
+                                uint used = size - unused;
+
+                                // 실제 size 구하고, 길이도 구하기. type별로 어떻게 쪼갤지 고민하기
+                            }
+                        });
+                    }
+                }
+            }
+            #endregion
+
         }
 
         public void ActionLinePointer(string line)
@@ -487,11 +616,6 @@ namespace CppMemoryVisualizer.ViewModels
                 uint.TryParse(match.Groups[1].Value, out lineNumber);
                 Debug.Assert(lineNumber > 0);
                 LinePointer = lineNumber;
-            }
-            else if (line.StartsWith("ntdll!NtTerminateProcess"))
-            {
-                Debug.WriteLine("Program is terminated.");
-                LinePointer = 0;
             }
         }
     }

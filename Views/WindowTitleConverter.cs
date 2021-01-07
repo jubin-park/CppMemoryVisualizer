@@ -4,7 +4,7 @@ using System.Windows.Data;
 
 namespace CppMemoryVisualizer.Views
 {
-    class WindowTitleConverter : IValueConverter
+    sealed class WindowTitleConverter : IValueConverter
     {
         private static string WINDOW_TITLE = "C++ Memory Visualizer";
 

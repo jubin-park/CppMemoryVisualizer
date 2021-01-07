@@ -39,6 +39,8 @@ namespace CppMemoryVisualizer.Constants
 
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-address
         public static readonly string DISPLAY_ADDRESS = "!address {0}";
+
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-heap
         public static readonly string DISPLAY_HEAP = "!heap -x {0}";
 
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dx--display-visualizer-variables-
@@ -65,8 +67,9 @@ namespace CppMemoryVisualizer.Constants
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-echo--echo-comment-
         public static readonly string ECHO = ".echo \"{0}\"";
 
-        #region NOTIFYING ECHO
+        #region REQUESTING ECHO
         public static readonly string OUTPUT_HEADER = "0:000> ";
+
         public static readonly string REQUEST_START = "@S=";
         public static readonly string REQUEST_END = "@E=";
 
@@ -84,6 +87,9 @@ namespace CppMemoryVisualizer.Constants
 
         public static readonly string REQUEST_START_DISPLAY_MEMORY = "@S=DM";
         public static readonly string REQUEST_END_DISPLAY_MEMORY = "@E=DM";
+
+        public static readonly string REQUEST_START_HEAP = "@S=HEAP";
+        public static readonly string REQUEST_END_HEAP = "@E=HEAP";
 
         public static readonly string REQUEST_START_GO_COMMAND = "@S=GO";
         public static readonly string REQUEST_END_GO_COMMAND = "@E=GO";

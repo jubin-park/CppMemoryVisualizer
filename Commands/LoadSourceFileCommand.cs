@@ -13,7 +13,7 @@ using System.Windows;
 
 namespace CppMemoryVisualizer.Commands
 {
-    class LoadSourceFileCommand : ICommand
+    sealed class LoadSourceFileCommand : ICommand
     {
         public event EventHandler CanExecuteChanged
         {

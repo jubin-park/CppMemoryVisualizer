@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
-    class LocalVariable
+    sealed class LocalVariable
     {
         private string mName = string.Empty;
         public string Name

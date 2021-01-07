@@ -13,7 +13,7 @@ using System.Windows;
 
 namespace CppMemoryVisualizer.Commands
 {
-    class DebugCommand : ICommand
+    sealed class DebugCommand : ICommand
     {
         public event EventHandler CanExecuteChanged
         {
@@ -30,7 +30,7 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.SourcePathOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
+            return mMainViewModel.SourcePathOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY || mMainViewModel.CurrentInstruction == EDebugInstructionState.DEAD;
         }
 
         public void Execute(object parameter)

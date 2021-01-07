@@ -12,7 +12,7 @@ using System.Windows.Input;
 
 namespace CppMemoryVisualizer.Commands
 {
-    class StepInCommand : ICommand
+    sealed class StepInCommand : ICommand
     {
         public event EventHandler CanExecuteChanged
         {
@@ -43,8 +43,11 @@ namespace CppMemoryVisualizer.Commands
 
             var thread = new Thread(() =>
             {
-                mMainViewModel.Update();
-                mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
+                lock (mMainViewModel.LockObject)
+                {
+                    mMainViewModel.Update();
+                    mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
+                }
             });
 
             thread.Start();

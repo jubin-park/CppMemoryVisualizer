@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
-    class StackFrame
+    sealed class StackFrame
     {
         public bool IsInitialized = false;
 
@@ -60,7 +60,7 @@ namespace CppMemoryVisualizer.Models
         {
             Debug.Assert(localVariableName != null);
 
-            LocalVariable localVariable;
+            LocalVariable localVariable = null;
             Debug.Assert(mLocalVariables.TryGetValue(localVariableName, out localVariable));
 
             return localVariable;

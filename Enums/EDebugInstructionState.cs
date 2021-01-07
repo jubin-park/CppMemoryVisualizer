@@ -10,6 +10,7 @@ namespace CppMemoryVisualizer
     {
         STANDBY,
         INIT,
+        DEAD,
         DEBUG,
         STEP_IN,
         STEP_OVER,

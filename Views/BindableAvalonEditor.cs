@@ -15,7 +15,7 @@ using System.Windows.Shapes;
 
 namespace CppMemoryVisualizer.Views
 {
-    public class BindableAvalonEditor : ICSharpCode.AvalonEdit.TextEditor, INotifyPropertyChanged
+    public sealed class BindableAvalonEditor : ICSharpCode.AvalonEdit.TextEditor, INotifyPropertyChanged
     {
         public int[] BreakPointIndices
         {

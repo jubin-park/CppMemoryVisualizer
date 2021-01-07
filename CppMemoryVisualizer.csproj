@@ -61,12 +61,15 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Enums\EStandardCppVersion.cs" />
-    <Compile Include="Enums\EVariableType.cs" />
+    <Compile Include="Enums\EMemoryTypeFlags.cs" />
     <Compile Include="Models\BreakPointInfo.cs" />
     <Compile Include="Models\CallStack.cs" />
     <Compile Include="Models\HeapManager.cs" />
+    <Compile Include="Models\HeapMemoryInfo.cs" />
+    <Compile Include="Models\MemberInfo.cs" />
     <Compile Include="Models\MemoryInfo.cs" />
     <Compile Include="Models\LocalVariable.cs" />
+    <Compile Include="Models\SizeManager.cs" />
     <Compile Include="Models\StackFrame.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

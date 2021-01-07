@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
-    class CallStack
+    sealed class CallStack
     {
         private List<uint> mFunctionAddressList = new List<uint>();
         private Dictionary<uint, StackFrame> mStackFrames = new Dictionary<uint, StackFrame>();
@@ -40,7 +40,7 @@ namespace CppMemoryVisualizer.Models
         {
             Debug.Assert(functionAddress > 0);
 
-            StackFrame stackFrame;
+            StackFrame stackFrame = null;
             Debug.Assert(mStackFrames.TryGetValue(functionAddress, out stackFrame));
 
             return stackFrame;

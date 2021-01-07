@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CppMemoryVisualizer.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,11 +31,30 @@ namespace CppMemoryVisualizer.Models
             set { mSize = value; }
         }
 
-        private string mType = string.Empty;
-        public string Type
+        private uint mUnitSize;
+        public uint UnitSize
         {
-            get { return mType; }
-            set { mType = value; }
+            get { return mUnitSize; }
+            set { mUnitSize = value; }
+        }
+
+        public uint Length
+        {
+            get { return mSize / mUnitSize; }
+        }
+
+        private string mTypeName = string.Empty;
+        public string TypeName
+        {
+            get { return mTypeName; }
+            set { mTypeName = value; }
+        }
+
+        private EMemoryTypeFlags mTypeFlags = 0;
+        public EMemoryTypeFlags TypeFlags
+        {
+            get { return mTypeFlags; }
+            set { mTypeFlags = value; }
         }
 
         private bool mbChanged;
@@ -48,7 +68,7 @@ namespace CppMemoryVisualizer.Models
 
         public void SetValue(string wordPattern)
         {
-            mbChanged = false;
+            bool isChanged = false;
 
             uint count = 0;
             for (int i = 9; i < wordPattern.Length && count < mSize; i += 9)
@@ -98,11 +118,13 @@ namespace CppMemoryVisualizer.Models
                     byte val = (byte)((byte)(16 * c) + (byte)d);
                     if (mByteValues[count] != val)
                     {
-                        mbChanged = true;
+                        isChanged = true;
                     }
                     mByteValues[count++] = val;
                 }
             }
+
+            mbChanged = isChanged;
         }
     }
 }

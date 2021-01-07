@@ -15,7 +15,7 @@ using System.Diagnostics;
 
 namespace CppMemoryVisualizer.Views
 {
-    class BreakPointMargin : AbstractMargin
+    sealed class BreakPointMargin : AbstractMargin
     {
         private static int MARGIN_WIDTH = 24;
         private BindableAvalonEditor mEditor;
@@ -36,7 +36,7 @@ namespace CppMemoryVisualizer.Views
             mEditor = editor;
             mMainViewModel = (MainViewModel)editor.DataContext;
 
-            mMainViewModel.LinePointerChanged += new PropertyChangedEventHandler(onOutputDataReceived);
+            mMainViewModel.LinePointerChanged += new PropertyChangedEventHandler(onLinePointerChanged);
             MouseLeftButtonDown += onMouseLeftButtonDown;
         }
 
@@ -119,7 +119,7 @@ namespace CppMemoryVisualizer.Views
             }
         }
 
-        private void onOutputDataReceived(object sender, PropertyChangedEventArgs e)
+        private void onLinePointerChanged(object sender, PropertyChangedEventArgs e)
         {
             Dispatcher.Invoke(() =>
             {
