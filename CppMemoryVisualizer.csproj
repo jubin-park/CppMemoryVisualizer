@@ -69,7 +69,7 @@
     <Compile Include="Models\MemberInfo.cs" />
     <Compile Include="Models\MemoryInfo.cs" />
     <Compile Include="Models\LocalVariable.cs" />
-    <Compile Include="Models\SizeManager.cs" />
+    <Compile Include="Models\TypeSizeManager.cs" />
     <Compile Include="Models\StackFrame.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

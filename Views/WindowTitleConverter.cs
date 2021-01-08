@@ -12,7 +12,7 @@ namespace CppMemoryVisualizer.Views
         public object Convert(object[] value, Type targetType, object parameter, CultureInfo culture)
         {
             string srcPathOrNull = value[0] as string;
-            if (srcPathOrNull == null || srcPathOrNull.Trim() == string.Empty)
+            if (srcPathOrNull == null || srcPathOrNull == string.Empty)
             {
                 return WINDOW_TITLE;
             }
@@ -20,12 +20,12 @@ namespace CppMemoryVisualizer.Views
             Process processOrNull = value[1] as Process;
             if (processOrNull == null)
             {
-                return string.Format("{0} (No Debugger) - @[{1}]", WINDOW_TITLE, srcPathOrNull);
+                return string.Format("{0} ( No Debugger ) - @[{1}]", WINDOW_TITLE, srcPathOrNull);
             }
 
             EDebugInstructionState state = (EDebugInstructionState)value[2];
 
-            return string.Format("{0} ({1}) - @[{2}]", WINDOW_TITLE, state.ToString(), srcPathOrNull);
+            return string.Format("{0} ( {1} ) - @[{2}]", WINDOW_TITLE, state.ToString(), srcPathOrNull);
         }
 
         public object[] ConvertBack(object value, Type[] targetType, object parameter, CultureInfo culture)

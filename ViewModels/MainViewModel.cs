@@ -167,6 +167,8 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
+        private TypeSizeManager mTypeSizeManagerOrNull;
+
         public readonly object LockObject = new object();
 
         public MainViewModel()
@@ -206,6 +208,7 @@ namespace CppMemoryVisualizer.ViewModels
             CurrentInstruction = EDebugInstructionState.INITIALIZING;
             LinePointer = 0;
             mCallStackOrNull = new CallStack();
+            mTypeSizeManagerOrNull = new TypeSizeManager();
 
             #region Initialize options
             {
@@ -501,6 +504,8 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 foreach (var name in stackFrame.LocalVariableNames)
                 {
+                    LocalVariable local = stackFrame.GetLocalVariable(name);
+
                     RequestInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, name),
                         CdbInstructionSet.REQUEST_START_SIZEOF + ' ' + name, CdbInstructionSet.REQUEST_END_SIZEOF);
                     ReadResultLine(CdbInstructionSet.REQUEST_START_SIZEOF, CdbInstructionSet.REQUEST_END_SIZEOF, (string line) =>
@@ -521,8 +526,6 @@ namespace CppMemoryVisualizer.ViewModels
                         }
                         Debug.Assert(size < uint.MaxValue);
 
-                        LocalVariable local = stackFrame.GetLocalVariable(name);
-
                         local.StackMemory.Size = size;
 
                         uint wordSize = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
@@ -530,6 +533,34 @@ namespace CppMemoryVisualizer.ViewModels
                         Debug.Assert(local.StackMemory.ByteValues == null);
                         local.StackMemory.ByteValues = new byte[wordSize * 4];
                     });
+
+                    string typeName = local.StackMemory.TypeName;
+                    if (!mTypeSizeManagerOrNull.HasSize(typeName))
+                    {
+                        // Get Plain-Type Size
+                        RequestInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, typeName),
+                            CdbInstructionSet.REQUEST_START_SIZEOF + ' ' + typeName, CdbInstructionSet.REQUEST_END_SIZEOF);
+                        ReadResultLine(CdbInstructionSet.REQUEST_START_SIZEOF, CdbInstructionSet.REQUEST_END_SIZEOF, (string innerLine) =>
+                        {
+                            int lastIndex = innerLine.LastIndexOf(' ');
+                            Debug.Assert(lastIndex >= 0);
+
+                            string value = innerLine.Substring(lastIndex + 1);
+                            uint size = uint.MaxValue;
+
+                            if (value.StartsWith("0x")) // hexadecimal
+                            {
+                                Debug.Assert(uint.TryParse(value.Substring(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out size));
+                            }
+                            else // decimal
+                            {
+                                Debug.Assert(uint.TryParse(value, out size));
+                            }
+                            Debug.Assert(size < uint.MaxValue);
+
+                            mTypeSizeManagerOrNull.Add(typeName, size);
+                        });
+                    }
                 }
 
                 stackFrame.IsInitialized = true;
@@ -568,7 +599,7 @@ UpdateMemory:
                             CdbInstructionSet.REQUEST_START_HEAP + ' ' + name, CdbInstructionSet.REQUEST_END_HEAP);
                         ReadResultLine(CdbInstructionSet.REQUEST_START_HEAP, CdbInstructionSet.REQUEST_END_HEAP, (string line) =>
                         {
-                            Regex rx = new Regex(@"^([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s+([0-9a-f]+)\s+([0-9a-f]+)\s+([0-9a-f]+)");
+                            Regex rx = new Regex(@"^([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s+([0-9a-f]+)\s+([0-9a-f]+)\s+([0-9a-f]+)\s+(busy)\s$");
                             Match match = rx.Match(line);
 
                             //Entry     User      Heap      Segment       Size  PrevSize  Unused    Flags
@@ -591,6 +622,7 @@ UpdateMemory:
                                 uint unused = 0;
                                 Debug.Assert(uint.TryParse(sizeHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out unused));
 
+                                Debug.Assert(size >= unused);
                                 uint used = size - unused;
 
                                 // 실제 size 구하고, 길이도 구하기. type별로 어떻게 쪼갤지 고민하기

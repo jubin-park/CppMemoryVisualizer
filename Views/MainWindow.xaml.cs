@@ -57,13 +57,18 @@ namespace CppMemoryVisualizer.Views
                 while (true)
                 {
                     line = mMainViewModel.ProcessCdbOrNull.StandardOutput.ReadLine();
-
-                    mMainViewModel.Log += line + Environment.NewLine;
-
-                    if (CdbInstructionSet.OUTPUT_HEADER == line)
                     {
-                        break;
+                        int lastIndex = line.LastIndexOf(CdbInstructionSet.OUTPUT_HEADER);
+                        if (lastIndex != -1)
+                        {
+                            line = line.Substring(lastIndex + CdbInstructionSet.OUTPUT_HEADER.Length);
+                        }
+                        if (line.Length == 0)
+                        {
+                            break;
+                        }
                     }
+                    mMainViewModel.Log += line + Environment.NewLine;
                 }
 
                 xTextBoxInput.Text = string.Empty;
