@@ -35,7 +35,11 @@
     </Window.Resources>
 
     <Window.Title>
-        <Binding Path="SourcePathOrNull" Converter="{StaticResource WindowTitleConverter}" Mode="OneWay"/>
+        <MultiBinding Converter="{StaticResource WindowTitleConverter}">
+            <Binding Path="SourcePathOrNull" Mode="OneWay"/>
+            <Binding Path="ProcessCdbOrNull" Mode="OneWay"/>
+            <Binding Path="CurrentInstruction" Mode="OneWay"/>
+        </MultiBinding>
     </Window.Title>
 
     <DockPanel>

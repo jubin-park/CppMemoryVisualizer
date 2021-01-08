@@ -54,11 +54,13 @@ namespace CppMemoryVisualizer.Commands
 
             if (breakpointIndex == uint.MaxValue)
             {
+                mMainViewModel.CurrentInstruction = EDebugInstructionState.ADD_BREAK_POINT;
                 mMainViewModel.RequestInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, SelectedLineNumber),
                     null, null);
             }
             else
             {
+                mMainViewModel.CurrentInstruction = EDebugInstructionState.REMOVE_BREAK_POINT;
                 mMainViewModel.RequestInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT, breakpointIndex),
                     null, null);
             }
@@ -84,6 +86,8 @@ namespace CppMemoryVisualizer.Commands
                     mMainViewModel.BreakPointInfoOrNull.Indices[realLineNumber] = bpIndex;
                 }
             });
+
+            mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }
     }
 }

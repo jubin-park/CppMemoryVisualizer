@@ -9,9 +9,9 @@ namespace CppMemoryVisualizer
     public enum EDebugInstructionState
     {
         STANDBY,
-        INIT,
+        INITIALIZING,
         DEAD,
-        DEBUG,
+        START_DEBUGGING,
         STEP_IN,
         STEP_OVER,
         GO,

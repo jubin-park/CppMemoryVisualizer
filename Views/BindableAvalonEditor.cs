@@ -117,7 +117,7 @@ namespace CppMemoryVisualizer.Views
                 }
             );
 
-        protected static void OnDependencyPropertyChanged(DependencyObject obj, DependencyPropertyChangedEventArgs args)
+        public static void OnDependencyPropertyChanged(DependencyObject obj, DependencyPropertyChangedEventArgs args)
         {
             var target = (BindableAvalonEditor)obj;
 

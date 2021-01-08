@@ -203,11 +203,11 @@ namespace CppMemoryVisualizer.ViewModels
 
             mProcessCdbOrNull.Start();
 
-            CurrentInstruction = EDebugInstructionState.INIT;
+            CurrentInstruction = EDebugInstructionState.INITIALIZING;
             LinePointer = 0;
             mCallStackOrNull = new CallStack();
 
-            #region Initialize options and Set breakpoint in main function
+            #region Initialize options
             {
                 RequestInstruction(CdbInstructionSet.CPP_EXPRESSION_EVALUATOR,
                     CdbInstructionSet.REQUEST_START_INIT, null);
@@ -217,26 +217,26 @@ namespace CppMemoryVisualizer.ViewModels
                     null, null);
                 RequestInstruction(CdbInstructionSet.SET_DEBUG_SETTINGS_SKIP_CRT_CODE,
                     null, null);
+            }
+            #endregion
+
+            #region
+            {
+                // Set breakpoint in main
                 RequestInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_MAIN, fileNameOnly),
                     null, CdbInstructionSet.REQUEST_END_INIT);
                 ReadResultLine(CdbInstructionSet.REQUEST_START_INIT, CdbInstructionSet.REQUEST_END_INIT, (string line) =>
                 {
                     Debug.WriteLine(line);
                 });
-            }
-            #endregion
 
-            #region Go
-            {
+                // Go
                 RequestInstruction(CdbInstructionSet.GO,
                     CdbInstructionSet.REQUEST_START_GO_COMMAND, CdbInstructionSet.REQUEST_END_GO_COMMAND);
                 ReadResultLine(CdbInstructionSet.REQUEST_START_GO_COMMAND, CdbInstructionSet.REQUEST_END_GO_COMMAND,
                     ActionLinePointer);
-            }
-            #endregion
 
-            #region Remove breakpoint
-            {
+                // Remove breakpoint
                 RequestInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT_MAIN, fileNameOnly),
                     CdbInstructionSet.REQUEST_START_INIT, CdbInstructionSet.REQUEST_END_INIT);
                 ReadResultLine(CdbInstructionSet.REQUEST_START_INIT, CdbInstructionSet.REQUEST_END_INIT, (string line) =>
@@ -375,6 +375,7 @@ namespace CppMemoryVisualizer.ViewModels
 
             if (mCallStackOrNull.IsEmpty())
             {
+                LinePointer = 0;
                 ShutdownCdb();
                 return;
             }
@@ -553,7 +554,6 @@ UpdateMemory:
             }
             #endregion
 
-
             #region Get Heap Memory
             {
                 foreach (var name in stackFrame.LocalVariableNames)
@@ -600,7 +600,6 @@ UpdateMemory:
                 }
             }
             #endregion
-
         }
 
         public void ActionLinePointer(string line)

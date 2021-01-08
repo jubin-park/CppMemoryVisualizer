@@ -52,7 +52,7 @@ namespace CppMemoryVisualizer.Commands
             });
 
             thread.Start();
-            thread.Join(3000);
+            thread.Join();
         }
     }
 }
