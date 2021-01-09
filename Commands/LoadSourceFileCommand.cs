@@ -101,7 +101,7 @@ namespace CppMemoryVisualizer.Commands
                 process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "ilk"));
                 process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "obj"));
                 process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "pdb"));
-                process.StandardInput.WriteLine(string.Format("cl{0} /EHsc /Zi \"{1}\"", STANDARD_CPP_OPTIONS[(uint)mMainViewModel.StandardCppVersion], fileName));
+                process.StandardInput.WriteLine(string.Format("cl{0} /EHsc /Zi /DEBUG \"{1}\"", STANDARD_CPP_OPTIONS[(uint)mMainViewModel.StandardCppVersion], fileName));
                 process.StandardInput.WriteLine(string.Format("dir \"{0}.*\"", fileNameOnly));
                 process.StandardInput.Close();
 
