@@ -13,6 +13,8 @@ namespace CppMemoryVisualizer
     /// </summary>
     public partial class App : Application
     {
+        public static string WINDOW_TITLE = "C++ Memory Visualizer";
+
         private string mVsPathOrNull;
         public string VsPath
         {
