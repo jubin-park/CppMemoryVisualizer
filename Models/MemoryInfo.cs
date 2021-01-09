@@ -57,6 +57,37 @@ namespace CppMemoryVisualizer.Models
             set { mTypeFlags = value; }
         }
 
+        private uint mPointerLevel;
+        public uint PointerLevel
+        {
+            get
+            {
+                return mPointerLevel;
+            }
+            set
+            {
+                mPointerLevel = value;
+            }
+        }
+
+        private readonly List<uint> mArrayOrFunctionPointerLevels = new List<uint>();
+        public List<uint> ArrayOrFunctionPointerLevels
+        {
+            get
+            {
+                return mArrayOrFunctionPointerLevels;
+            }
+        }
+
+        private readonly List<uint> mArrayLengths = new List<uint>();
+        public List<uint> ArrayLengths
+        {
+            get
+            {
+                return mArrayLengths;
+            }
+        }
+
         private bool mbChanged;
         public bool IsChanged
         {
@@ -64,6 +95,34 @@ namespace CppMemoryVisualizer.Models
             {
                 return mbChanged;
             }
+        }
+
+        public static string GetFullTypeName(string typeName, uint pointerLevel, List<uint> arrayOrFunctionPointerLevels, List<uint> arrayLengths)
+        {
+            StringBuilder sb = new StringBuilder(typeName, 128);
+            sb.Append(' ');
+
+            if (pointerLevel > 0)
+            {
+                sb.Append('*', (int)pointerLevel);
+            }
+            foreach (uint len in arrayOrFunctionPointerLevels)
+            {
+                sb.Append('(');
+                sb.Append(new string('*', (int)len));
+                sb.Append(')');
+            }
+            foreach (uint len in arrayLengths)
+            {
+                sb.AppendFormat("[{0}]", len);
+            }
+
+            if (sb[sb.Length - 1] == ' ')
+            {
+                --sb.Length;
+            }
+
+            return sb.ToString();
         }
 
         public void SetValue(string wordPattern)

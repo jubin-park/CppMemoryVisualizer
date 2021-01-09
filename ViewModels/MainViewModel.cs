@@ -393,7 +393,7 @@ namespace CppMemoryVisualizer.ViewModels
                 {
                     if (!stackFrame.IsInitialized)
                     {
-                        Regex rx = new Regex(@"^prv\s(local|param)\s+([0-9a-f]{8})\s+(\w+|\w+\s[a-zA-Z0-9_<>,: ]+|<function>)\s(\**)(\(\*+\))*(\[\d+\])*\s*(\w+)\s=\s");
+                        Regex rx = new Regex(@"^prv\s(local|param)\s+([0-9a-f]{8})\s+(\w+|\w+\s[a-zA-Z0-9_<>,: ]+|<function>)\s(\**)([\(\*+\)]*)([\[\d+\]]*)\s*(\w+)\s=\s");
                         Match match = rx.Match(line);
 
                         if (match.Success)
@@ -465,6 +465,36 @@ namespace CppMemoryVisualizer.ViewModels
                             if (dimensions.Length > 0)
                             {
                                 local.StackMemory.TypeFlags |= EMemoryTypeFlags.ARRAY;
+                            }
+
+                            local.StackMemory.PointerLevel = (uint)pointerChars.Length;
+
+                            {
+                                Regex regex = new Regex(@"\((\*+)\)");
+                                Match matchPointer = regex.Match(arrayOrFunctionPointerChars);
+
+                                while (matchPointer.Success)
+                                {
+                                    uint size = (uint)matchPointer.Groups[1].Length;
+                                    local.StackMemory.ArrayOrFunctionPointerLevels.Add(size);
+
+                                    matchPointer = matchPointer.NextMatch();
+                                }
+                            }
+
+                            {
+                                Regex regex = new Regex(@"\[(\d+)\]");
+                                Match matchDimeson = regex.Match(dimensions);
+
+                                while (matchDimeson.Success)
+                                {
+                                    uint size = 0;
+                                    Debug.Assert(uint.TryParse(matchDimeson.Groups[1].Value, out size));
+
+                                    local.StackMemory.ArrayLengths.Add(size);
+
+                                    matchDimeson = matchDimeson.NextMatch();
+                                }
                             }
 
                             // name (fixed)
@@ -620,12 +650,22 @@ UpdateMemory:
                                 Debug.Assert(uint.TryParse(sizeHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out size));
 
                                 uint unused = 0;
-                                Debug.Assert(uint.TryParse(sizeHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out unused));
+                                Debug.Assert(uint.TryParse(unusedHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out unused));
 
                                 Debug.Assert(size >= unused);
                                 uint used = size - unused;
 
-                                // 실제 size 구하고, 길이도 구하기. type별로 어떻게 쪼갤지 고민하기
+                                // 포인터만이 heap을 가리킬 수 있다.
+                                if (local.StackMemory.PointerLevel > 0)
+                                {
+                                    Debug.Assert(mTypeSizeManagerOrNull.HasSize(local.StackMemory.TypeName));
+
+                                    uint unitSize = local.StackMemory.PointerLevel == 1 ? mTypeSizeManagerOrNull.GetSize(local.StackMemory.TypeName) : 4;
+                                    Debug.Assert(used % unitSize == 0);
+                                    uint length = used / unitSize;
+
+                                    Debug.WriteLine("used memory: {0}, Length : {1}", used, length);
+                                }
                             }
                         });
                     }

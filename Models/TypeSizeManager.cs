@@ -21,6 +21,7 @@ namespace CppMemoryVisualizer.Models
             { "unsigned short", 2 },
             { "unsigned int", 4 },
             { "unsigned long", 4 },
+            { "<function>", 4 },
         };
 
         public void Add(string typeName, uint size)
