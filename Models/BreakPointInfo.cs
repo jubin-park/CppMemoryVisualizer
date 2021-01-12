@@ -12,12 +12,18 @@ namespace CppMemoryVisualizer.Models
         private uint[] mIndices;
         public uint[] Indices
         {
-            get => mIndices;
+            get
+            {
+                return mIndices;
+            }
         }
 
         public uint Count
         {
-            get => mIndices[0];
+            get
+            {
+                return mIndices[0];
+            }
             set
             {
                 Debug.Assert(mIndices != null);
@@ -29,13 +35,19 @@ namespace CppMemoryVisualizer.Models
         private uint mOldCount;
         public uint OldCount
         {
-            get => mOldCount;
+            get
+            {
+                return mOldCount;
+            }
         }
 
         private uint mLinePointer = 0;
         public uint LinePointer
         {
-            get => mLinePointer;
+            get
+            {
+                return mLinePointer;
+            }
         }
 
         public BreakPointInfo(uint capacity)
@@ -50,6 +62,7 @@ namespace CppMemoryVisualizer.Models
         {
             mOldCount = Count;
             Count = 0;
+
             for (int i = 1; i < mIndices.Length; ++i)
             {
                 mIndices[i] = uint.MaxValue;

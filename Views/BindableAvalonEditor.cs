@@ -19,8 +19,14 @@ namespace CppMemoryVisualizer.Views
     {
         public int[] BreakPointIndices
         {
-            get { return (int[])GetValue(BreakPointIndicesProperty); }
-            set { SetValue(BreakPointIndicesProperty, value); }
+            get
+            {
+                return (int[])GetValue(BreakPointIndicesProperty);
+            }
+            set
+            {
+                SetValue(BreakPointIndicesProperty, value);
+            }
         }
 
         public static readonly DependencyProperty BreakPointIndicesProperty =
@@ -28,8 +34,14 @@ namespace CppMemoryVisualizer.Views
 
         public uint LinePointer
         {
-            get { return (uint)GetValue(LinePointerProperty); }
-            set { SetValue(LinePointerProperty, value); RaisePropertyChanged("LinePointer"); }
+            get
+            {
+                return (uint)GetValue(LinePointerProperty);
+            }
+            set
+            {
+                SetValue(LinePointerProperty, value); RaisePropertyChanged("LinePointer");
+            }
         }
 
         public static readonly DependencyProperty LinePointerProperty =
@@ -48,14 +60,21 @@ namespace CppMemoryVisualizer.Views
         /// </summary>
         public bool ShowLineNumbersCustom
         {
-            get { return (bool)GetValue(ShowLineNumbersCustomProperty); }
-            set { SetValue(ShowLineNumbersCustomProperty, value); }
+            get
+            {
+                return (bool)GetValue(ShowLineNumbersCustomProperty);
+            }
+            set
+            {
+                SetValue(ShowLineNumbersCustomProperty, value);
+            }
         }
 
         static void OnShowLineNumbersCustomChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             BindableAvalonEditor editor = (BindableAvalonEditor)d;
             var leftMargins = editor.TextArea.LeftMargins;
+
             if ((bool)e.NewValue)
             {
                 LineNumberMargin lineNumbers = new LineNumberMargin();

@@ -17,11 +17,18 @@ namespace CppMemoryVisualizer.Commands
     {
         public event EventHandler CanExecuteChanged
         {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
+            add
+            {
+                CommandManager.RequerySuggested += value;
+            }
+            remove
+            {
+                CommandManager.RequerySuggested -= value;
+            }
         }
 
         private static readonly string[] STANDARD_CPP_OPTIONS = { string.Empty, " /std:c++14", " /std:c++17" };
+
         private readonly MainViewModel mMainViewModel;
 
         public LoadSourceFileCommand(MainViewModel mainViewModel)
@@ -87,7 +94,7 @@ namespace CppMemoryVisualizer.Commands
 
                     if (!File.Exists(compilerPath))
                     {
-                        MessageBox.Show("vcvar32.bat 파일을 찾을 수 없습니다.", "caption", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show($"{compilerPath} 파일을 찾을 수 없습니다. Visual Studio Installer 에서 'C++를 사용한 데스크톱 개발' 패키지를 설치하십시오.", "caption", MessageBoxButton.OK, MessageBoxImage.Error);
                         Debug.WriteLine("FAILED");
                     }
                     else

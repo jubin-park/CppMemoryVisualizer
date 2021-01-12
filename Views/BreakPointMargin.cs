@@ -18,6 +18,7 @@ namespace CppMemoryVisualizer.Views
     sealed class BreakPointMargin : AbstractMargin
     {
         private static int MARGIN_WIDTH = 24;
+
         private BindableAvalonEditor mEditor;
         private MainViewModel mMainViewModel;
 
@@ -94,6 +95,7 @@ namespace CppMemoryVisualizer.Views
             {
                 newTextView.VisualLinesChanged += TextViewVisualLinesChanged;
             }
+
             InvalidateVisual();
         }
 

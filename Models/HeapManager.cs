@@ -8,7 +8,7 @@ namespace CppMemoryVisualizer.Models
 {
     public sealed class HeapManager
     {
-        private Dictionary<uint, HeapMemoryInfo> mHeapMemories = new Dictionary<uint, HeapMemoryInfo>();
+        private Dictionary<uint, MemoryOwnerInfo> mHeaps = new Dictionary<uint, MemoryOwnerInfo>();
 
         public void AddHeap()
         {

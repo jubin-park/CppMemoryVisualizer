@@ -11,9 +11,6 @@ namespace CppMemoryVisualizer.Models
     {
         public bool IsInitialized = false;
 
-        private uint mAddress;
-        private string mName;
-
         private readonly List<string> mLocalVariableNames = new List<string>();
         public List<string> LocalVariableNames
         {
@@ -31,6 +28,17 @@ namespace CppMemoryVisualizer.Models
                 return mLocalVariables;
             }
         }
+
+        private string mName;
+        public string Name
+        {
+            get
+            {
+                return mName;
+            }
+        }
+
+        private uint mAddress;
 
         public StackFrame(uint address, string name)
         {

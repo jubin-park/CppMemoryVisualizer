@@ -8,17 +8,28 @@ namespace CppMemoryVisualizer.Models
 {
     sealed class LocalVariable
     {
-        private string mName = string.Empty;
+        public bool IsParameter;
+
+        private string mName;
         public string Name
         {
-            get { return mName; }
-            set { mName = value; }
+            get
+            {
+                return mName;
+            }
+            set
+            {
+                mName = value;
+            }
         }
 
-        private MemoryInfo mStackMemory = new MemoryInfo();
-        public MemoryInfo StackMemory
+        private readonly MemoryOwnerInfo mStackMemory = new MemoryOwnerInfo();
+        public MemoryOwnerInfo StackMemory
         {
-            get { return mStackMemory; }
+            get
+            {
+                return mStackMemory;
+            }
         }
     }
 }

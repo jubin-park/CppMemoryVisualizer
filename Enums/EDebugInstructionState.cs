@@ -11,10 +11,12 @@ namespace CppMemoryVisualizer
         STANDBY,
         INITIALIZING,
         DEAD,
+
         START_DEBUGGING,
-        STEP_IN,
-        STEP_OVER,
+
         GO,
+        STEP_OVER,
+        STEP_IN,
         ADD_BREAK_POINT,
         REMOVE_BREAK_POINT,
     }

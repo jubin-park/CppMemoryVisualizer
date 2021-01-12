@@ -26,6 +26,9 @@ namespace CppMemoryVisualizer.Constants
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dv--display-local-variables-
         public static readonly string DISPLAY_LOCAL_VARIABLE = "dv /i /t /a /v";
 
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dt--display-type-
+        public static readonly string DISPLAY_TYPE = "dt -i {0}";
+
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/bl--breakpoint-list-
         public static readonly string DISPLAY_BREAK_POINT_LIST = "bl";
 
@@ -67,7 +70,7 @@ namespace CppMemoryVisualizer.Constants
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-echo--echo-comment-
         public static readonly string ECHO = ".echo \"{0}\"";
 
-        #region REQUESTING ECHO
+        #region Request by Echo
         public static readonly string OUTPUT_HEADER = "0:000> ";
 
         public static readonly string REQUEST_START = "@S=";
@@ -87,6 +90,9 @@ namespace CppMemoryVisualizer.Constants
 
         public static readonly string REQUEST_START_DISPLAY_MEMORY = "@S=DM";
         public static readonly string REQUEST_END_DISPLAY_MEMORY = "@E=DM";
+
+        public static readonly string REQUEST_START_DISPLAY_TYPE = "@S=DT";
+        public static readonly string REQUEST_END_DISPLAY_TYPE = "@E=DT";
 
         public static readonly string REQUEST_START_HEAP = "@S=HEAP";
         public static readonly string REQUEST_END_HEAP = "@E=HEAP";

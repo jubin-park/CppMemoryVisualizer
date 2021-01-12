@@ -167,7 +167,7 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private TypeSizeManager mTypeSizeManagerOrNull;
+        private PureTypeManager mPureTypeManagerOrNull;
 
         public readonly object LockObject = new object();
 
@@ -208,7 +208,7 @@ namespace CppMemoryVisualizer.ViewModels
             CurrentInstruction = EDebugInstructionState.INITIALIZING;
             LinePointer = 0;
             mCallStackOrNull = new CallStack();
-            mTypeSizeManagerOrNull = new TypeSizeManager();
+            mPureTypeManagerOrNull = new PureTypeManager();
 
             #region Initialize options
             {
@@ -223,7 +223,7 @@ namespace CppMemoryVisualizer.ViewModels
             }
             #endregion
 
-            #region
+            #region set main breakpoint
             {
                 // Set breakpoint in main
                 RequestInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_MAIN, fileNameOnly),
@@ -400,75 +400,77 @@ namespace CppMemoryVisualizer.ViewModels
                         {
                             string localOrParam = match.Groups[1].Value;
                             string stackAddr = match.Groups[2].Value;
-                            string typeName = match.Groups[3].Value;
+                            string pureTypeName = match.Groups[3].Value;
                             string pointerChars = match.Groups[4].Value;
                             string arrayOrFunctionPointerChars = match.Groups[5].Value;
                             string dimensions = match.Groups[6].Value;
                             string variableName = match.Groups[7].Value;
-
+                            
                             stackFrame.TryAdd(variableName);
                             LocalVariable local = stackFrame.GetLocalVariable(variableName);
 
-                            // local or parameter
-                            if (localOrParam == "param")
-                            {
-                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.PARAMETER;
-                            }
+                            // local or parameter (fixed)
+                            local.IsParameter = (localOrParam == "param");
 
-                            // address
+                            // name (fixed)
+                            local.Name = variableName;
+
+                            // address in stack
                             uint address = 0;
                             Debug.Assert(uint.TryParse(stackAddr, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address));
                             local.StackMemory.Address = address;
 
-                            // typename (fixed)
-                            if (typeName.StartsWith("struct "))
+                            // type (fixed)
+                            TypeInfo newType = new TypeInfo();
+
+                            // typename
+                            if (pureTypeName.StartsWith("struct "))
                             {
-                                typeName = typeName.Substring(7);
-                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.STRUCT;
+                                pureTypeName = pureTypeName.Substring(7);
+                                newType.Flags |= EMemoryTypeFlags.STRUCT;
                             }
-                            else if (typeName.StartsWith("class "))
+                            else if (pureTypeName.StartsWith("class "))
                             {
-                                typeName = typeName.Substring(6);
-                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.CLASS;
+                                pureTypeName = pureTypeName.Substring(6);
+                                newType.Flags |= EMemoryTypeFlags.CLASS;
                             }
-                            else if (typeName.StartsWith("enum "))
+                            else if (pureTypeName.StartsWith("enum "))
                             {
-                                typeName = typeName.Substring(5);
-                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.ENUM;
+                                pureTypeName = pureTypeName.Substring(5);
+                                newType.Flags |= EMemoryTypeFlags.ENUM;
                             }
-                            else if (typeName.StartsWith("union "))
+                            else if (pureTypeName.StartsWith("union "))
                             {
-                                typeName = typeName.Substring(6);
-                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.UNION;
+                                pureTypeName = pureTypeName.Substring(6);
+                                newType.Flags |= EMemoryTypeFlags.UNION;
                             }
-                            else if (typeName == "<function>")
+                            else if (pureTypeName == "<function>")
                             {
-                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.FUNCTION;
+                                newType.Flags |= EMemoryTypeFlags.FUNCTION;
                             }
 
                             // STL
-                            if (typeName.Contains("std::"))
+                            if (pureTypeName.Contains("std::"))
                             {
-                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.STL;
+                                newType.Flags |= EMemoryTypeFlags.STL;
                             }
 
-                            // TypeName
-                            local.StackMemory.TypeName = typeName;
+                            newType.PureName = pureTypeName;
 
                             // Pointer
                             if (pointerChars.Length > 0 || arrayOrFunctionPointerChars.Length > 0)
                             {
-                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.POINTER;
+                                newType.Flags |= EMemoryTypeFlags.POINTER;
                             }
 
                             // Array
                             if (dimensions.Length > 0)
                             {
-                                local.StackMemory.TypeFlags |= EMemoryTypeFlags.ARRAY;
+                                newType.Flags |= EMemoryTypeFlags.ARRAY;
                             }
+                            newType.PointerLevel = (uint)pointerChars.Length;
 
-                            local.StackMemory.PointerLevel = (uint)pointerChars.Length;
-
+                            // ArrayOrFunctionPointer
                             {
                                 Regex regex = new Regex(@"\((\*+)\)");
                                 Match matchPointer = regex.Match(arrayOrFunctionPointerChars);
@@ -476,31 +478,33 @@ namespace CppMemoryVisualizer.ViewModels
                                 while (matchPointer.Success)
                                 {
                                     uint size = (uint)matchPointer.Groups[1].Length;
-                                    local.StackMemory.ArrayOrFunctionPointerLevels.Add(size);
+                                    newType.ArrayOrFunctionPointerLevels.Add(size);
 
                                     matchPointer = matchPointer.NextMatch();
                                 }
                             }
 
+                            // Array Lengths
                             {
                                 Regex regex = new Regex(@"\[(\d+)\]");
-                                Match matchDimeson = regex.Match(dimensions);
+                                Match matchDimension = regex.Match(dimensions);
 
-                                while (matchDimeson.Success)
+                                while (matchDimension.Success)
                                 {
                                     uint size = 0;
-                                    Debug.Assert(uint.TryParse(matchDimeson.Groups[1].Value, out size));
+                                    Debug.Assert(uint.TryParse(matchDimension.Groups[1].Value, out size));
 
-                                    local.StackMemory.ArrayLengths.Add(size);
+                                    newType.ArrayLengths.Add(size);
 
-                                    matchDimeson = matchDimeson.NextMatch();
+                                    matchDimension = matchDimension.NextMatch();
                                 }
                             }
 
-                            // name (fixed)
-                            local.Name = variableName;
+                            Debug.Assert(local.StackMemory.TypeInfo == null);
+                            local.StackMemory.TypeInfo = newType;
                         }
                     }
+                    // Update stack address only
                     else
                     {
                         Regex rx = new Regex(@"\s{2}([0-9a-f]{8}).*\s(\w+)\s=\s");
@@ -522,12 +526,9 @@ namespace CppMemoryVisualizer.ViewModels
             #endregion
 
             // Check if initialized
-            if (!mCallStackOrNull.IsEmpty())
+            if (!mCallStackOrNull.IsEmpty() && stackFrame.IsInitialized)
             {
-                if (stackFrame.IsInitialized)
-                {
-                    goto UpdateMemory;
-                }
+                goto UpdateMemory;
             }
 
             #region Get Local Variable SizeOf
@@ -544,6 +545,55 @@ namespace CppMemoryVisualizer.ViewModels
                         Debug.Assert(lastIndex >= 0);
 
                         string value = line.Substring(lastIndex + 1);
+
+                        uint size = uint.MaxValue;
+                        if (value.StartsWith("0x")) // hexadecimal
+                        {
+                            Debug.Assert(uint.TryParse(value.Substring(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out size));
+                        }
+                        else // decimal
+                        {
+                            Debug.Assert(uint.TryParse(value, out size));
+                        }
+                        Debug.Assert(size < uint.MaxValue);
+                        local.StackMemory.TypeInfo.Size = size;
+
+                        uint wordSize = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
+
+                        Debug.Assert(local.StackMemory.ByteValues == null);
+                        local.StackMemory.ByteValues = new byte[wordSize * 4];
+                    });
+                }                
+            }
+            #endregion
+
+            #region Get Struct/Class Members
+            {
+                Queue<string> memberQueue = new Queue<string>();
+
+                foreach (var name in stackFrame.LocalVariableNames)
+                {
+                    LocalVariable local = stackFrame.GetLocalVariable(name);
+                    TypeInfo typeInfo = local.StackMemory.TypeInfo;
+                    string pureName = typeInfo.PureName;
+
+                    if (mPureTypeManagerOrNull.HasType(pureName))
+                    {
+                        local.StackMemory.PureTypeInfo = mPureTypeManagerOrNull.GetType(pureName);
+                        continue;
+                    }
+
+                    TypeInfo pure = new TypeInfo();
+                    pure.PureName = pureName;
+                    
+                    RequestInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, pureName),
+                        CdbInstructionSet.REQUEST_START_SIZEOF + ' ' + pureName, CdbInstructionSet.REQUEST_END_SIZEOF);
+                    ReadResultLine(CdbInstructionSet.REQUEST_START_SIZEOF, CdbInstructionSet.REQUEST_END_SIZEOF, (string innerLine) =>
+                    {
+                        int lastIndex = innerLine.LastIndexOf(' ');
+                        Debug.Assert(lastIndex >= 0);
+
+                        string value = innerLine.Substring(lastIndex + 1);
                         uint size = uint.MaxValue;
 
                         if (value.StartsWith("0x")) // hexadecimal
@@ -556,20 +606,84 @@ namespace CppMemoryVisualizer.ViewModels
                         }
                         Debug.Assert(size < uint.MaxValue);
 
-                        local.StackMemory.Size = size;
-
-                        uint wordSize = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
-
-                        Debug.Assert(local.StackMemory.ByteValues == null);
-                        local.StackMemory.ByteValues = new byte[wordSize * 4];
+                        pure.Size = size;
                     });
 
-                    string typeName = local.StackMemory.TypeName;
-                    if (!mTypeSizeManagerOrNull.HasSize(typeName))
+                    RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_TYPE, pureName),
+                        CdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureName, CdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                    ReadResultLine(CdbInstructionSet.REQUEST_START_DISPLAY_TYPE, CdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
                     {
-                        // Get Plain-Type Size
-                        RequestInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, typeName),
-                            CdbInstructionSet.REQUEST_START_SIZEOF + ' ' + typeName, CdbInstructionSet.REQUEST_END_SIZEOF);
+                        Regex rx = new Regex(@"^\+0x([0-9a-f]+)\s(\w+)\s+:\s(Ptr32|[\[\d+\]]+\s\w+$|\w+$)");
+                        Match match = rx.Match(line);
+
+                        if (match.Success)
+                        {
+                            TypeInfo newMember = new TypeInfo();
+
+                            string offsetHex = match.Groups[1].Value;
+                            string memberName = match.Groups[2].Value;
+                            string arrayTypeOrType = match.Groups[3].Value;
+
+                            // offset
+                            uint offset = 0;
+                            Debug.Assert(uint.TryParse(offsetHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out offset));
+                            newMember.Offset = offset;
+
+                            // member name
+                            newMember.MemberNameOrNull = memberName;
+
+                            // arrayTypeOrType name
+                            int lastIndex = arrayTypeOrType.LastIndexOf(' ');
+                            if (lastIndex >= 0) // array
+                            {
+                                string dimensions = arrayTypeOrType.Substring(0, lastIndex);
+                                string memberTypeName = arrayTypeOrType.Substring(lastIndex + 1);
+
+                                Regex regex = new Regex(@"\[(\d+)\]");
+                                Match matchDimension = regex.Match(dimensions);
+
+                                newMember.PureName = memberTypeName;
+                                memberQueue.Enqueue(memberTypeName);
+
+                                while (matchDimension.Success)
+                                {
+                                    uint size = 0;
+                                    Debug.Assert(uint.TryParse(matchDimension.Groups[1].Value, out size));
+
+                                    newMember.ArrayLengths.Add(size);
+
+                                    matchDimension = matchDimension.NextMatch();
+                                }
+                            }
+                            else
+                            {
+                                newMember.PureName = arrayTypeOrType;
+                                memberQueue.Enqueue(arrayTypeOrType);
+                            }
+
+                            pure.Members.Add(newMember);
+                        }
+                    });
+
+                    local.StackMemory.PureTypeInfo = pure;
+                    mPureTypeManagerOrNull.AddType(pureName, pure);
+                }
+
+                #region member Queue
+                {
+                    while (memberQueue.Count > 0)
+                    {
+                        string pureName = memberQueue.Dequeue();
+                        if (mPureTypeManagerOrNull.HasType(pureName))
+                        {
+                            continue;
+                        }
+
+                        TypeInfo pure = new TypeInfo();
+                        pure.PureName = pureName;
+
+                        RequestInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, pureName),
+                            CdbInstructionSet.REQUEST_START_SIZEOF + ' ' + pureName, CdbInstructionSet.REQUEST_END_SIZEOF);
                         ReadResultLine(CdbInstructionSet.REQUEST_START_SIZEOF, CdbInstructionSet.REQUEST_END_SIZEOF, (string innerLine) =>
                         {
                             int lastIndex = innerLine.LastIndexOf(' ');
@@ -588,17 +702,75 @@ namespace CppMemoryVisualizer.ViewModels
                             }
                             Debug.Assert(size < uint.MaxValue);
 
-                            mTypeSizeManagerOrNull.Add(typeName, size);
+                            pure.Size = size;
                         });
+
+                        RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_TYPE, pureName),
+                            CdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureName, CdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                        ReadResultLine(CdbInstructionSet.REQUEST_START_DISPLAY_TYPE, CdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
+                        {
+                            Regex rx = new Regex(@"^\+0x([0-9a-f]+)\s(\w+)\s+:\s(Ptr32|[\[\d+\]]+\s\w+$|\w+$)");
+                            Match match = rx.Match(line);
+
+                            if (match.Success)
+                            {
+                                TypeInfo newMember = new TypeInfo();
+
+                                string offsetHex = match.Groups[1].Value;
+                                string memberName = match.Groups[2].Value;
+                                string arrayTypeOrType = match.Groups[3].Value;
+
+                                // offset
+                                uint offset = 0;
+                                Debug.Assert(uint.TryParse(offsetHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out offset));
+                                newMember.Offset = offset;
+
+                                // member name
+                                newMember.MemberNameOrNull = memberName;
+
+                                // arrayTypeOrType name
+                                int lastIndex = arrayTypeOrType.LastIndexOf(' ');
+                                if (lastIndex >= 0) // array
+                                {
+                                    string dimensions = arrayTypeOrType.Substring(0, lastIndex);
+                                    string memberTypeName = arrayTypeOrType.Substring(lastIndex + 1);
+
+                                    Regex regex = new Regex(@"\[(\d+)\]");
+                                    Match matchDimension = regex.Match(dimensions);
+
+                                    newMember.PureName = memberTypeName;
+                                    memberQueue.Enqueue(memberTypeName);
+
+                                    while (matchDimension.Success)
+                                    {
+                                        uint size = 0;
+                                        Debug.Assert(uint.TryParse(matchDimension.Groups[1].Value, out size));
+
+                                        newMember.ArrayLengths.Add(size);
+
+                                        matchDimension = matchDimension.NextMatch();
+                                    }
+                                }
+                                else
+                                {
+                                    newMember.PureName = arrayTypeOrType;
+                                    memberQueue.Enqueue(arrayTypeOrType);
+                                }
+
+                                pure.Members.Add(newMember);
+                            }
+                        });
+
+                        mPureTypeManagerOrNull.AddType(pureName, pure);
                     }
+                    #endregion
                 }
 
                 stackFrame.IsInitialized = true;
             }
-
             #endregion
 
-UpdateMemory:
+            UpdateMemory:
 
             #region Get Memory Words
             {
@@ -620,7 +792,7 @@ UpdateMemory:
                 foreach (var name in stackFrame.LocalVariableNames)
                 {
                     LocalVariable local = stackFrame.GetLocalVariable(name);
-                    if (local.StackMemory.TypeFlags.HasFlag(EMemoryTypeFlags.POINTER) && local.StackMemory.IsChanged)
+                    if (local.StackMemory.TypeInfo.Flags.HasFlag(EMemoryTypeFlags.POINTER) && local.StackMemory.IsChanged)
                     {
                         byte[] byteValues = local.StackMemory.ByteValues;
                         uint wordValue = ((uint)byteValues[0] << 24) | ((uint)byteValues[1] << 16) | ((uint)byteValues[2] << 8) | (uint)byteValues[3];
@@ -656,11 +828,11 @@ UpdateMemory:
                                 uint used = size - unused;
 
                                 // 포인터만이 heap을 가리킬 수 있다.
-                                if (local.StackMemory.PointerLevel > 0)
+                                if (local.StackMemory.TypeInfo.PointerLevel > 0)
                                 {
-                                    Debug.Assert(mTypeSizeManagerOrNull.HasSize(local.StackMemory.TypeName));
+                                    Debug.Assert(mPureTypeManagerOrNull.HasType(local.StackMemory.TypeInfo.PureName));
 
-                                    uint unitSize = local.StackMemory.PointerLevel == 1 ? mTypeSizeManagerOrNull.GetSize(local.StackMemory.TypeName) : 4;
+                                    uint unitSize = local.StackMemory.TypeInfo.PointerLevel == 1 ? mPureTypeManagerOrNull.GetType(local.StackMemory.TypeInfo.PureName).Size : 4;
                                     Debug.Assert(used % unitSize == 0);
                                     uint length = used / unitSize;
 
