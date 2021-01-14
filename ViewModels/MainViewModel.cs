@@ -17,24 +17,12 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Collections.ObjectModel;
 
 namespace CppMemoryVisualizer.ViewModels
 {
     sealed class MainViewModel : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-        public event PropertyChangedEventHandler LinePointerChanged;
-
-        public void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public void OnLinePointerChanged()
-        {
-            LinePointerChanged?.Invoke(this, new PropertyChangedEventArgs("LinePointer"));
-        }
-
         public ICommand LoadSourceFileCommand { get; }
         public ICommand DebugCommand { get; }
         public ICommand GoCommand { get; }
@@ -165,6 +153,11 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 return mCallStackOrNull;
             }
+            set
+            {
+                mCallStackOrNull = value;
+                OnPropertyChanged("CallStackOrNull");
+            }
         }
 
         private PureTypeManager mPureTypeManagerOrNull;
@@ -207,7 +200,7 @@ namespace CppMemoryVisualizer.ViewModels
 
             CurrentInstruction = EDebugInstructionState.INITIALIZING;
             LinePointer = 0;
-            mCallStackOrNull = new CallStack();
+            CallStackOrNull = new CallStack();
             mPureTypeManagerOrNull = new PureTypeManager();
 
             #region Initialize options
@@ -383,7 +376,7 @@ namespace CppMemoryVisualizer.ViewModels
                 return;
             }
 
-            CppMemoryVisualizer.Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
+            Models.StackFrame stackFrame = mCallStackOrNull.GetStackFrame(mCallStackOrNull.Top());
 
             #region Get Local Variable Info
             {
@@ -860,6 +853,19 @@ namespace CppMemoryVisualizer.ViewModels
                 Debug.Assert(lineNumber > 0);
                 LinePointer = lineNumber;
             }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler LinePointerChanged;
+
+        public void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void OnLinePointerChanged()
+        {
+            LinePointerChanged?.Invoke(this, new PropertyChangedEventArgs("LinePointer"));
         }
     }
 }
