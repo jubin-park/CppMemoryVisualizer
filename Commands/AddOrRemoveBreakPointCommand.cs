@@ -55,8 +55,8 @@ namespace CppMemoryVisualizer.Commands
 
             Debug.Assert(SelectedLineNumber > 0u);
 
-            uint breakpointIndex = mMainViewModel.BreakPointInfoOrNull.Indices[SelectedLineNumber];
-            mMainViewModel.BreakPointInfoOrNull.Clear();
+            uint breakpointIndex = mMainViewModel.BreakPointList.Indices[SelectedLineNumber];
+            mMainViewModel.BreakPointList.Clear();
 
             if (breakpointIndex == uint.MaxValue)
             {
@@ -71,7 +71,7 @@ namespace CppMemoryVisualizer.Commands
                     null, null);
             }
 
-            mMainViewModel.RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_BREAK_POINT_LIST, fileName, SelectedLineNumber),
+            mMainViewModel.RequestInstruction(CdbInstructionSet.DISPLAY_BREAK_POINT_LIST,
                 CdbInstructionSet.REQUEST_START_DISPLAY_BREAK_POINT_LIST, CdbInstructionSet.REQUEST_END_DISPLAY_BREAK_POINT_LIST);
             mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_DISPLAY_BREAK_POINT_LIST, CdbInstructionSet.REQUEST_END_DISPLAY_BREAK_POINT_LIST, (string line) =>
             {
@@ -88,8 +88,8 @@ namespace CppMemoryVisualizer.Commands
                     Debug.Assert(uint.TryParse(match.Groups[3].Value, out realLineNumber));
                     Debug.Assert(realLineNumber > 0);
 
-                    ++mMainViewModel.BreakPointInfoOrNull.Count;
-                    mMainViewModel.BreakPointInfoOrNull.Indices[realLineNumber] = bpIndex;
+                    ++mMainViewModel.BreakPointList.Count;
+                    mMainViewModel.BreakPointList.Indices[realLineNumber] = bpIndex;
                 }
             });
 

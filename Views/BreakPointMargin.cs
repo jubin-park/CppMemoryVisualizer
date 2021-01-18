@@ -45,7 +45,7 @@ namespace CppMemoryVisualizer.Views
         {
             TextView textView = this.TextView;
             Size renderSize = this.RenderSize;
-            var breakPointInfoOrNull = mMainViewModel.BreakPointInfoOrNull;
+            var breakPointInfoOrNull = mMainViewModel.BreakPointList;
 
             drawingContext.DrawRectangle(Brushes.LightGray, null, new Rect(0, 0, MARGIN_WIDTH, RenderSize.Height));
 

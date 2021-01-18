@@ -51,6 +51,26 @@ namespace CppMemoryVisualizer.Commands
             {
                 lock (mMainViewModel.LockObject)
                 {
+                    bool loopGoUp = true;
+                    while (loopGoUp)
+                    {
+                        mMainViewModel.RequestInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE + " 1",
+                            CdbInstructionSet.REQUEST_START_GET_CALL_STACK, CdbInstructionSet.REQUEST_END_GET_CALL_STACK);
+                        mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_GET_CALL_STACK, CdbInstructionSet.REQUEST_END_GET_CALL_STACK, (string line) =>
+                        {
+                            if (line.Contains(mMainViewModel.SourcePathOrNull))
+                            {
+                                loopGoUp = false;
+                            }
+                        });
+
+                        if (loopGoUp)
+                        {
+                            mMainViewModel.RequestInstruction(CdbInstructionSet.GO_UP + " 1",
+                                null, null);
+                        }
+                    }
+
                     mMainViewModel.Update();
                     mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
                 }

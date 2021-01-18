@@ -20,6 +20,9 @@ namespace CppMemoryVisualizer.Constants
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/g--go-
         public static readonly string GO = "g";
 
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/gu--go-up-
+        public static readonly string GO_UP = "gu";
+
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/k--kb--kc--kd--kp--kp--kv--display-stack-backtrace-
         public static readonly string DISPLAY_STACK_BACKTRACE = "kn";
 
@@ -72,6 +75,8 @@ namespace CppMemoryVisualizer.Constants
 
         #region Request by Echo
         public static readonly string OUTPUT_HEADER = "0:000> ";
+        public static readonly string REQUEST_START_CONSOLE = "@S=CMD";
+        public static readonly string REQUEST_END_CONSOLE = "@E=CMD";
 
         public static readonly string REQUEST_START = "@S=";
         public static readonly string REQUEST_END = "@E=";
@@ -99,6 +104,9 @@ namespace CppMemoryVisualizer.Constants
 
         public static readonly string REQUEST_START_GO_COMMAND = "@S=GO";
         public static readonly string REQUEST_END_GO_COMMAND = "@E=GO";
+
+        public static readonly string REQUEST_START_GO_UP_COMMAND = "@S=GO_UP";
+        public static readonly string REQUEST_END_GO_UP_COMMAND = "@E=GO_UP";
 
         public static readonly string REQUEST_START_STEP_OVER_COMMAND = "@S=STEP_OVER";
         public static readonly string REQUEST_END_STEP_OVER_COMMAND = "@E=STEP_OVER";

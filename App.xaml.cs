@@ -61,8 +61,7 @@ namespace CppMemoryVisualizer
                 }
                 if (mVsPathOrNull == null)
                 {
-                    MessageBoxResult result = MessageBox.Show("Visual Studio가 설치되지 않았습니다. 다운로드 페이지로 이동하시겠습니까?", "caption", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-                    if (result == MessageBoxResult.Yes)
+                    if (MessageBoxResult.Yes == MessageBox.Show("Visual Studio가 설치되지 않았습니다. 다운로드 페이지로 이동하시겠습니까?", App.WINDOW_TITLE, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No))
                     {
                         Process.Start("https://visualstudio.microsoft.com/ko/vs/older-downloads/");
                     }
@@ -86,8 +85,7 @@ namespace CppMemoryVisualizer
 
                 if (regKeyOrNull == null)
                 {
-                    MessageBoxResult result = MessageBox.Show("WinDbg 가 설치되지 않았습니다. Windows 10 SDK 다운로드 페이지로 이동하시겠습니까?", "caption", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-                    if (result == MessageBoxResult.Yes)
+                    if (MessageBoxResult.Yes == MessageBox.Show("WinDbg 가 설치되지 않았습니다. Windows 10 SDK 다운로드 페이지로 이동하시겠습니까?", App.WINDOW_TITLE, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No))
                     {
                         Process.Start("https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/");
                     }
@@ -98,7 +96,7 @@ namespace CppMemoryVisualizer
                 object valueOrNull = regKeyOrNull.GetValue("KitsRoot10");
                 if (valueOrNull == null)
                 {
-                    MessageBox.Show("레지스트리 KitsRoot10 키가 존재하지 않습니다.", "caption", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("레지스트리 KitsRoot10 키가 존재하지 않습니다.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
 
                     Current.Shutdown();
                 }
@@ -107,7 +105,7 @@ namespace CppMemoryVisualizer
                     mCdbPathOrNull = System.IO.Path.Combine(valueOrNull.ToString(), "Debuggers\\x86\\cdb.exe");
                     if (!File.Exists(mCdbPathOrNull))
                     {
-                        MessageBox.Show(string.Format("`{0}' 파일이 존재하지 않습니다.", mCdbPathOrNull), "caption", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show(string.Format("`{0}' 파일이 존재하지 않습니다.", mCdbPathOrNull), App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
 
                         Current.Shutdown();
                     }

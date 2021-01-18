@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
-    sealed class StackFrame
+    sealed class StackFrame : INotifyPropertyChanged
     {
         public bool IsInitialized = false;
 
@@ -20,12 +21,26 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        private Dictionary<string, LocalVariable> mLocalVariables = new Dictionary<string, LocalVariable>();
-        public Dictionary<string, LocalVariable> LocalVariables
+        private Dictionary<string, LocalVariable> mLocalVariableCaches = new Dictionary<string, LocalVariable>();
+        public Dictionary<string, LocalVariable> LocalVariableCaches
+        {
+            get
+            {
+                return mLocalVariableCaches;
+            }
+        }
+
+        private List<LocalVariable> mLocalVariables = new List<LocalVariable>();
+        public List<LocalVariable> LocalVariables
         {
             get
             {
                 return mLocalVariables;
+            }
+            set
+            {
+                mLocalVariables = value;
+                onPropertyChanged(nameof(mLocalVariables));
             }
         }
 
@@ -38,14 +53,73 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        private uint mAddress;
-
-        public StackFrame(uint address, string name)
+        private uint mStackAddress;
+        public uint StackAddress
         {
-            Debug.Assert(address > 0);
+            get
+            {
+                return mStackAddress;
+            }
+        }
+
+        private uint mFunctionAddress;
+        public uint FunctionAddress
+        {
+            get
+            {
+                return mFunctionAddress;
+            }
+        }
+
+        private uint mIndex;
+        public uint Index
+        {
+            get
+            {
+                return mIndex;
+            }
+            set
+            {
+                mIndex = value;
+            }
+        }
+
+        private double mX;
+        public double X
+        {
+            get
+            {
+                return mX;
+            }
+            set
+            {
+                mX = value;
+                onPropertyChanged("X");
+            }
+        }
+
+        private double mY;
+        public double Y
+        {
+            get
+            {
+                return mY;
+            }
+            set
+            {
+                mY = value;
+                onPropertyChanged("Y");
+            }
+        }
+
+        public StackFrame(uint stackAddress, uint functionAddress, string name)
+        {
+            Debug.Assert(stackAddress > 0);
+            Debug.Assert(functionAddress > 0);
             Debug.Assert(name != null);
 
-            mAddress = address;
+            mStackAddress = stackAddress;
+            mFunctionAddress = functionAddress;
             mName = name;
         }
 
@@ -53,10 +127,13 @@ namespace CppMemoryVisualizer.Models
         {
             Debug.Assert(localVariableName != null);
 
-            if (!mLocalVariables.ContainsKey(localVariableName))
+            if (!mLocalVariableCaches.ContainsKey(localVariableName))
             {
-                mLocalVariables.Add(localVariableName, new LocalVariable());
                 mLocalVariableNames.Add(localVariableName);
+
+                var local = new LocalVariable();
+                mLocalVariableCaches.Add(localVariableName, local);
+                mLocalVariables.Add(local);
 
                 return true;
             }
@@ -64,14 +141,21 @@ namespace CppMemoryVisualizer.Models
             return false;
         }
 
-        public LocalVariable GetLocalVariable(string localVariableName)
+        public LocalVariable GetLocalVariableOrNull(string localVariableName)
         {
             Debug.Assert(localVariableName != null);
 
-            LocalVariable localVariable = null;
-            Debug.Assert(mLocalVariables.TryGetValue(localVariableName, out localVariable));
+            LocalVariable localVariableOrNull = null;
+            mLocalVariableCaches.TryGetValue(localVariableName, out localVariableOrNull);
 
-            return localVariable;
+            return localVariableOrNull;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void onPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace CppMemoryVisualizer.Models
 {
-    sealed class BreakPointInfo
+    sealed class BreakPointList
     {
         private uint[] mIndices;
         public uint[] Indices
@@ -50,7 +50,7 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        public BreakPointInfo(uint capacity)
+        public BreakPointList(uint capacity)
         {
             Debug.Assert(capacity > 0);
 

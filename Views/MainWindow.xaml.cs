@@ -50,26 +50,9 @@ namespace CppMemoryVisualizer.Views
         {
             if (e.Key == Key.Return && xTextBoxInput.Text.Length > 0)
             {
-                mMainViewModel.ProcessCdbOrNull.StandardInput.WriteLine(xTextBoxInput.Text);
-                mMainViewModel.ProcessCdbOrNull.StandardInput.WriteLine(string.Format(CdbInstructionSet.ECHO, string.Empty));
-
-                string line;
-                while (true)
-                {
-                    line = mMainViewModel.ProcessCdbOrNull.StandardOutput.ReadLine();
-                    {
-                        int lastIndex = line.LastIndexOf(CdbInstructionSet.OUTPUT_HEADER);
-                        if (lastIndex != -1)
-                        {
-                            line = line.Substring(lastIndex + CdbInstructionSet.OUTPUT_HEADER.Length);
-                        }
-                        if (line.Length == 0)
-                        {
-                            break;
-                        }
-                    }
-                    mMainViewModel.Log += line + Environment.NewLine;
-                }
+                mMainViewModel.RequestInstruction(xTextBoxInput.Text,
+                    CdbInstructionSet.REQUEST_START_CONSOLE, CdbInstructionSet.REQUEST_END_CONSOLE);
+                mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_CONSOLE, CdbInstructionSet.REQUEST_END_CONSOLE, null);
 
                 xTextBoxInput.Text = string.Empty;
             }

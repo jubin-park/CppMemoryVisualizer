@@ -12,72 +12,79 @@ namespace CppMemoryVisualizer.Models
 {
     sealed class CallStack : INotifyPropertyChanged
     {
-        private ObservableCollection<StackFrame> mObservableStackFrames = new ObservableCollection<StackFrame>();
-        public ObservableCollection<StackFrame> ObservableStackFrames
+        private readonly List<ulong> mKeys = new List<ulong>();
+        private Dictionary<ulong, StackFrame> mStackFrames = new Dictionary<ulong, StackFrame>();
+
+        private List<StackFrame> mStack;
+        public List<StackFrame> Stack
         {
             get
             {
-                return mObservableStackFrames;
+                return mStack;
+            }
+            set
+            {
+                mStack = value;
+                onPropertyChanged("Stack");
             }
         }
-
-        private List<uint> mFunctionAddressList = new List<uint>();
-        private Dictionary<uint, StackFrame> mStackFrames = new Dictionary<uint, StackFrame>();
 
         public void Clear()
         {
-            mFunctionAddressList.Clear();
-            App.Current.Dispatcher.Invoke(() =>
-            {
-                mObservableStackFrames.Clear();
-            });       
+            mKeys.Clear();
+            Stack = new List<StackFrame>();
         }
 
-        public void Push(uint functionAddress, string functionName)
+        public void Push(uint stackAddress, uint functionAddress, string functionName)
         {
+            Debug.Assert(stackAddress > 0);
             Debug.Assert(functionAddress > 0);
             Debug.Assert(functionName != null);
 
-            if (!mStackFrames.ContainsKey(functionAddress))
-            {
-                mStackFrames.Add(functionAddress, new StackFrame(functionAddress, functionName));
-            }
-            mFunctionAddressList.Add(functionAddress);
+            ulong key = (ulong)stackAddress << 32 | functionAddress;
+            mKeys.Add(key);
 
             StackFrame frame = null;
-            Debug.Assert(mStackFrames.TryGetValue(functionAddress, out frame));
-            App.Current.Dispatcher.Invoke(() =>
+            if (!mStackFrames.ContainsKey(key))
             {
-                mObservableStackFrames.Add(frame);
-            });
-            OnPropertyChanged("ObservableStackFrames");
+                frame = new StackFrame(stackAddress, functionAddress, functionName);
+                mStackFrames.Add(key, frame);
+            }
+            else
+            {
+                Debug.Assert(mStackFrames.TryGetValue(key, out frame));
+            }
+            frame.Index = (uint)mStack.Count;
+            frame.Y = frame.Index * 50;
+
+            mStack.Add(frame);
         }
 
-        public uint Top()
+        public ulong Top()
         {
-            Debug.Assert(mFunctionAddressList.Count > 0);
+            Debug.Assert(mKeys.Count > 0);
 
-            return mFunctionAddressList[0];
+            return mKeys[0];
         }
 
-        public StackFrame GetStackFrame(uint functionAddress)
+        public StackFrame GetStackFrame(ulong key)
         {
-            Debug.Assert(functionAddress > 0);
+            Debug.Assert(key > 0);
 
             StackFrame stackFrame = null;
-            Debug.Assert(mStackFrames.TryGetValue(functionAddress, out stackFrame));
+            Debug.Assert(mStackFrames.TryGetValue(key, out stackFrame));
 
             return stackFrame;
         }
 
         public bool IsEmpty()
         {
-            return mFunctionAddressList.Count == 0;
+            return mKeys.Count == 0;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void OnPropertyChanged(string propertyName)
+        private void onPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

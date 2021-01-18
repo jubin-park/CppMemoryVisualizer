@@ -57,33 +57,5 @@ namespace CppMemoryVisualizer.Models
                 return mbChanged;
             }
         }
-
-        public static string GetFullTypeName(string typeName, uint pointerLevel, List<uint> arrayOrFunctionPointerLevels, List<uint> arrayLengths)
-        {
-            StringBuilder sb = new StringBuilder(typeName, 128);
-            sb.Append(' ');
-
-            if (pointerLevel > 0)
-            {
-                sb.Append('*', (int)pointerLevel);
-            }
-            foreach (uint len in arrayOrFunctionPointerLevels)
-            {
-                sb.Append('(');
-                sb.Append(new string('*', (int)len));
-                sb.Append(')');
-            }
-            foreach (uint len in arrayLengths)
-            {
-                sb.AppendFormat("[{0}]", len);
-            }
-
-            if (sb[sb.Length - 1] == ' ')
-            {
-                --sb.Length;
-            }
-
-            return sb.ToString();
-        }
     }
 }

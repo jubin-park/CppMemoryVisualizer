@@ -53,7 +53,13 @@ namespace CppMemoryVisualizer.Commands
                 string fileName = Path.GetFileName(openFileDialog.FileName);
                 if (fileName.Contains(' '))
                 {
-                    MessageBox.Show("파일 이름에 공백문자가 들어갈 수 없습니다.");
+                    MessageBox.Show("파일 이름에 공백문자가 들어갈 수 없습니다.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (mMainViewModel.BreakPointList != null && mMainViewModel.BreakPointList.Count > 0
+                    && MessageBoxResult.Yes != MessageBox.Show("새 파일을 불러올 경우 설정한 중단점이 모두 사라집니다. 계속 진행하시겠습니까?", App.WINDOW_TITLE, MessageBoxButton.YesNo, MessageBoxImage.Exclamation))
+                {
                     return;
                 }
 
@@ -73,7 +79,7 @@ namespace CppMemoryVisualizer.Commands
                     }
                     reader.Close();
                 }
-                mMainViewModel.BreakPointInfoOrNull = new BreakPointInfo(lineCount + 1);
+                mMainViewModel.BreakPointList = new BreakPointList(lineCount + 1);
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
 
                 // compile
@@ -94,7 +100,7 @@ namespace CppMemoryVisualizer.Commands
 
                     if (!File.Exists(compilerPath))
                     {
-                        MessageBox.Show($"{compilerPath} 파일을 찾을 수 없습니다. Visual Studio Installer 에서 'C++를 사용한 데스크톱 개발' 패키지를 설치하십시오.", "caption", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show($"{compilerPath} 파일을 찾을 수 없습니다. Visual Studio Installer 에서 'C++를 사용한 데스크톱 개발' 패키지를 설치하십시오.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
                         Debug.WriteLine("FAILED");
                     }
                     else
