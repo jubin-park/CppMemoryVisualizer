@@ -71,6 +71,10 @@
     <Compile Include="Models\PureTypeManager.cs" />
     <Compile Include="Models\StackFrame.cs" />
     <Compile Include="ViewModels\CallStackViewModel.cs" />
+    <Compile Include="Views\BytesToPointerConverter.cs" />
+    <Compile Include="Views\BytesToValueConverter.cs" />
+    <Compile Include="Views\MemoryDataTemplateSelector.cs" />
+    <Compile Include="Views\UIntToHexadecimalConverter.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
@@ -121,6 +125,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="Views\MainWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\MemoryDataTemplate.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

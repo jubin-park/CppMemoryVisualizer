@@ -31,7 +31,7 @@ namespace CppMemoryVisualizer.Models
             {
                 for (int j = 0; j < 4; ++j)
                 {
-                    char c = wordPattern[i + j * 2 + 1];
+                    char c = wordPattern[i + (3 - j) * 2 + 1];
                     if (c >= '0' && c <= '9')
                     {
                         c -= '0';
@@ -51,7 +51,7 @@ namespace CppMemoryVisualizer.Models
                         Debug.Assert(false);
                     }
 
-                    char d = wordPattern[i + j * 2 + 2];
+                    char d = wordPattern[i + (3 - j) * 2 + 2];
                     if (d >= '0' && d <= '9')
                     {
                         d -= '0';

@@ -15,141 +15,219 @@
     Height="600"
     Width="800"
     WindowStartupLocation="CenterScreen"
-    Closing="OnWindowClosing"
-    >
+    Closing="OnWindowClosing">
 
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
 
     <Window.InputBindings>
-        <KeyBinding Key="F5" Command="{Binding Path=GoCommand}" />
-        <KeyBinding Key="F10" Command="{Binding Path=StepOverCommand}" />
-        <KeyBinding Key="F11" Command="{Binding Path=StepInCommand}" />
+        <KeyBinding
+            Key="F5"
+            Command="{Binding Path=GoCommand}" />
+        <KeyBinding
+            Key="F10"
+            Command="{Binding Path=StepOverCommand}" />
+        <KeyBinding
+            Key="F11"
+            Command="{Binding Path=StepInCommand}" />
     </Window.InputBindings>
 
     <Window.Resources>
+
         <ResourceDictionary>
-            <v:WindowTitleConverter x:Key="WindowTitleConverter" />
-            <v:StandardCppVersionEnumToBooleanConverter x:Key="StandardCppVersionEnumToBooleanConverter" />
+
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="MemoryDataTemplate.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <v:WindowTitleConverter
+                x:Key="WindowTitleConverter" />
+            <v:StandardCppVersionEnumToBooleanConverter
+                x:Key="StandardCppVersionEnumToBooleanConverter" />
+            <v:MemoryDataTemplateSelector
+                x:Key="MemoryDataTemplateSelector" />
 
             <DataTemplate
-                DataType="{x:Type m:StackFrame}"
-                >
+                DataType="{x:Type m:StackFrame}">
 
                 <Grid
-                    Margin="0, 0, 0, 12"
-                    >
+                    Margin="0, 0, 0, 12">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="64" />
-                        <ColumnDefinition />
+                        <ColumnDefinition
+                            Width="64" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
 
                     <TextBlock
                         Grid.Column="0"
                         Text="{Binding Name}"
+                        TextWrapping="Wrap"
                         FontWeight="Bold"
                         />
 
                     <ItemsControl
                         Grid.Column="1"
-                        ItemsSource="{Binding LocalVariables}"
-                        >
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel
-                                    Orientation="Vertical"
-                                    >
-                                </StackPanel>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-
+                        ItemsSource="{Binding LocalVariables}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid
-                                    Margin="0, 0, 0, 8"
-                                    >
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition />
-                                        <RowDefinition />
-                                    </Grid.RowDefinitions>
-                                    <TextBlock
-                                        Grid.Row="0"
-                                        Text="{Binding StackMemory.TypeInfo.FullName}"
-                                        Foreground="Gray"
-                                        FontStyle="Italic"
-                                        HorizontalAlignment="Right"
-                                        />
-                                    <TextBlock
-                                        Grid.Row="1"
-                                        Text="{Binding Name}"
-                                        HorizontalAlignment="Right"
-                                        />
+                                <Grid Margin="0, 0, 0, 8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition MaxWidth="160"/>
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid Grid.Column="0">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            TextAlignment="Right"
+                                            Text="{Binding StackMemory.Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                                            TextWrapping="Wrap"
+                                            Foreground="Gray"
+                                            />
+
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            Text="{Binding StackMemory.TypeInfo.FullName}"
+                                            TextAlignment="Right"
+                                            TextWrapping="Wrap"
+                                            Foreground="Gray"
+                                            FontStyle="Italic" 
+                                            />
+
+                                        <TextBlock
+                                            Grid.Row="2"
+                                            Text="{Binding Name}"
+                                            TextAlignment="Right"
+                                            TextWrapping="Wrap"
+                                            />
+                                    </Grid>
+
+                                    <ContentControl
+                                        Grid.Column="1"
+                                        Content="{Binding StackMemory}"
+                                        ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
+                                    </ContentControl>
+
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
-
-                        <ItemsControl.ItemContainerStyle>
-                            <Style TargetType="ContentPresenter">
-                                <Setter Property="Canvas.Left" Value="50" />
-                                <Setter Property="Canvas.Top" Value="50" />
-                            </Style>
-                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel
+                                    Orientation="Vertical">
+                                </StackPanel>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                     </ItemsControl>
 
                 </Grid>
             </DataTemplate>
-            
+
         </ResourceDictionary>
     </Window.Resources>
 
     <Window.Title>
-        <MultiBinding Converter="{StaticResource WindowTitleConverter}">
-            <Binding Path="SourcePathOrNull" Mode="OneWay"/>
-            <Binding Path="ProcessCdbOrNull" Mode="OneWay"/>
-            <Binding Path="CurrentInstruction" Mode="OneWay"/>
+        <MultiBinding
+            Converter="{StaticResource WindowTitleConverter}">
+            <Binding
+                Path="SourcePathOrNull"
+                Mode="OneWay" />
+            <Binding
+                Path="ProcessCdbOrNull"
+                Mode="OneWay" />
+            <Binding
+                Path="CurrentInstruction"
+                Mode="OneWay" />
         </MultiBinding>
     </Window.Title>
 
     <DockPanel>
-        <Menu DockPanel.Dock="Top">
-            <MenuItem Header="O_pen" Command="{Binding Path=LoadSourceFileCommand}" />
-            <MenuItem Header="D_ebug" Command="{Binding Path=DebugCommand}" />
-            <MenuItem Header="Go (F5)" Command="{Binding Path=GoCommand}" InputGestureText="F5" >
+        <Menu
+            DockPanel.Dock="Top">
+            <MenuItem
+                Header="O_pen"
+                Command="{Binding Path=LoadSourceFileCommand}" />
+            <MenuItem
+                Header="D_ebug"
+                Command="{Binding Path=DebugCommand}" />
+            <MenuItem
+                Header="Go (F5)"
+                Command="{Binding Path=GoCommand}"
+                InputGestureText="F5">
                 <MenuItem.InputBindings>
-                    <KeyBinding Key="F5" Modifiers="Control" Command="{Binding Path=GoCommand}"/>
+                    <KeyBinding
+                        Key="F5"
+                        Modifiers="Control"
+                        Command="{Binding Path=GoCommand}" />
                 </MenuItem.InputBindings>
             </MenuItem>
-            <MenuItem Header="Step-Over (F10)" Command="{Binding Path=StepOverCommand}">
+            <MenuItem
+                Header="Step-Over (F10)"
+                Command="{Binding Path=StepOverCommand}">
                 <MenuItem.InputBindings>
-                    <KeyBinding Key="F10" Modifiers="Control" Command="{Binding Path=StepOverCommand}"/>
+                    <KeyBinding
+                        Key="F10"
+                        Modifiers="Control"
+                        Command="{Binding Path=StepOverCommand}" />
                 </MenuItem.InputBindings>
             </MenuItem>
-            <MenuItem Header="Step-In (F11)" Command="{Binding Path=StepInCommand}">
+            <MenuItem
+                Header="Step-In (F11)"
+                Command="{Binding Path=StepInCommand}">
                 <MenuItem.InputBindings>
-                    <KeyBinding Key="F11" Modifiers="Control" Command="{Binding Path=StepInCommand}"/>
+                    <KeyBinding
+                        Key="F11"
+                        Modifiers="Control"
+                        Command="{Binding Path=StepInCommand}" />
                 </MenuItem.InputBindings>
             </MenuItem>
-            <MenuItem x:Name="MenuItem_Root" Header="std">
-                <MenuItem x:Name="MenuItem_Item1" IsCheckable="True" Header="C++11" IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP11}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
-                <MenuItem x:Name="MenuItem_Item2" IsCheckable="True" Header="C++14" IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP14}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
-                <MenuItem x:Name="MenuItem_Item3" IsCheckable="True" Header="C++17" IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP17}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
+            <MenuItem
+                x:Name="MenuItem_Root"
+                Header="std">
+                <MenuItem
+                    x:Name="MenuItem_Item1"
+                    IsCheckable="True"
+                    Header="C++11"
+                    IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP11}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
+                <MenuItem
+                    x:Name="MenuItem_Item2"
+                    IsCheckable="True"
+                    Header="C++14"
+                    IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP14}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
+                <MenuItem
+                    x:Name="MenuItem_Item3"
+                    IsCheckable="True"
+                    Header="C++17"
+                    IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP17}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
             </MenuItem>
         </Menu>
 
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="2*"/>
-                <RowDefinition Height="1*"/>
-                <RowDefinition Height="24"/>
+                <RowDefinition
+                    Height="4*" />
+                <RowDefinition
+                    Height="1*" />
+                <RowDefinition
+                    Height="24" />
             </Grid.RowDefinitions>
 
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="4*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="5*"/>
+                    <ColumnDefinition
+                        Width="4*" />
+                    <ColumnDefinition
+                        Width="Auto" />
+                    <ColumnDefinition
+                        Width="5*" />
                 </Grid.ColumnDefinitions>
 
                 <v:BindableAvalonEditor
@@ -160,34 +238,30 @@
                     FontSize="14"
                     FontFamily="Consolas"
                     Text="{Binding SourceCode}"
-                    LinePointer="{Binding LinePointer}"
-                    />
+                    LinePointer="{Binding LinePointer}" />
                 <GridSplitter
                     Grid.Column="1"
                     Width="5"
                     Background="Gray"
                     ShowsPreview="true"
-                    HorizontalAlignment="Stretch"
-                    />
-
+                    HorizontalAlignment="Stretch" />
                 <ScrollViewer
                     Grid.Column="2"
                     VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollBarVisibility="Visible"
-                    >
+                    HorizontalScrollBarVisibility="Visible">
                     <Grid>
                         <ItemsControl
-                            ItemsSource="{Binding CallStackViewModel.CallStack.Stack}"
-                            >
+                            ItemsSource="{Binding CallStackViewModel.CallStack.Stack}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Vertical" />
+                                    <StackPanel
+                                        Orientation="Vertical" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
                     </Grid>
                 </ScrollViewer>
-                
+
             </Grid>
 
             <TextBox
@@ -198,14 +272,13 @@
                 VerticalScrollBarVisibility="Visible"
                 Text="{Binding Log}"
                 IsReadOnly="True"
-                TextChanged="xTextBoxLog_TextChanged"
-                />
+                TextChanged="xTextBoxLog_TextChanged" />
 
-            <Grid Grid.Row="2">
+            <Grid
+                Grid.Row="2">
                 <TextBox
                     x:Name="xTextBoxInput"
-                    KeyDown="xTextBoxInput_KeyDown"
-                    />
+                    KeyDown="xTextBoxInput_KeyDown" />
             </Grid>
         </Grid>
     </DockPanel>

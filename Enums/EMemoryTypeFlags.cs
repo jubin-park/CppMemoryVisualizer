@@ -9,6 +9,7 @@ namespace CppMemoryVisualizer.Enums
     [Flags]
     public enum EMemoryTypeFlags : short
     {
+        NONE = 0,
         POINTER = 1 << 0,
         ARRAY = 1 << 1,
         ENUM = 1 << 2,
