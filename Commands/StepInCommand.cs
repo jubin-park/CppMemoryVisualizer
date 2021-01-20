@@ -78,7 +78,7 @@ namespace CppMemoryVisualizer.Commands
 
             thread.IsBackground = true;
             thread.Start();
-            thread.Join(3000);
+            thread.Join();
         }
     }
 }
