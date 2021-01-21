@@ -27,6 +27,13 @@ namespace CppMemoryVisualizer.Views
             {
                 resourceName = "PointerOnly";
             }
+            else if (memory.TypeInfo.Flags.HasFlag(EMemoryTypeFlags.ARRAY))
+            {
+                if (memory.PureTypeInfo.PureName == "int")
+                {
+                    resourceName = "ValueArrayOnly";
+                }
+            }
 
             return (DataTemplate)el.FindResource(resourceName);
         }

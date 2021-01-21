@@ -64,59 +64,66 @@
                         Grid.Column="0"
                         Text="{Binding Name}"
                         TextWrapping="Wrap"
-                        FontWeight="Bold"
-                        />
+                        FontWeight="Bold" />
 
                     <ItemsControl
                         Grid.Column="1"
                         ItemsSource="{Binding LocalVariables}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0, 0, 0, 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition MaxWidth="160"/>
-                                        <ColumnDefinition />
-                                    </Grid.ColumnDefinitions>
+                                <Border
+                                    BorderBrush="#1266a7"
+                                    BorderThickness="1"
+                                    Margin="0, -1, 0, 0">
+                                    <Grid
+                                        Margin="0, 0, 0, 8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition
+                                                Width="160" />
+                                            <ColumnDefinition
+                                                Width="3*" />
+                                        </Grid.ColumnDefinitions>
 
-                                    <Grid Grid.Column="0">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition />
-                                            <RowDefinition />
-                                            <RowDefinition />
-                                        </Grid.RowDefinitions>
+                                        <Grid
+                                            Grid.Column="0">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition />
+                                                <RowDefinition />
+                                                <RowDefinition />
+                                            </Grid.RowDefinitions>
 
-                                        <TextBlock
-                                            Grid.Row="0"
-                                            TextAlignment="Right"
-                                            Text="{Binding StackMemory.Address, Converter={StaticResource UIntToHexadecimalConverter}}"
-                                            TextWrapping="Wrap"
-                                            Foreground="Gray"
-                                            />
+                                            <TextBlock
+                                                Grid.Row="0"
+                                                Text="{Binding StackMemory.Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                                                TextAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Foreground="LightSlateGray" />
 
-                                        <TextBlock
-                                            Grid.Row="1"
-                                            Text="{Binding StackMemory.TypeInfo.FullName}"
-                                            TextAlignment="Right"
-                                            TextWrapping="Wrap"
-                                            Foreground="Gray"
-                                            FontStyle="Italic" 
-                                            />
+                                            <TextBlock
+                                                Grid.Row="1"
+                                                Text="{Binding StackMemory.TypeInfo.FullName}"
+                                                TextAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Foreground="LightSlateGray"
+                                                FontStyle="Italic" />
 
-                                        <TextBlock
-                                            Grid.Row="2"
-                                            Text="{Binding Name}"
-                                            TextAlignment="Right"
-                                            TextWrapping="Wrap"
-                                            />
+                                            <TextBlock
+                                                Grid.Row="2"
+                                                Text="{Binding Name}"
+                                                TextAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                FontWeight="Bold" />
+                                        </Grid>
+
+                                        <ContentControl
+                                            Grid.Column="1"
+                                            Content="{Binding StackMemory}"
+                                            ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
+                                        </ContentControl>
+
                                     </Grid>
+                                </Border>
 
-                                    <ContentControl
-                                        Grid.Column="1"
-                                        Content="{Binding StackMemory}"
-                                        ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
-                                    </ContentControl>
-
-                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                         <ItemsControl.ItemsPanel>
@@ -129,6 +136,8 @@
                     </ItemsControl>
 
                 </Grid>
+
+
             </DataTemplate>
 
         </ResourceDictionary>

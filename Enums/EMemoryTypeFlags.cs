@@ -18,6 +18,7 @@ namespace CppMemoryVisualizer.Enums
         CLASS = 1 << 5,
         FUNCTION = 1 << 6,        
         REFERENCE = 1 << 7,
+        // https://stackoverflow.com/questions/48938003/windbg-c-how-to-print-vector-contents
         STL = 1 << 8,
     }
 }

@@ -1,7 +1,6 @@
 ﻿using CppMemoryVisualizer.Models;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -10,25 +9,26 @@ using System.Windows.Data;
 
 namespace CppMemoryVisualizer.Views
 {
-    class BytesToPointerConverter : IValueConverter
+    class BytesToValueArrayConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             MemoryOwnerInfo memory = value as MemoryOwnerInfo;
 
-            Debug.Assert(memory.TypeInfo.ArrayLengths.Count <= 0);
-            Debug.Assert(memory.TypeInfo.Size == 4);
-
-            uint pointer = memory.ByteValues[0] | (uint)memory.ByteValues[1] << 8 | (uint)memory.ByteValues[2] << 16 | (uint)memory.ByteValues[3] << 24;
-
-            if (pointer == 0)
+            uint totalLength = 1;
+            foreach (uint len in memory.TypeInfo.ArrayLengths)
             {
-                return "(nullptr)";
+                totalLength *= len;
             }
-            else
+
+            int blockSize = (int)(memory.TypeInfo.Size / totalLength);
+            List<int> values = new List<int>((int)totalLength);
+            for (uint i = 0; i < totalLength; ++i)
             {
-                return string.Format("0x{0:x8}", pointer);
+                values.Add(BitConverter.ToInt32(memory.ByteValues, (int)i * blockSize));
             }
+
+            return values;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

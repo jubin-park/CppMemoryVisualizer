@@ -6,9 +6,12 @@
     <local:UIntToHexadecimalConverter x:Key="UIntToHexadecimalConverter" />
     <local:BytesToValueConverter x:Key="BytesToValueConverter" />
     <local:BytesToPointerConverter x:Key="BytesToPointerConverter" />
+    <local:BytesToValueArrayConverter x:Key="BytesToValueArrayConverter" />
 
     <DataTemplate x:Key="ValueOnly">
-        <Grid Margin="8, 0, 0, 0">
+        <Grid
+            Background="LightYellow"
+            Margin="8, 0, 0, 0">
             <TextBlock
                 Text="{Binding ., Converter={StaticResource BytesToValueConverter}}"
                 Foreground="Blue" />
@@ -18,10 +21,46 @@
     <DataTemplate
         x:Key="PointerOnly">
         <Grid
+            Background="LightYellow"
             Margin="8, 0, 0, 0">
             <TextBlock
                 Text="{Binding ., Converter={StaticResource BytesToPointerConverter}}"
                 Foreground="Brown" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate
+        x:Key="ValueArrayOnly">
+        <Grid
+            Background="LightYellow"
+            Margin="8, 0, 0, 0">
+            <ItemsControl
+                ItemsSource="{Binding ., Converter={StaticResource BytesToValueArrayConverter}}">
+                
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border
+                            BorderBrush="#1266a7"
+                            BorderThickness="1">
+                            <Grid
+                                Width="80">
+                                <TextBlock
+                                    Text="{Binding }" 
+                                    HorizontalAlignment="Center"
+                                    TextAlignment="Center"
+                                    />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel
+                            Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
         </Grid>
     </DataTemplate>
 

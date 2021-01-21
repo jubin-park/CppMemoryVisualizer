@@ -72,6 +72,7 @@
     <Compile Include="Models\StackFrame.cs" />
     <Compile Include="ViewModels\CallStackViewModel.cs" />
     <Compile Include="Views\BytesToPointerConverter.cs" />
+    <Compile Include="Views\BytesToValueArrayConverter.cs" />
     <Compile Include="Views\BytesToValueConverter.cs" />
     <Compile Include="Views\MemoryDataTemplateSelector.cs" />
     <Compile Include="Views\UIntToHexadecimalConverter.cs" />
