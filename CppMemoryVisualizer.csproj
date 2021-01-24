@@ -93,7 +93,7 @@
     <Compile Include="Commands\GoCommand.cs" />
     <Compile Include="Commands\StepInCommand.cs" />
     <Compile Include="Commands\StepOverCommand.cs" />
-    <Compile Include="Constants\CdbInstructionSet.cs" />
+    <Compile Include="Constants\GdbInstructionSet.cs" />
     <Compile Include="Views\BreakPointMargin.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
   </ItemGroup>

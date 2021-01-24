@@ -45,8 +45,8 @@ namespace CppMemoryVisualizer.Commands
 
             mMainViewModel.CurrentInstruction = EDebugInstructionState.START_DEBUGGING;
 
-            mMainViewModel.ShutdownCdb();
-            mMainViewModel.ExecuteCdb();
+            mMainViewModel.ShutdownGdb();
+            mMainViewModel.ExecuteGdb();
 
             mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }

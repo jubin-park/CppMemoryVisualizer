@@ -36,62 +36,55 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
+            return mMainViewModel.ProcessGdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
         }
 
         public void Execute(object parameter)
         {
             string fileName = Path.GetFileName(mMainViewModel.SourcePathOrNull);
-            uint SelectedLineNumber = 0;
+            uint selectedLineNumber = 0;
 
             if (parameter is string)
             {
-                Debug.Assert(uint.TryParse((string)parameter, out SelectedLineNumber));
+                Debug.Assert(uint.TryParse((string)parameter, out selectedLineNumber));
             }
             else if (parameter is uint)
             {
-                SelectedLineNumber = (uint)parameter;
+                selectedLineNumber = (uint)parameter;
             }
 
-            Debug.Assert(SelectedLineNumber > 0u);
+            var breakpoints = mMainViewModel.BreakPointList.Indices;
 
-            uint breakpointIndex = mMainViewModel.BreakPointList.Indices[SelectedLineNumber];
-            mMainViewModel.BreakPointList.Clear();
+            Debug.Assert(selectedLineNumber > 0u);
 
-            if (breakpointIndex == uint.MaxValue)
+            if (!breakpoints[(int)selectedLineNumber])
             {
                 mMainViewModel.CurrentInstruction = EDebugInstructionState.ADD_BREAK_POINT;
-                mMainViewModel.RequestInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, SelectedLineNumber),
-                    null, null);
+                mMainViewModel.RequestInstruction(string.Format(GdbInstructionSet.ADD_BREAK_POINT, fileName, selectedLineNumber),
+                    GdbInstructionSet.REQUEST_START_ADD_BREAK_POINT, GdbInstructionSet.REQUEST_END_ADD_BREAK_POINT);
+                mMainViewModel.ReadResultLine(GdbInstructionSet.REQUEST_START_ADD_BREAK_POINT, GdbInstructionSet.REQUEST_END_ADD_BREAK_POINT, (string line) =>
+                {
+                    Regex rx = new Regex(@"line (\d+).$");
+                    Match match = rx.Match(line);
+
+                    if (match.Success)
+                    {
+                        uint realLineNumber = 0;
+                        Debug.Assert(uint.TryParse(match.Groups[1].Value, out realLineNumber));
+                        Debug.Assert(realLineNumber > 0);
+
+                        ++mMainViewModel.BreakPointList.Count;
+                        breakpoints[(int)realLineNumber] = true;
+                    }
+                });
             }
             else
             {
                 mMainViewModel.CurrentInstruction = EDebugInstructionState.REMOVE_BREAK_POINT;
-                mMainViewModel.RequestInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT, breakpointIndex),
+                mMainViewModel.RequestInstruction(string.Format(GdbInstructionSet.REMOVE_BREAK_POINT, fileName, selectedLineNumber),
                     null, null);
+                breakpoints[(int)selectedLineNumber] = false;
             }
-
-            mMainViewModel.RequestInstruction(CdbInstructionSet.DISPLAY_BREAK_POINT_LIST,
-                CdbInstructionSet.REQUEST_START_DISPLAY_BREAK_POINT_LIST, CdbInstructionSet.REQUEST_END_DISPLAY_BREAK_POINT_LIST);
-            mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_DISPLAY_BREAK_POINT_LIST, CdbInstructionSet.REQUEST_END_DISPLAY_BREAK_POINT_LIST, (string line) =>
-            {
-                Regex rx = new Regex(@"^\s?(\d+)\se\s[0-9a-f]{8}\s\[(.+|:|\\)\s@\s(\d+)\]");
-                Match match = rx.Match(line);
-
-                if (match.Success)
-                {
-                    uint bpIndex = uint.MaxValue;
-                    Debug.Assert(uint.TryParse(match.Groups[1].Value, out bpIndex));
-                    Debug.Assert(bpIndex < uint.MaxValue);
-
-                    uint realLineNumber = 0;
-                    Debug.Assert(uint.TryParse(match.Groups[3].Value, out realLineNumber));
-                    Debug.Assert(realLineNumber > 0);
-
-                    ++mMainViewModel.BreakPointList.Count;
-                    mMainViewModel.BreakPointList.Indices[realLineNumber] = bpIndex;
-                }
-            });
 
             mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }

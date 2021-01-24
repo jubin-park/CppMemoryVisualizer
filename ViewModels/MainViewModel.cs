@@ -30,17 +30,17 @@ namespace CppMemoryVisualizer.ViewModels
         public ICommand StepInCommand { get; }
         public ICommand AddOrRemoveBreakPointCommand { get; }
 
-        private Process mProcessCdbOrNull;
-        public Process ProcessCdbOrNull
+        private Process mProcessGdbOrNull;
+        public Process ProcessGdbOrNull
         {
             get
             {
-                return mProcessCdbOrNull;
+                return mProcessGdbOrNull;
             }
             set
             {
-                mProcessCdbOrNull = value;
-                OnPropertyChanged("ProcessCdbOrNull");
+                mProcessGdbOrNull = value;
+                OnPropertyChanged("ProcessGdbOrNull");
             }
         }
 
@@ -174,116 +174,78 @@ namespace CppMemoryVisualizer.ViewModels
             AddOrRemoveBreakPointCommand = new AddOrRemoveBreakPointCommand(this);
         }
 
-        public void ExecuteCdb()
+        public void ExecuteGdb()
         {
             string dirPath = Path.GetDirectoryName(mSourcePathOrNull);
-            string fileName = Path.GetFileName(mSourcePathOrNull);
             string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
 
-            App app = Application.Current as App;
+            ProcessGdbOrNull = new Process();
 
             ProcessStartInfo processInfo = new ProcessStartInfo();
-            processInfo.FileName = app.CdbPath;
+            processInfo.FileName = "gdb";
             processInfo.WorkingDirectory = dirPath;
-            processInfo.Arguments = $"-o {fileNameOnly}.exe -y {fileNameOnly}.pdb -srcpath {fileName}";
+            processInfo.Arguments = $"{fileNameOnly}.exe";
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             processInfo.RedirectStandardInput = true;
             processInfo.RedirectStandardOutput = true;
-            processInfo.RedirectStandardError = true;
+            processInfo.RedirectStandardError = false;
+            ProcessGdbOrNull.StartInfo = processInfo;
 
-            ProcessCdbOrNull = new Process();
-            mProcessCdbOrNull.StartInfo = processInfo;
             Log = string.Empty;
 
-            mProcessCdbOrNull.Start();
+            mProcessGdbOrNull.Start();
 
             CurrentInstruction = EDebugInstructionState.INITIALIZING;
             LinePointer = 0;
             CallStackViewModel = new CallStackViewModel();
             mPureTypeManagerOrNull = new PureTypeManager();
 
-            #region Initialize options
-            {
-                RequestInstruction(CdbInstructionSet.CPP_EXPRESSION_EVALUATOR,
-                    CdbInstructionSet.REQUEST_START_INIT, null);
-                RequestInstruction(CdbInstructionSet.ENABLE_SOURCE_LINE_SUPPORT,
-                    null, null);
-                RequestInstruction(CdbInstructionSet.SET_SOURCE_OPTIONS,
-                    null, null);
-                RequestInstruction(CdbInstructionSet.SET_DEBUG_SETTINGS_SKIP_CRT_CODE,
-                    null, null);
-            }
-            #endregion
-
             #region set main breakpoint
             {
-                // Set breakpoint in main
-                RequestInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_MAIN, fileNameOnly),
-                    null, CdbInstructionSet.REQUEST_END_INIT);
-                ReadResultLine(CdbInstructionSet.REQUEST_START_INIT, CdbInstructionSet.REQUEST_END_INIT, (string line) =>
-                {
-                    Debug.WriteLine(line);
-                });
-
-                // Go
-                RequestInstruction(CdbInstructionSet.GO,
-                    CdbInstructionSet.REQUEST_START_GO_COMMAND, CdbInstructionSet.REQUEST_END_GO_COMMAND);
-                ReadResultLine(CdbInstructionSet.REQUEST_START_GO_COMMAND, CdbInstructionSet.REQUEST_END_GO_COMMAND,
-                    ActionLinePointer);
-
-                // Remove breakpoint
-                RequestInstruction(string.Format(CdbInstructionSet.CLEAR_BREAK_POINT_MAIN, fileNameOnly),
-                    CdbInstructionSet.REQUEST_START_INIT, CdbInstructionSet.REQUEST_END_INIT);
-                ReadResultLine(CdbInstructionSet.REQUEST_START_INIT, CdbInstructionSet.REQUEST_END_INIT, (string line) =>
-                {
-                    Debug.WriteLine(line);
-                });
-
-                // reload breakpoint
-                for (int i = 1; i < BreakPointList.Indices.Length; ++i)
-                {
-                    if (BreakPointList.Indices[i] != uint.MaxValue)
-                    {
-                        RequestInstruction(string.Format(CdbInstructionSet.SET_BREAK_POINT_SOURCE_LEVEL, fileName, i),
-                            null, null);
-                    }
-                }
+                RequestInstruction("set pagination off",
+                    null, null);
+                RequestInstruction(GdbInstructionSet.SKIP_STL_CONSTRUCTOR_DESTRUCTOR,
+                    null, null);
+                RequestInstruction(GdbInstructionSet.SET_BREAK_POINT_MAIN,
+                    null, null);
+                RequestInstruction(GdbInstructionSet.RUN,
+                    GdbInstructionSet.REQUEST_START_INIT, GdbInstructionSet.REQUEST_END_INIT);
+                ReadResultLine(GdbInstructionSet.REQUEST_START_INIT, GdbInstructionSet.REQUEST_END_INIT, ActionLinePointer);
+                RequestInstruction(GdbInstructionSet.CLEAR_ALL_BREAK_POINTS,
+                    null, null);
             }
             #endregion
 
-            Update();
+            UpdateGdb();
 
             CurrentInstruction = EDebugInstructionState.STANDBY;
         }
 
-        public void ShutdownCdb()
+        public void ShutdownGdb()
         {
-            if (mProcessCdbOrNull != null)
+            if (mProcessGdbOrNull != null)
             {
                 CurrentInstruction = EDebugInstructionState.DEAD;
-                RequestInstruction(CdbInstructionSet.QUIT,
+                RequestInstruction(GdbInstructionSet.QUIT,
                     null, null);
-                ProcessCdbOrNull = null;
+                ProcessGdbOrNull = null;
             }
         }
 
         public void RequestInstruction(string instructionOrNull, string startOrNull, string endOrNull)
         {
-            if (mProcessCdbOrNull != null)
+            if (startOrNull != null)
             {
-                if (startOrNull != null)
-                {
-                    mProcessCdbOrNull.StandardInput.WriteLine(string.Format(CdbInstructionSet.ECHO, startOrNull));
-                }
-                if (instructionOrNull != null)
-                {
-                    mProcessCdbOrNull.StandardInput.WriteLine(instructionOrNull);
-                }
-                if (endOrNull != null)
-                {
-                    mProcessCdbOrNull.StandardInput.WriteLine(string.Format(CdbInstructionSet.ECHO, endOrNull));
-                }
+                mProcessGdbOrNull.StandardInput.WriteLine(string.Format(GdbInstructionSet.PRINTF, startOrNull));
+            }
+            if (instructionOrNull != null)
+            {
+                mProcessGdbOrNull.StandardInput.WriteLine(instructionOrNull);
+            }
+            if (endOrNull != null)
+            {
+                mProcessGdbOrNull.StandardInput.WriteLine(string.Format(GdbInstructionSet.PRINTF, endOrNull));
             }
         }
 
@@ -296,12 +258,12 @@ namespace CppMemoryVisualizer.ViewModels
 
             do
             {
-                line = mProcessCdbOrNull.StandardOutput.ReadLine();
+                line = mProcessGdbOrNull.StandardOutput.ReadLine();
                 {
-                    int lastIndex = line.LastIndexOf(CdbInstructionSet.OUTPUT_HEADER);
+                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
                     if (lastIndex != -1)
                     {
-                        line = line.Substring(lastIndex + CdbInstructionSet.OUTPUT_HEADER.Length);
+                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
                     }
                     if (line.Length == 0)
                     {
@@ -316,12 +278,12 @@ namespace CppMemoryVisualizer.ViewModels
 
             while (true)
             {
-                line = mProcessCdbOrNull.StandardOutput.ReadLine();
+                line = mProcessGdbOrNull.StandardOutput.ReadLine();
                 {
-                    int lastIndex = line.LastIndexOf(CdbInstructionSet.OUTPUT_HEADER);
+                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
                     if (lastIndex != -1)
                     {
-                        line = line.Substring(lastIndex + CdbInstructionSet.OUTPUT_HEADER.Length);
+                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
                     }
                     if (line.Length == 0)
                     {
@@ -343,6 +305,28 @@ namespace CppMemoryVisualizer.ViewModels
             } 
         }
 
+        public void UpdateGdb()
+        {
+            {
+                mCallStackViewModel.CallStack.Clear();
+
+                Regex rx = new Regex(@"(\w+)\s\((.*)\)\sat");
+
+                RequestInstruction(GdbInstructionSet.DISPLAY_STACK_BACKTRACE,
+                    GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK);
+                ReadResultLine(GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK, (string line) =>
+                {
+                    Match match = rx.Match(line);
+
+                    if (match.Success)
+                    {
+                        string functionName = match.Groups[1].Value;
+                        string[] parameters = match.Groups[2].Value.Split(',');
+                    }
+                });
+            }
+        }
+
         public void Update()
         {
             #region Get StackTrace
@@ -352,9 +336,9 @@ namespace CppMemoryVisualizer.ViewModels
                 string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
                 Regex rx = new Regex(@"^\d+\s([0-9a-f]{8})\s([0-9a-f]{8})\s" + fileNameOnly + @"!(.*)\s\[(.*)\s@\s(\d+)\]");
 
-                RequestInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE,
-                    CdbInstructionSet.REQUEST_START_GET_CALL_STACK, CdbInstructionSet.REQUEST_END_GET_CALL_STACK);
-                ReadResultLine(CdbInstructionSet.REQUEST_START_GET_CALL_STACK, CdbInstructionSet.REQUEST_END_GET_CALL_STACK, (string line) => 
+                RequestInstruction(GdbInstructionSet.DISPLAY_STACK_BACKTRACE,
+                    GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK);
+                ReadResultLine(GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK, (string line) => 
                 {
                     Match match = rx.Match(line);
 
@@ -385,7 +369,7 @@ namespace CppMemoryVisualizer.ViewModels
             if (mCallStackViewModel.CallStack.IsEmpty())
             {
                 LinePointer = 0;
-                ShutdownCdb();
+                ShutdownGdb();
 
                 return;
             }
@@ -396,9 +380,9 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 bool isFailed = false;
 
-                RequestInstruction(CdbInstructionSet.DISPLAY_LOCAL_VARIABLE,
-                    CdbInstructionSet.REQUEST_START_GET_LOCAL_VARS, CdbInstructionSet.REQUEST_END_GET_LOCAL_VARS);
-                ReadResultLine(CdbInstructionSet.REQUEST_START_GET_LOCAL_VARS, CdbInstructionSet.REQUEST_END_GET_LOCAL_VARS, (string line) =>
+                RequestInstruction(GdbInstructionSet.DISPLAY_LOCAL_VARIABLE,
+                    GdbInstructionSet.REQUEST_START_GET_LOCAL_VARS, GdbInstructionSet.REQUEST_END_GET_LOCAL_VARS);
+                ReadResultLine(GdbInstructionSet.REQUEST_START_GET_LOCAL_VARS, GdbInstructionSet.REQUEST_END_GET_LOCAL_VARS, (string line) =>
                 {
                     if (!stackFrame.IsInitialized)
                     {
@@ -561,9 +545,9 @@ namespace CppMemoryVisualizer.ViewModels
                 {
                     LocalVariable local = stackFrame.GetLocalVariableOrNull(name);
 
-                    RequestInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, name),
-                        CdbInstructionSet.REQUEST_START_SIZEOF + ' ' + name, CdbInstructionSet.REQUEST_END_SIZEOF);
-                    ReadResultLine(CdbInstructionSet.REQUEST_START_SIZEOF, CdbInstructionSet.REQUEST_END_SIZEOF, (string line) =>
+                    RequestInstruction(string.Format(GdbInstructionSet.EVALUATE_SIZEOF, name),
+                        GdbInstructionSet.REQUEST_START_SIZEOF + ' ' + name, GdbInstructionSet.REQUEST_END_SIZEOF);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_SIZEOF, GdbInstructionSet.REQUEST_END_SIZEOF, (string line) =>
                     {
                         int lastIndex = line.LastIndexOf(' ');
                         Debug.Assert(lastIndex >= 0);
@@ -612,9 +596,9 @@ namespace CppMemoryVisualizer.ViewModels
                     TypeInfo pure = new TypeInfo();
                     pure.PureName = pureName;
                     
-                    RequestInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, pureName),
-                        CdbInstructionSet.REQUEST_START_SIZEOF + ' ' + pureName, CdbInstructionSet.REQUEST_END_SIZEOF);
-                    ReadResultLine(CdbInstructionSet.REQUEST_START_SIZEOF, CdbInstructionSet.REQUEST_END_SIZEOF, (string innerLine) =>
+                    RequestInstruction(string.Format(GdbInstructionSet.EVALUATE_SIZEOF, pureName),
+                        GdbInstructionSet.REQUEST_START_SIZEOF + ' ' + pureName, GdbInstructionSet.REQUEST_END_SIZEOF);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_SIZEOF, GdbInstructionSet.REQUEST_END_SIZEOF, (string innerLine) =>
                     {
                         int lastIndex = innerLine.LastIndexOf(' ');
                         Debug.Assert(lastIndex >= 0);
@@ -635,9 +619,9 @@ namespace CppMemoryVisualizer.ViewModels
                         pure.Size = size;
                     });
 
-                    RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_TYPE, pureName),
-                        CdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureName, CdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
-                    ReadResultLine(CdbInstructionSet.REQUEST_START_DISPLAY_TYPE, CdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE, pureName),
+                        GdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureName, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
                     {
                         Regex rx = new Regex(@"^\+0x([0-9a-f]+)\s(\w+)\s+:\s(Ptr32|[\[\d+\]]+\s\w+$|\w+$)");
                         Match match = rx.Match(line);
@@ -708,9 +692,9 @@ namespace CppMemoryVisualizer.ViewModels
                         TypeInfo pure = new TypeInfo();
                         pure.PureName = pureName;
 
-                        RequestInstruction(string.Format(CdbInstructionSet.EVALUATE_SIZEOF, pureName),
-                            CdbInstructionSet.REQUEST_START_SIZEOF + ' ' + pureName, CdbInstructionSet.REQUEST_END_SIZEOF);
-                        ReadResultLine(CdbInstructionSet.REQUEST_START_SIZEOF, CdbInstructionSet.REQUEST_END_SIZEOF, (string innerLine) =>
+                        RequestInstruction(string.Format(GdbInstructionSet.EVALUATE_SIZEOF, pureName),
+                            GdbInstructionSet.REQUEST_START_SIZEOF + ' ' + pureName, GdbInstructionSet.REQUEST_END_SIZEOF);
+                        ReadResultLine(GdbInstructionSet.REQUEST_START_SIZEOF, GdbInstructionSet.REQUEST_END_SIZEOF, (string innerLine) =>
                         {
                             int lastIndex = innerLine.LastIndexOf(' ');
                             Debug.Assert(lastIndex >= 0);
@@ -731,9 +715,9 @@ namespace CppMemoryVisualizer.ViewModels
                             pure.Size = size;
                         });
 
-                        RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_TYPE, pureName),
-                            CdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureName, CdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
-                        ReadResultLine(CdbInstructionSet.REQUEST_START_DISPLAY_TYPE, CdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE, pureName),
+                            GdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureName, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
                         {
                             Regex rx = new Regex(@"^\+0x([0-9a-f]+)\s(\w+)\s+:\s(Ptr32|[\[\d+\]]+\s\w+$|\w+$)");
                             Match match = rx.Match(line);
@@ -803,9 +787,9 @@ namespace CppMemoryVisualizer.ViewModels
                 foreach (var name in stackFrame.LocalVariableNames)
                 {
                     LocalVariable local = stackFrame.GetLocalVariableOrNull(name);
-                    RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_MEMORY, local.StackMemory.ByteValues.Length / 4, "0x" + local.StackMemory.Address.ToString("X")),
-                        CdbInstructionSet.REQUEST_START_DISPLAY_MEMORY + ' ' + name, CdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
-                    ReadResultLine(CdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, CdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, local.StackMemory.ByteValues.Length / 4, "0x" + local.StackMemory.Address.ToString("X")),
+                        GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY + ' ' + name, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
                     {
                         local.StackMemory.SetValue(line);
                     });
@@ -823,9 +807,9 @@ namespace CppMemoryVisualizer.ViewModels
                         byte[] byteValues = local.StackMemory.ByteValues;
                         uint wordValue = ((uint)byteValues[0] << 24) | ((uint)byteValues[1] << 16) | ((uint)byteValues[2] << 8) | (uint)byteValues[3];
 
-                        RequestInstruction(string.Format(CdbInstructionSet.DISPLAY_HEAP, wordValue.ToString("X")),
-                            CdbInstructionSet.REQUEST_START_HEAP + ' ' + name, CdbInstructionSet.REQUEST_END_HEAP);
-                        ReadResultLine(CdbInstructionSet.REQUEST_START_HEAP, CdbInstructionSet.REQUEST_END_HEAP, (string line) =>
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_HEAP, wordValue.ToString("X")),
+                            GdbInstructionSet.REQUEST_START_HEAP + ' ' + name, GdbInstructionSet.REQUEST_END_HEAP);
+                        ReadResultLine(GdbInstructionSet.REQUEST_START_HEAP, GdbInstructionSet.REQUEST_END_HEAP, (string line) =>
                         {
                             Regex rx = new Regex(@"^([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s+([0-9a-f]+)\s+([0-9a-f]+)\s+([0-9a-f]+)\s+(busy)\s$");
                             Match match = rx.Match(line);
@@ -874,7 +858,7 @@ namespace CppMemoryVisualizer.ViewModels
 
         public void ActionLinePointer(string line)
         {
-            Regex rx = new Regex(@"^>\s*(\d*):\s(.+)$");
+            Regex rx = new Regex(@"^(\d+)\t(.*)");
             Match match = rx.Match(line);
 
             if (match.Success)

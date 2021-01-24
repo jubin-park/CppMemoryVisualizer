@@ -15,103 +15,55 @@ namespace CppMemoryVisualizer
     {
         public static string WINDOW_TITLE = "C++ Memory Visualizer";
 
-        private string mVsPathOrNull;
-        public string VsPath
+        protected override void OnStartup(StartupEventArgs e)
         {
-            get
-            {
-                return mVsPathOrNull;
-            }
-        }
+            base.OnStartup(e);
 
-        private string mCdbPathOrNull;
-        public string CdbPath
-        {
-            get
+            List<string> shouldInstallPackageNames = new List<string>();
+            string[] programNames = { "gcc", "gdb" };
+            foreach (var name in programNames)
             {
-                return mCdbPathOrNull;
-            }
-        }
-
-        public App()
-        {
-            {
-                Debug.Write("Loading vswhere.exe ... ");
-
                 Process process = new Process();
                 ProcessStartInfo processInfo = new ProcessStartInfo();
 
-                processInfo.FileName = "vswhere.exe";
+                processInfo.FileName = name;
                 processInfo.CreateNoWindow = true;
                 processInfo.UseShellExecute = false;
-                processInfo.RedirectStandardOutput = true;
 
                 process.StartInfo = processInfo;
-                process.Start();
 
-                string propertyName = "installationPath: ";
-                string line;
-                while ((line = process.StandardOutput.ReadLine()) != null)
+                try
                 {
-                    if (line.Contains(propertyName))
-                    {
-                        mVsPathOrNull = line.Substring(propertyName.Length);
-                        break;
-                    }
+                    Debug.Write($"Loading {name} ... ");
+                    process.Start();
+                    process.Close();
+                    Debug.WriteLine("SUCCESS");
                 }
-                if (mVsPathOrNull == null)
+                catch (System.ComponentModel.Win32Exception)
                 {
-                    if (MessageBoxResult.Yes == MessageBox.Show("Visual Studio가 설치되지 않았습니다. 다운로드 페이지로 이동하시겠습니까?", App.WINDOW_TITLE, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No))
-                    {
-                        Process.Start("https://visualstudio.microsoft.com/ko/vs/older-downloads/");
-                    }
-
-                    process.WaitForExit();
-                    Current.Shutdown();
+                    shouldInstallPackageNames.Add(name);
+                    Debug.WriteLine("FAILED");
                 }
-
-                process.WaitForExit();
-                process.Close();
-
-                Debug.WriteLine("SUCCESS");
             }
 
+            if (shouldInstallPackageNames.Count > 0)
             {
-                Debug.Write("Loading cdb.exe ... ");
-
-                RegistryKey regKeyOrNull = Environment.Is64BitOperatingSystem ?
-                    Registry.LocalMachine.OpenSubKey("SOFTWARE\\WOW6432Node\\Microsoft\\Windows Kits\\Installed Roots", false) :
-                    Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots", false);
-
-                if (regKeyOrNull == null)
+                string msg = string.Format("아래 {0}개의 GNU 패키지가 설치되지 않았습니다.{1}msys2 설치 및 설정 후, 아래의 패키지를 설치하십시오.", shouldInstallPackageNames.Count, Environment.NewLine);
+                msg += Environment.NewLine;
+                msg += Environment.NewLine;
+                foreach (var name in shouldInstallPackageNames)
                 {
-                    if (MessageBoxResult.Yes == MessageBox.Show("WinDbg 가 설치되지 않았습니다. Windows 10 SDK 다운로드 페이지로 이동하시겠습니까?", App.WINDOW_TITLE, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No))
-                    {
-                        Process.Start("https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk/");
-                    }
+                    msg += "- " + name + Environment.NewLine;
+                }
+                msg += Environment.NewLine;
+                msg += "msys2 다운로드 페이지로 이동하시겠습니까?";
 
-                    Current.Shutdown();
+                if (MessageBoxResult.Yes == MessageBox.Show(msg, WINDOW_TITLE, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No))
+                {
+                    Process.Start("https://www.msys2.org/");
                 }
 
-                object valueOrNull = regKeyOrNull.GetValue("KitsRoot10");
-                if (valueOrNull == null)
-                {
-                    MessageBox.Show("레지스트리 KitsRoot10 키가 존재하지 않습니다.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
-
-                    Current.Shutdown();
-                }
-                else
-                {
-                    mCdbPathOrNull = System.IO.Path.Combine(valueOrNull.ToString(), "Debuggers\\x86\\cdb.exe");
-                    if (!File.Exists(mCdbPathOrNull))
-                    {
-                        MessageBox.Show(string.Format("`{0}' 파일이 존재하지 않습니다.", mCdbPathOrNull), App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
-
-                        Current.Shutdown();
-                    }
-                }
-
-                Debug.WriteLine("SUCCESS");
+                Current.Shutdown();
             }
         }
     }

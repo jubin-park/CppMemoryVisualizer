@@ -51,17 +51,14 @@ namespace CppMemoryVisualizer.Views
 
             if (breakPointInfoOrNull != null && textView != null && textView.VisualLinesValid)
             {
-                if (breakPointInfoOrNull.IsUpdatable())
+                foreach (VisualLine line in textView.VisualLines)
                 {
-                    foreach (VisualLine line in textView.VisualLines)
-                    {
-                        int lineNumber = line.FirstDocumentLine.LineNumber;
-                        double y = line.GetTextLineVisualYPosition(line.TextLines[0], VisualYPosition.TextTop);
+                    int lineNumber = line.FirstDocumentLine.LineNumber;
+                    double y = line.GetTextLineVisualYPosition(line.TextLines[0], VisualYPosition.TextTop);
 
-                        if (breakPointInfoOrNull.Indices[lineNumber] != uint.MaxValue)
-                        {
-                            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(7, 3 + y - textView.VerticalOffset, 9, 9));
-                        }
+                    if (breakPointInfoOrNull.Indices[lineNumber])
+                    {
+                        drawingContext.DrawRectangle(Brushes.Red, null, new Rect(7, 3 + y - textView.VerticalOffset, 9, 9));
                     }
                 }
 

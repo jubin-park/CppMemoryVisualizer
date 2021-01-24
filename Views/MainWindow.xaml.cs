@@ -37,7 +37,7 @@ namespace CppMemoryVisualizer.Views
 
         private void OnWindowClosing(object sender, CancelEventArgs e)
         {
-            mMainViewModel.ShutdownCdb();
+            mMainViewModel.ShutdownGdb();
         }
 
         private void xTextBoxLog_TextChanged(object sender, TextChangedEventArgs e)
@@ -51,8 +51,8 @@ namespace CppMemoryVisualizer.Views
             if (e.Key == Key.Return && xTextBoxInput.Text.Length > 0)
             {
                 mMainViewModel.RequestInstruction(xTextBoxInput.Text,
-                    CdbInstructionSet.REQUEST_START_CONSOLE, CdbInstructionSet.REQUEST_END_CONSOLE);
-                mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_CONSOLE, CdbInstructionSet.REQUEST_END_CONSOLE, null);
+                    GdbInstructionSet.REQUEST_START_CONSOLE, GdbInstructionSet.REQUEST_END_CONSOLE);
+                mMainViewModel.ReadResultLine(GdbInstructionSet.REQUEST_START_CONSOLE, GdbInstructionSet.REQUEST_END_CONSOLE, null);
 
                 xTextBoxInput.Text = string.Empty;
             }

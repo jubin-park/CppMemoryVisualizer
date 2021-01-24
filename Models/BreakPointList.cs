@@ -4,13 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Collections;
 
 namespace CppMemoryVisualizer.Models
 {
     sealed class BreakPointList
     {
-        private uint[] mIndices;
-        public uint[] Indices
+        private BitArray mIndices;
+        public BitArray Indices
         {
             get
             {
@@ -18,26 +19,16 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
+        private uint mCount;
         public uint Count
         {
             get
             {
-                return mIndices[0];
+                return mCount;
             }
             set
             {
-                Debug.Assert(mIndices != null);
-
-                mIndices[0] = value;
-            }
-        }
-
-        private uint mOldCount;
-        public uint OldCount
-        {
-            get
-            {
-                return mOldCount;
+                mCount = value;
             }
         }
 
@@ -54,24 +45,7 @@ namespace CppMemoryVisualizer.Models
         {
             Debug.Assert(capacity > 0);
 
-            mIndices = new uint[capacity];
-            Clear();
-        }
-
-        public void Clear()
-        {
-            mOldCount = Count;
-            Count = 0;
-
-            for (int i = 1; i < mIndices.Length; ++i)
-            {
-                mIndices[i] = uint.MaxValue;
-            }
-        }
-
-        public bool IsUpdatable()
-        {
-            return Count + 1 >= OldCount && Count <= OldCount + 1;
+            mIndices = new BitArray((int)capacity);
         }
     }
 }

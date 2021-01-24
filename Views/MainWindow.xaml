@@ -150,7 +150,7 @@
                 Path="SourcePathOrNull"
                 Mode="OneWay" />
             <Binding
-                Path="ProcessCdbOrNull"
+                Path="ProcessGdbOrNull"
                 Mode="OneWay" />
             <Binding
                 Path="CurrentInstruction"
