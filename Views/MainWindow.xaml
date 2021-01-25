@@ -10,7 +10,6 @@
     xmlns:v="clr-namespace:CppMemoryVisualizer.Views"
     xmlns:m="clr-namespace:CppMemoryVisualizer.Models"
     xmlns:enum="clr-namespace:CppMemoryVisualizer.Enums"
-    xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
     mc:Ignorable="d"
     Height="600"
     Width="800"

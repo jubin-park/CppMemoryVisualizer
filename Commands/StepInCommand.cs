@@ -83,6 +83,8 @@ namespace CppMemoryVisualizer.Commands
                     mMainViewModel.ActionLinePointer);
             }
 
+            mMainViewModel.UpdateGdb();
+
             mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }
     }

@@ -27,6 +27,9 @@ namespace CppMemoryVisualizer.Constants
         public static readonly string SET_BREAK_POINT_MAIN = "b main";
         public static readonly string CLEAR_ALL_BREAK_POINTS = "delete";
 
+        public static readonly string DISPLAY_INFO_FRAME = "info frame {0}"; // index
+        public static readonly string DISPLAY_INFO_SYMBOL = "info symbol {0}"; // 0xADDRESS | <name>
+
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-address
         public static readonly string DISPLAY_ADDRESS = "!address {0}";
 
@@ -62,6 +65,12 @@ namespace CppMemoryVisualizer.Constants
 
         public static readonly string REQUEST_START_GET_CALL_STACK = "@S=GET_CALL_STACK";
         public static readonly string REQUEST_END_GET_CALL_STACK = "@E=GET_CALL_STACK";
+
+        public static readonly string REQUEST_START_GET_INFO_FRAME = "@S=GET_INFO_FRAME";
+        public static readonly string REQUEST_END_GET_INFO_FRAME = "@E=GET_INFO_FRAME";
+
+        public static readonly string REQUEST_START_GET_INFO_SYMBOL = "@S=GET_INFO_SYMBOL";
+        public static readonly string REQUEST_END_GET_INFO_SYMBOL = "@E=GET_INFO_SYMBOL";
 
         public static readonly string REQUEST_START_GET_LOCAL_VARS = "@S=GET_LOCAL_VARS";
         public static readonly string REQUEST_END_GET_LOCAL_VARS = "@E=GET_LOCAL_VARS";

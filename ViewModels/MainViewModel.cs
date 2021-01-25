@@ -307,73 +307,111 @@ namespace CppMemoryVisualizer.ViewModels
 
         public void UpdateGdb()
         {
-            {
-                mCallStackViewModel.CallStack.Clear();
-
-                Regex rx = new Regex(@"(\w+)\s\((.*)\)\sat");
-
-                RequestInstruction(GdbInstructionSet.DISPLAY_STACK_BACKTRACE,
-                    GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK);
-                ReadResultLine(GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK, (string line) =>
-                {
-                    Match match = rx.Match(line);
-
-                    if (match.Success)
-                    {
-                        string functionName = match.Groups[1].Value;
-                        string[] parameters = match.Groups[2].Value.Split(',');
-                    }
-                });
-            }
-        }
-
-        public void Update()
-        {
             #region Get StackTrace
             {
                 mCallStackViewModel.CallStack.Clear();
 
-                string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
-                Regex rx = new Regex(@"^\d+\s([0-9a-f]{8})\s([0-9a-f]{8})\s" + fileNameOnly + @"!(.*)\s\[(.*)\s@\s(\d+)\]");
-
+                uint frameCount = 0;
                 RequestInstruction(GdbInstructionSet.DISPLAY_STACK_BACKTRACE,
                     GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK);
-                ReadResultLine(GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK, (string line) => 
+                ReadResultLine(GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK, (string line) =>
                 {
-                    Match match = rx.Match(line);
-
-                    if (match.Success)
-                    {
-                        string stackAddressHex = match.Groups[1].Value;
-                        string functionAddressHex = match.Groups[2].Value;
-                        string name = match.Groups[3].Value;
-                        string path = match.Groups[4].Value;
-                        //string line = match.Groups[5].Value;
-
-                        if (path == mSourcePathOrNull)
-                        {
-                            uint stackAddress = 0;
-                            Debug.Assert(uint.TryParse(stackAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out stackAddress));
-
-                            uint functionAddress = 0;
-                            Debug.Assert(uint.TryParse(functionAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out functionAddress));
-
-                            Debug.WriteLine("Stack addr: {0}, Function addr: {1}, name: {2}", stackAddress, functionAddress, name);
-                            mCallStackViewModel.CallStack.Push(stackAddress, functionAddress, name);
-                        }
-                    }
+                    ++frameCount;
                 });
+
+                Regex regexFrameAddress = new Regex(@"^Stack frame at 0x([a-z0-9]+):$");
+                Regex regexFunctionWithOffsetAddress = new Regex(@"^\seip\s=\s0x([a-z0-9]+)\sin\s");
+
+                Regex regexFunctionSignature = new Regex(@"^((.*)\s\+\s(\d+)|(.*))\sin\ssection\s");
+
+                for (uint i = 0; i < frameCount; ++i)
+                {
+                    string stackAddressHex = null;
+                    string functionWithOffsetAddressHex = null;
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_INFO_FRAME, i),
+                        GdbInstructionSet.REQUEST_START_GET_INFO_FRAME, GdbInstructionSet.REQUEST_END_GET_INFO_FRAME);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_GET_INFO_FRAME, GdbInstructionSet.REQUEST_END_GET_INFO_FRAME, (string line) =>
+                    {
+                        {
+                            Match match = regexFrameAddress.Match(line);
+                            if (match.Success)
+                            {
+                                stackAddressHex = match.Groups[1].Value;
+                            }
+                        }
+
+                        {
+                            Match match = regexFunctionWithOffsetAddress.Match(line);
+                            if (match.Success)
+                            {
+                                functionWithOffsetAddressHex = match.Groups[1].Value;
+                            }
+                        }
+                    });
+
+                    Debug.Assert(stackAddressHex != null);
+                    Debug.Assert(functionWithOffsetAddressHex != null);
+
+                    uint stackAddress;
+                    Debug.Assert(uint.TryParse(stackAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out stackAddress));
+
+                    uint functionAddress; // may have offset
+                    Debug.Assert(uint.TryParse(functionWithOffsetAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out functionAddress));
+
+                    string functionName = null;
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_INFO_SYMBOL, "0x" + functionWithOffsetAddressHex),
+                        GdbInstructionSet.REQUEST_START_GET_INFO_SYMBOL, GdbInstructionSet.REQUEST_END_GET_INFO_SYMBOL);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_GET_INFO_SYMBOL, GdbInstructionSet.REQUEST_END_GET_INFO_SYMBOL, (string line) =>
+                    {
+                        Match match = regexFunctionSignature.Match(line);
+                        if (match.Success)
+                        {
+                            // no offset
+                            string signature = match.Groups[4].Value;
+                            uint offset = 0;
+
+                            // has offset
+                            if (signature.Length == 0)
+                            {
+                                signature = match.Groups[2].Value;
+                                Debug.Assert(uint.TryParse(match.Groups[3].Value, out offset));
+                                functionAddress -= offset;
+                            }
+
+                            int nameLen = signature.IndexOf('(');
+                            if (nameLen > 0)
+                            {
+                                functionName = signature.Substring(0, nameLen);
+                            }
+                            else
+                            {
+                                functionName = signature;
+                            }
+                        }
+                    });
+
+                    Debug.Assert(functionName != null);
+
+                    Debug.WriteLine("Stack addr: {0}, Function addr: {1}, name: {2}", stackAddress, functionAddress, functionName);
+                    mCallStackViewModel.CallStack.Push(stackAddress, functionAddress, functionName);
+                }
+
+                if (mCallStackViewModel.CallStack.IsEmpty())
+                {
+                    LinePointer = 0;
+                    ShutdownGdb();
+
+                    return;
+                }
             }
             #endregion
 
-            if (mCallStackViewModel.CallStack.IsEmpty())
-            {
-                LinePointer = 0;
-                ShutdownGdb();
 
-                return;
-            }
+        }
 
+        public void Update()
+        {
+            
             Models.StackFrame stackFrame = mCallStackViewModel.CallStack.GetStackFrame(mCallStackViewModel.CallStack.Top());
 
             #region Get Local Variable Info

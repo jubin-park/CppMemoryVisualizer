@@ -62,6 +62,8 @@ namespace CppMemoryVisualizer.Commands
             thread.Join();
             */
 
+            mMainViewModel.UpdateGdb();
+
             mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }
     }

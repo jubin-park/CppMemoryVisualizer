@@ -16,7 +16,7 @@ namespace CppMemoryVisualizer.Models
         private Dictionary<ulong, StackFrame> mStackFrames = new Dictionary<ulong, StackFrame>();
 
         // https://stackoverflow.com/questions/21976979/mvvm-model-with-collections-use-or-not-observablecollection-in-model
-        private List<StackFrame> mStack;
+        private List<StackFrame> mStack = new List<StackFrame>(8);
         public List<StackFrame> Stack
         {
             get
@@ -33,8 +33,7 @@ namespace CppMemoryVisualizer.Models
         public void Clear()
         {
             mKeys.Clear();
-            int capacity = (mStack == null ? 8 : mStack.Count);
-            Stack = new List<StackFrame>(capacity);
+            Stack = new List<StackFrame>(mStack.Count);
         }
 
         public void Push(uint stackAddress, uint functionAddress, string functionName)
