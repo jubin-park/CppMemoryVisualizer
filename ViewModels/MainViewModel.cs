@@ -477,7 +477,7 @@ namespace CppMemoryVisualizer.ViewModels
                             local.StackMemory.ByteValues = new byte[wordSize * 4];
                         });
 
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE, name),
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE_NAME, name),
                             GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
                         {
@@ -485,14 +485,125 @@ namespace CppMemoryVisualizer.ViewModels
                             local.StackMemory.TypeInfo.FullName = fullTypeName;
                         });
 
-                        /*
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, 1, name),
-                            GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
-                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
+                        string pureTypeName = local.StackMemory.TypeInfo.PureName;
+                        if (!mPureTypeManagerOrNull.HasType(pureTypeName))
                         {
-                            Debug.WriteLine(line.Substring(0, 8));
-                        });
-                        */
+                            var newPureType = new TypeInfo();
+
+                            newPureType.PureName = pureTypeName;
+
+                            // Pure Type Size
+                            RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureTypeName),
+                                GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                            ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
+                            {
+                                int index = line.LastIndexOf(' ');
+                                Debug.Assert(index > 0);
+
+                                uint size;
+                                Debug.Assert(uint.TryParse(line.Substring(index + 1), out size));
+                                newPureType.Size = size;
+                            });
+
+                            int depth = 0;
+                            // Pure Type Info
+                            RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE_INFO, pureTypeName),
+                                GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                            ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
+                            {
+                                if (depth == 0)
+                                {
+                                    Regex regexKind = new Regex(@"^type\s=(\sclass|\sstruct|\senum|\sunion){0,1}\s.*\s{$");
+                                    Match matchKind = regexKind.Match(line);
+                                    if (matchKind.Success)
+                                    {
+                                        string t = matchKind.Groups[1].Value;
+                                        if ("class" == t)
+                                        {
+                                            newPureType.Flags |= EMemoryTypeFlags.CLASS;
+                                        }
+                                        else if ("struct" == t)
+                                        {
+                                            newPureType.Flags |= EMemoryTypeFlags.STRUCT;
+                                        }
+                                        else if ("enum" == t)
+                                        {
+                                            newPureType.Flags |= EMemoryTypeFlags.ENUM;
+                                        }
+                                        else if ("union" == t)
+                                        {
+                                            newPureType.Flags |= EMemoryTypeFlags.UNION;
+                                        }
+                                    }
+                                }
+                                else if (depth == 1)
+                                {
+                                    Regex regexOffsetAndSize = new Regex(@"^\/\*\s*(\d+)\s*\|\s*(\d+)\s*\*\/");
+                                    Match matchOffsetAndSize = regexOffsetAndSize.Match(line);
+                                    if (matchOffsetAndSize.Success)
+                                    {
+                                        var memberType = new TypeInfo();
+
+                                        uint offset;
+                                        uint size;
+
+                                        Debug.Assert(uint.TryParse(matchOffsetAndSize.Groups[1].Value, out offset));
+                                        Debug.Assert(uint.TryParse(matchOffsetAndSize.Groups[2].Value, out size));
+
+                                        Regex regexMemberName = new Regex(@"[a-zA-Z_$][a-zA-Z_$0-9]*", RegexOptions.RightToLeft);
+                                        Match matchMemberName = regexMemberName.Match(line);
+
+                                        if (matchMemberName.Success)
+                                        {
+                                            memberType.MemberNameOrNull = matchMemberName.Value;
+                                        }
+                                        memberType.Offset = offset;
+                                        memberType.Size = size;
+
+                                        newPureType.Members.Add(memberType);
+                                    }
+                                }
+
+                                if (line.Contains('{'))
+                                {
+                                    ++depth;
+                                }
+                                else if (line.Contains('}'))
+                                {
+                                    --depth;
+                                }
+
+                                if (depth == 1 && line.Contains('}'))
+                                {
+                                    Regex regexMemberName = new Regex(@"}\s(\w+);$");
+                                    Match matchMemberName = regexMemberName.Match(line);
+
+                                    if (matchMemberName.Success)
+                                    {
+                                        var memberType = newPureType.Members[newPureType.Members.Count - 1];
+                                        memberType.MemberNameOrNull = matchMemberName.Groups[1].Value;
+                                    }
+                                }
+                            });
+
+                            // members' typename
+                            for (int n = 0; n < newPureType.Members.Count; ++n)
+                            {
+                                var memberType = newPureType.Members[n];
+                                if (memberType.MemberNameOrNull != null)
+                                {
+                                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE_NAME, newPureType.PureName + "::" + memberType.MemberNameOrNull),
+                                        GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
+                                    {
+                                        string fullTypeName = line.Substring("type = ".Length);
+                                        memberType.FullName = fullTypeName;
+                                    });
+                                }
+                            }
+
+                            mPureTypeManagerOrNull.AddType(pureTypeName, newPureType);
+                        }
                     }
 
                     frame.IsInitialized = true;
@@ -500,6 +611,7 @@ namespace CppMemoryVisualizer.ViewModels
 
                 RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, 0),
                     null, null);
+
             }
         }
 
@@ -717,19 +829,19 @@ namespace CppMemoryVisualizer.ViewModels
                 {
                     LocalVariable local = stackFrame.GetLocalVariable(name);
                     TypeInfo typeInfo = local.StackMemory.TypeInfo;
-                    string pureName = typeInfo.PureName;
+                    string pureTypeName = typeInfo.PureName;
 
-                    if (mPureTypeManagerOrNull.HasType(pureName))
+                    if (mPureTypeManagerOrNull.HasType(pureTypeName))
                     {
-                        local.StackMemory.PureTypeInfo = mPureTypeManagerOrNull.GetType(pureName);
+                        local.StackMemory.PureTypeInfo = mPureTypeManagerOrNull.GetType(pureTypeName);
                         continue;
                     }
 
                     TypeInfo pure = new TypeInfo();
-                    pure.PureName = pureName;
+                    pure.PureName = pureTypeName;
                     
-                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureName),
-                        GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + pureName, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureTypeName),
+                        GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + pureTypeName, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
                     ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string innerLine) =>
                     {
                         int lastIndex = innerLine.LastIndexOf(' ');
@@ -751,8 +863,8 @@ namespace CppMemoryVisualizer.ViewModels
                         pure.Size = size;
                     });
 
-                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE, pureName),
-                        GdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureName, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE_NAME, pureTypeName),
+                        GdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureTypeName, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
                     ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
                     {
                         Regex rx = new Regex(@"^\+0x([0-9a-f]+)\s(\w+)\s+:\s(Ptr32|[\[\d+\]]+\s\w+$|\w+$)");
@@ -808,24 +920,24 @@ namespace CppMemoryVisualizer.ViewModels
                     });
 
                     local.StackMemory.PureTypeInfo = pure;
-                    mPureTypeManagerOrNull.AddType(pureName, pure);
+                    mPureTypeManagerOrNull.AddType(pureTypeName, pure);
                 }
 
                 #region member Queue
                 {
                     while (memberQueue.Count > 0)
                     {
-                        string pureName = memberQueue.Dequeue();
-                        if (mPureTypeManagerOrNull.HasType(pureName))
+                        string pureTypeName = memberQueue.Dequeue();
+                        if (mPureTypeManagerOrNull.HasType(pureTypeName))
                         {
                             continue;
                         }
 
                         TypeInfo pure = new TypeInfo();
-                        pure.PureName = pureName;
+                        pure.PureName = pureTypeName;
 
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureName),
-                            GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + pureName, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureTypeName),
+                            GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + pureTypeName, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string innerLine) =>
                         {
                             int lastIndex = innerLine.LastIndexOf(' ');
@@ -847,8 +959,8 @@ namespace CppMemoryVisualizer.ViewModels
                             pure.Size = size;
                         });
 
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE, pureName),
-                            GdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureName, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE_NAME, pureTypeName),
+                            GdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureTypeName, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
                         {
                             Regex rx = new Regex(@"^\+0x([0-9a-f]+)\s(\w+)\s+:\s(Ptr32|[\[\d+\]]+\s\w+$|\w+$)");
@@ -903,7 +1015,7 @@ namespace CppMemoryVisualizer.ViewModels
                             }
                         });
 
-                        mPureTypeManagerOrNull.AddType(pureName, pure);
+                        mPureTypeManagerOrNull.AddType(pureTypeName, pure);
                     }
                     #endregion
                 }

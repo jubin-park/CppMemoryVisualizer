@@ -43,7 +43,7 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        private EMemoryTypeFlags mFlags = 0;
+        private EMemoryTypeFlags mFlags = EMemoryTypeFlags.NONE;
         public EMemoryTypeFlags Flags
         {
             get
@@ -124,10 +124,12 @@ namespace CppMemoryVisualizer.Models
         }
         #endregion
 
+        private string mFullName;
         public string FullName
         {
             get
             {
+                /*
                 StringBuilder sb = new StringBuilder(mPureName, 128);
                 sb.Append(' ');
 
@@ -152,9 +154,14 @@ namespace CppMemoryVisualizer.Models
                 }
 
                 return sb.ToString();
+                */
+
+                return mFullName;
             }
             set
             {
+                mFullName = value;
+
                 Match match = regex.Match(value);
 
                 if (match.Success)
@@ -164,6 +171,11 @@ namespace CppMemoryVisualizer.Models
                     string arrayOrFunctionPointerChars = match.Groups[4].Value;
                     string dimensions = match.Groups[5].Value;
                     string reference = match.Groups[6].Value;
+
+                    if (PureName.StartsWith("std::"))
+                    {
+                        mFlags |= EMemoryTypeFlags.STL;
+                    }
 
                     if (pointerChars.Length > 0)
                     {

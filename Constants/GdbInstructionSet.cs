@@ -26,7 +26,8 @@ namespace CppMemoryVisualizer.Constants
         public static readonly string DISPLAY_ARGUMENTS = "info args -q";
         public static readonly string DISPLAY_LOCAL_VARIABLES = "info locals -q";
         public static readonly string DISPLAY_ADDRESS = "call &{0}";
-        public static readonly string DISPLAY_TYPE = "whatis {0}"; // <name>
+        public static readonly string DISPLAY_TYPE_NAME = "whatis {0}"; // <name>
+        public static readonly string DISPLAY_TYPE_INFO = "ptype /o {0}"; // <name>
         public static readonly string DISPLAY_SIZEOF = "call sizeof({0})"; // 0xADDRESS | <name>
         public static readonly string DISPLAY_INFO_SYMBOL = "info symbol {0}"; // 0xADDRESS | <name>
         public static readonly string DISPLAY_MEMORY = "x/{0}x {1}"; // count, 0xADDRESS
