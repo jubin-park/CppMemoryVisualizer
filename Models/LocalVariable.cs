@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,7 +9,14 @@ namespace CppMemoryVisualizer.Models
 {
     sealed class LocalVariable
     {
-        public bool IsParameter;
+        private bool mbArgument;
+        public bool IsArgument
+        {
+            get
+            {
+                return mbArgument;
+            }
+        }
 
         private string mName;
         public string Name
@@ -16,10 +24,6 @@ namespace CppMemoryVisualizer.Models
             get
             {
                 return mName;
-            }
-            set
-            {
-                mName = value;
             }
         }
 
@@ -30,6 +34,14 @@ namespace CppMemoryVisualizer.Models
             {
                 return mStackMemory;
             }
+        }
+
+        public LocalVariable(string name, bool isArgument)
+        {
+            Debug.Assert(name != null);
+
+            mName = name;
+            mbArgument = isArgument;
         }
     }
 }

@@ -11,6 +11,7 @@ namespace CppMemoryVisualizer.Models
     {
         private Dictionary<string, TypeInfo> mTypes = new Dictionary<string, TypeInfo>();
 
+        /*
         public PureTypeManager()
         {
             {
@@ -105,6 +106,7 @@ namespace CppMemoryVisualizer.Models
                 mTypes.Add("Ptr32", typePointer);
             }
         }
+        */
 
         public void AddType(string typeName, TypeInfo pure)
         {

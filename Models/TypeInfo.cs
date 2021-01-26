@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
     sealed class TypeInfo
     {
+        private static readonly Regex regex = new Regex(@"([a-zA-Z0-9_<>,: ]+)($|\s(\**)([\(\*+\)]*)([\[\d+\]]*)(&{0,1}))");
+
         private string mPureName;
         public string PureName
         {
@@ -149,6 +152,63 @@ namespace CppMemoryVisualizer.Models
                 }
 
                 return sb.ToString();
+            }
+            set
+            {
+                Match match = regex.Match(value);
+
+                if (match.Success)
+                {
+                    PureName = match.Groups[1].Value;
+                    string pointerChars = match.Groups[3].Value;
+                    string arrayOrFunctionPointerChars = match.Groups[4].Value;
+                    string dimensions = match.Groups[5].Value;
+                    string reference = match.Groups[6].Value;
+
+                    if (pointerChars.Length > 0)
+                    {
+                        mFlags |= EMemoryTypeFlags.POINTER;
+                        mPointerLevel = (uint)pointerChars.Length;
+                    }
+
+                    if (arrayOrFunctionPointerChars.Length > 0)
+                    {
+                        mFlags |= EMemoryTypeFlags.ARRAY_OR_FUNCTION_POINTER;
+
+                        Regex regex = new Regex(@"\((\*+)\)");
+                        Match matchPointer = regex.Match(arrayOrFunctionPointerChars);
+
+                        while (matchPointer.Success)
+                        {
+                            uint size = (uint)matchPointer.Groups[1].Length;
+                            mArrayOrFunctionPointerLevels.Add(size);
+
+                            matchPointer = matchPointer.NextMatch();
+                        }
+                    }
+
+                    if (dimensions.Length > 0)
+                    {
+                        mFlags |= EMemoryTypeFlags.ARRAY;
+
+                        Regex regex = new Regex(@"\[(\d+)\]");
+                        Match matchDimension = regex.Match(dimensions);
+
+                        while (matchDimension.Success)
+                        {
+                            uint size;
+                            Debug.Assert(uint.TryParse(matchDimension.Groups[1].Value, out size));
+                            mArrayLengths.Add(size);
+
+                            matchDimension = matchDimension.NextMatch();
+                        }
+                    }
+
+                    if (reference.Length > 0)
+                    {
+                        mFlags |= EMemoryTypeFlags.REFERENCE;
+                    }
+                }
             }
         }
     }

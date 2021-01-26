@@ -13,6 +13,14 @@ namespace CppMemoryVisualizer.Models
     sealed class CallStack : INotifyPropertyChanged
     {
         private readonly List<ulong> mKeys = new List<ulong>();
+        public List<ulong> Keys
+        {
+            get
+            {
+                return mKeys;
+            }
+        }
+
         private Dictionary<ulong, StackFrame> mStackFrames = new Dictionary<ulong, StackFrame>();
 
         // https://stackoverflow.com/questions/21976979/mvvm-model-with-collections-use-or-not-observablecollection-in-model

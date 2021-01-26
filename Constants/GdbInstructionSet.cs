@@ -16,22 +16,22 @@ namespace CppMemoryVisualizer.Constants
         public static readonly string GO = "continue";
         public static readonly string FINISH = "finish";
 
-        public static readonly string DISPLAY_STACK_BACKTRACE = "info stack";
-        public static readonly string DISPLAY_LOCAL_VARIABLE = "info locals";
-
-        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dt--display-type-
-        public static readonly string DISPLAY_TYPE = "dt -i {0}";
-
         public static readonly string ADD_BREAK_POINT = "break {0}:{1}"; // src_name:line
         public static readonly string REMOVE_BREAK_POINT = "clear {0}:{1}"; // src_name:line
         public static readonly string SET_BREAK_POINT_MAIN = "b main";
         public static readonly string CLEAR_ALL_BREAK_POINTS = "delete";
 
+        public static readonly string DISPLAY_STACK_BACKTRACE = "info stack";
         public static readonly string DISPLAY_INFO_FRAME = "info frame {0}"; // index
+        public static readonly string DISPLAY_ARGUMENTS = "info args -q";
+        public static readonly string DISPLAY_LOCAL_VARIABLES = "info locals -q";
+        public static readonly string DISPLAY_ADDRESS = "call &{0}";
+        public static readonly string DISPLAY_TYPE = "whatis {0}"; // <name>
+        public static readonly string DISPLAY_SIZEOF = "call sizeof({0})"; // 0xADDRESS | <name>
         public static readonly string DISPLAY_INFO_SYMBOL = "info symbol {0}"; // 0xADDRESS | <name>
+        public static readonly string DISPLAY_MEMORY = "x/{0}x {1}"; // count, 0xADDRESS
 
-        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-address
-        public static readonly string DISPLAY_ADDRESS = "!address {0}";
+        public static readonly string SELECT_FRAME = "select-frame {0}"; // index
 
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-heap
         public static readonly string DISPLAY_HEAP = "!heap -x {0}";
@@ -39,18 +39,14 @@ namespace CppMemoryVisualizer.Constants
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dx--display-visualizer-variables-
         public static readonly string DISPLAY_EXPRESSION = "dx {0}";
 
-        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/d--da--db--dc--dd--dd--df--dp--dq--du--dw--dw--dyb--dyd--display-memor
-        public static readonly string DISPLAY_MEMORY = "dd /c{0} {1} L{0}";
-
-        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/----evaluate-c---expression-
-        public static readonly string EVALUATE_SIZEOF = "?? sizeof({0})";
 
         // https://sourceware.org/gdb/current/onlinedocs/gdb/Output.html
         // https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_57.html#SEC58
         public static readonly string PRINTF = "printf \"{0}\\n\"";
 
+        public static readonly string SET_PAGINATION_OFF = "set pagination off";
+
         // https://sourceware.org/gdb/onlinedocs/gdb/Skipping-Over-Functions-and-Files.html
-        public static readonly string SKIP_STL_CONSTRUCTOR_DESTRUCTOR = @"skip -rfu ^std::([a-zA-z0-9_]+)<.*>::~?\1 .*\(";
 
         #region Request by Echo
         public static readonly string OUTPUT_HEADER = "(gdb) ";
@@ -63,26 +59,32 @@ namespace CppMemoryVisualizer.Constants
         public static readonly string REQUEST_START_INIT = "@S=INIT";
         public static readonly string REQUEST_END_INIT = "@E=INIT";
 
-        public static readonly string REQUEST_START_GET_CALL_STACK = "@S=GET_CALL_STACK";
-        public static readonly string REQUEST_END_GET_CALL_STACK = "@E=GET_CALL_STACK";
+        public static readonly string REQUEST_START_DISPLAY_CALL_STACK = "@S=DISPLAY_CALL_STACK";
+        public static readonly string REQUEST_END_DISPLAY_CALL_STACK = "@E=DISPLAY_CALL_STACK";
 
-        public static readonly string REQUEST_START_GET_INFO_FRAME = "@S=GET_INFO_FRAME";
-        public static readonly string REQUEST_END_GET_INFO_FRAME = "@E=GET_INFO_FRAME";
+        public static readonly string REQUEST_START_DISPLAY_INFO_FRAME = "@S=DISPLAY_INFO_FRAME";
+        public static readonly string REQUEST_END_DISPLAY_INFO_FRAME = "@E=DISPLAY_INFO_FRAME";
 
-        public static readonly string REQUEST_START_GET_INFO_SYMBOL = "@S=GET_INFO_SYMBOL";
-        public static readonly string REQUEST_END_GET_INFO_SYMBOL = "@E=GET_INFO_SYMBOL";
+        public static readonly string REQUEST_START_DISPLAY_ARGUMENTS = "@S=DISPLAY_ARGS";
+        public static readonly string REQUEST_END_DISPLAY_ARGUMENTS = "@E=DISPLAY_ARGS";
 
-        public static readonly string REQUEST_START_GET_LOCAL_VARS = "@S=GET_LOCAL_VARS";
-        public static readonly string REQUEST_END_GET_LOCAL_VARS = "@E=GET_LOCAL_VARS";
+        public static readonly string REQUEST_START_DISPLAY_LOCAL_VARIABLES = "@S=DISPLAY_LOCAL_VARS";
+        public static readonly string REQUEST_END_DISPLAY_LOCAL_VARIABLES = "@E=DISPLAY_LOCAL_VARS";
 
-        public static readonly string REQUEST_START_SIZEOF = "@S=SIZEOF";
-        public static readonly string REQUEST_END_SIZEOF = "@E=SIZEOF";
-
-        public static readonly string REQUEST_START_DISPLAY_MEMORY = "@S=DM";
-        public static readonly string REQUEST_END_DISPLAY_MEMORY = "@E=DM";
+        public static readonly string REQUEST_START_DISPLAY_ADDRESS = "@S=DISPLAY_ADDRESS";
+        public static readonly string REQUEST_END_DISPLAY_ADDRESS = "@E=DISPLAY_ADDRESS";
 
         public static readonly string REQUEST_START_DISPLAY_TYPE = "@S=DT";
         public static readonly string REQUEST_END_DISPLAY_TYPE = "@E=DT";
+
+        public static readonly string REQUEST_START_DISPLAY_SIZEOF = "@S=SIZEOF";
+        public static readonly string REQUEST_END_DISPLAY_SIZEOF = "@E=SIZEOF";
+
+        public static readonly string REQUEST_START_DISPLAY_INFO_SYMBOL = "@S=DISPLAY_INFO_SYMBOL";
+        public static readonly string REQUEST_END_DISPLAY_INFO_SYMBOL = "@E=DISPLAY_INFO_SYMBOL";
+
+        public static readonly string REQUEST_START_DISPLAY_MEMORY = "@S=DM";
+        public static readonly string REQUEST_END_DISPLAY_MEMORY = "@E=DM";
 
         public static readonly string REQUEST_START_HEAP = "@S=HEAP";
         public static readonly string REQUEST_END_HEAP = "@E=HEAP";

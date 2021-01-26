@@ -112,18 +112,18 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        public StackFrame(uint stackAddress, uint functionAddress, string name)
+        public StackFrame(uint stackAddress, uint functionAddress, string functionName)
         {
             Debug.Assert(stackAddress > 0);
             Debug.Assert(functionAddress > 0);
-            Debug.Assert(name != null);
+            Debug.Assert(functionName != null);
 
             mStackAddress = stackAddress;
             mFunctionAddress = functionAddress;
-            mName = name;
+            mName = functionName;
         }
 
-        public bool TryAdd(string localVariableName)
+        public bool TryAdd(string localVariableName, bool isArgument)
         {
             Debug.Assert(localVariableName != null);
 
@@ -131,7 +131,7 @@ namespace CppMemoryVisualizer.Models
             {
                 mLocalVariableNames.Add(localVariableName);
 
-                var local = new LocalVariable();
+                var local = new LocalVariable(localVariableName, isArgument);
                 mLocalVariableCaches.Add(localVariableName, local);
                 mLocalVariables.Add(local);
 
@@ -141,14 +141,14 @@ namespace CppMemoryVisualizer.Models
             return false;
         }
 
-        public LocalVariable GetLocalVariableOrNull(string localVariableName)
+        public LocalVariable GetLocalVariable(string localVariableName)
         {
             Debug.Assert(localVariableName != null);
 
-            LocalVariable localVariableOrNull = null;
-            mLocalVariableCaches.TryGetValue(localVariableName, out localVariableOrNull);
+            LocalVariable localVariable = null;
+            mLocalVariableCaches.TryGetValue(localVariableName, out localVariable);
 
-            return localVariableOrNull;
+            return localVariable;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -203,9 +203,7 @@ namespace CppMemoryVisualizer.ViewModels
 
             #region set main breakpoint
             {
-                RequestInstruction("set pagination off",
-                    null, null);
-                RequestInstruction(GdbInstructionSet.SKIP_STL_CONSTRUCTOR_DESTRUCTOR,
+                RequestInstruction(GdbInstructionSet.SET_PAGINATION_OFF,
                     null, null);
                 RequestInstruction(GdbInstructionSet.SET_BREAK_POINT_MAIN,
                     null, null);
@@ -313,8 +311,8 @@ namespace CppMemoryVisualizer.ViewModels
 
                 uint frameCount = 0;
                 RequestInstruction(GdbInstructionSet.DISPLAY_STACK_BACKTRACE,
-                    GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK);
-                ReadResultLine(GdbInstructionSet.REQUEST_START_GET_CALL_STACK, GdbInstructionSet.REQUEST_END_GET_CALL_STACK, (string line) =>
+                    GdbInstructionSet.REQUEST_START_DISPLAY_CALL_STACK, GdbInstructionSet.REQUEST_END_DISPLAY_CALL_STACK);
+                ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_CALL_STACK, GdbInstructionSet.REQUEST_END_DISPLAY_CALL_STACK, (string line) =>
                 {
                     ++frameCount;
                 });
@@ -329,14 +327,15 @@ namespace CppMemoryVisualizer.ViewModels
                     string stackAddressHex = null;
                     string functionWithOffsetAddressHex = null;
                     RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_INFO_FRAME, i),
-                        GdbInstructionSet.REQUEST_START_GET_INFO_FRAME, GdbInstructionSet.REQUEST_END_GET_INFO_FRAME);
-                    ReadResultLine(GdbInstructionSet.REQUEST_START_GET_INFO_FRAME, GdbInstructionSet.REQUEST_END_GET_INFO_FRAME, (string line) =>
+                        GdbInstructionSet.REQUEST_START_DISPLAY_INFO_FRAME, GdbInstructionSet.REQUEST_END_DISPLAY_INFO_FRAME);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_INFO_FRAME, GdbInstructionSet.REQUEST_END_DISPLAY_INFO_FRAME, (string line) =>
                     {
                         {
                             Match match = regexFrameAddress.Match(line);
                             if (match.Success)
                             {
                                 stackAddressHex = match.Groups[1].Value;
+                                return;
                             }
                         }
 
@@ -360,8 +359,8 @@ namespace CppMemoryVisualizer.ViewModels
 
                     string functionName = null;
                     RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_INFO_SYMBOL, "0x" + functionWithOffsetAddressHex),
-                        GdbInstructionSet.REQUEST_START_GET_INFO_SYMBOL, GdbInstructionSet.REQUEST_END_GET_INFO_SYMBOL);
-                    ReadResultLine(GdbInstructionSet.REQUEST_START_GET_INFO_SYMBOL, GdbInstructionSet.REQUEST_END_GET_INFO_SYMBOL, (string line) =>
+                        GdbInstructionSet.REQUEST_START_DISPLAY_INFO_SYMBOL, GdbInstructionSet.REQUEST_END_DISPLAY_INFO_SYMBOL);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_INFO_SYMBOL, GdbInstructionSet.REQUEST_END_DISPLAY_INFO_SYMBOL, (string line) =>
                     {
                         Match match = regexFunctionSignature.Match(line);
                         if (match.Success)
@@ -395,32 +394,127 @@ namespace CppMemoryVisualizer.ViewModels
                     Debug.WriteLine("Stack addr: {0}, Function addr: {1}, name: {2}", stackAddress, functionAddress, functionName);
                     mCallStackViewModel.CallStack.Push(stackAddress, functionAddress, functionName);
                 }
-
-                if (mCallStackViewModel.CallStack.IsEmpty())
-                {
-                    LinePointer = 0;
-                    ShutdownGdb();
-
-                    return;
-                }
             }
             #endregion
 
+            if (mCallStackViewModel.CallStack.IsEmpty())
+            {
+                LinePointer = 0;
+                ShutdownGdb();
 
+                return;
+            }
+
+            {
+                Regex regexLocalAddress = new Regex(@"\s0x([a-z0-9]+)");
+
+                for (int i = 0; i < mCallStackViewModel.CallStack.Keys.Count; ++i)
+                {
+                    Models.StackFrame frame = mCallStackViewModel.CallStack.GetStackFrame(mCallStackViewModel.CallStack.Keys[i]);
+                    if (frame.IsInitialized)
+                    {
+                        continue;
+                    }
+
+                    RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, i),
+                        null, null);
+
+                    // add argument names
+                    RequestInstruction(GdbInstructionSet.DISPLAY_ARGUMENTS,
+                        GdbInstructionSet.REQUEST_START_DISPLAY_ARGUMENTS, GdbInstructionSet.REQUEST_END_DISPLAY_ARGUMENTS);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_ARGUMENTS, GdbInstructionSet.REQUEST_END_DISPLAY_ARGUMENTS, (string line) =>
+                    {
+                        int index = line.IndexOf(" = ");
+                        Debug.Assert(index > 0);
+
+                        string name = line.Substring(0, index);
+                        frame.TryAdd(name, true);
+                    });
+
+                    // add local names
+                    RequestInstruction(GdbInstructionSet.DISPLAY_LOCAL_VARIABLES,
+                        GdbInstructionSet.REQUEST_START_DISPLAY_LOCAL_VARIABLES, GdbInstructionSet.REQUEST_END_DISPLAY_LOCAL_VARIABLES);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_LOCAL_VARIABLES, GdbInstructionSet.REQUEST_END_DISPLAY_LOCAL_VARIABLES, (string line) =>
+                    {
+                        int index = line.IndexOf(" = ");
+                        Debug.Assert(index > 0);
+
+                        string name = line.Substring(0, index);
+                        frame.TryAdd(name, false);
+                    });
+
+                    foreach (var name in frame.LocalVariableNames)
+                    {
+                        var local = frame.GetLocalVariable(name);
+
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_ADDRESS, name),
+                            GdbInstructionSet.REQUEST_START_DISPLAY_ADDRESS, GdbInstructionSet.REQUEST_END_DISPLAY_ADDRESS);
+                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_ADDRESS, GdbInstructionSet.REQUEST_END_DISPLAY_ADDRESS, (string line) =>
+                        {
+                            Match match = regexLocalAddress.Match(line);
+                            if (match.Success)
+                            {
+                                string addressHex = match.Groups[1].Value;
+                                uint address = 0;
+                                Debug.Assert(uint.TryParse(addressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address));
+                                local.StackMemory.Address = address;
+                            }
+                        });
+
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, name),
+                            GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
+                        {
+                            int index = line.LastIndexOf(' ');
+                            Debug.Assert(index > 0);
+
+                            uint size = 0;
+                            Debug.Assert(uint.TryParse(line.Substring(index + 1), out size));
+                            local.StackMemory.TypeInfo.Size = size;
+                            
+                            uint wordSize = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
+                            Debug.Assert(local.StackMemory.ByteValues == null);
+                            local.StackMemory.ByteValues = new byte[wordSize * 4];
+                        });
+
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE, name),
+                            GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
+                        {
+                            string fullTypeName = line.Substring("type = ".Length);
+                            local.StackMemory.TypeInfo.FullName = fullTypeName;
+                        });
+
+                        /*
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, 1, name),
+                            GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
+                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
+                        {
+                            Debug.WriteLine(line.Substring(0, 8));
+                        });
+                        */
+                    }
+
+                    frame.IsInitialized = true;
+                }
+
+                RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, 0),
+                    null, null);
+            }
         }
 
+        /*
         public void Update()
         {
-            
             Models.StackFrame stackFrame = mCallStackViewModel.CallStack.GetStackFrame(mCallStackViewModel.CallStack.Top());
 
             #region Get Local Variable Info
             {
                 bool isFailed = false;
 
-                RequestInstruction(GdbInstructionSet.DISPLAY_LOCAL_VARIABLE,
-                    GdbInstructionSet.REQUEST_START_GET_LOCAL_VARS, GdbInstructionSet.REQUEST_END_GET_LOCAL_VARS);
-                ReadResultLine(GdbInstructionSet.REQUEST_START_GET_LOCAL_VARS, GdbInstructionSet.REQUEST_END_GET_LOCAL_VARS, (string line) =>
+                //RequestInstruction(GdbInstructionSet.DISPLAY_LOCAL_VARIABLE,
+                    //GdbInstructionSet.REQUEST_START_DISPLAY_LOCAL_VARIABLES, GdbInstructionSet.REQUEST_END_DISPLAY_LOCAL_VARIABLES);
+                ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_LOCAL_VARIABLES, GdbInstructionSet.REQUEST_END_DISPLAY_LOCAL_VARIABLES, (string line) =>
                 {
                     if (!stackFrame.IsInitialized)
                     {
@@ -438,10 +532,10 @@ namespace CppMemoryVisualizer.ViewModels
                             string variableName = match.Groups[7].Value;
                             
                             stackFrame.TryAdd(variableName);
-                            LocalVariable local = stackFrame.GetLocalVariableOrNull(variableName);
+                            LocalVariable local = stackFrame.GetLocalVariable(variableName);
 
                             // local or parameter (fixed)
-                            local.IsParameter = (localOrParam == "param");
+                            local.IsArgument = (localOrParam == "param");
 
                             // name (fixed)
                             local.Name = variableName;
@@ -547,7 +641,7 @@ namespace CppMemoryVisualizer.ViewModels
                         {
                             string stackAddr = match.Groups[1].Value;
                             string variableName = match.Groups[2].Value;
-                            LocalVariable local = stackFrame.GetLocalVariableOrNull(variableName);
+                            LocalVariable local = stackFrame.GetLocalVariable(variableName);
 
                             if (local == null)
                             {
@@ -581,11 +675,11 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 foreach (var name in stackFrame.LocalVariableNames)
                 {
-                    LocalVariable local = stackFrame.GetLocalVariableOrNull(name);
+                    LocalVariable local = stackFrame.GetLocalVariable(name);
 
-                    RequestInstruction(string.Format(GdbInstructionSet.EVALUATE_SIZEOF, name),
-                        GdbInstructionSet.REQUEST_START_SIZEOF + ' ' + name, GdbInstructionSet.REQUEST_END_SIZEOF);
-                    ReadResultLine(GdbInstructionSet.REQUEST_START_SIZEOF, GdbInstructionSet.REQUEST_END_SIZEOF, (string line) =>
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, name),
+                        GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + name, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
                     {
                         int lastIndex = line.LastIndexOf(' ');
                         Debug.Assert(lastIndex >= 0);
@@ -621,7 +715,7 @@ namespace CppMemoryVisualizer.ViewModels
 
                 foreach (var name in stackFrame.LocalVariableNames)
                 {
-                    LocalVariable local = stackFrame.GetLocalVariableOrNull(name);
+                    LocalVariable local = stackFrame.GetLocalVariable(name);
                     TypeInfo typeInfo = local.StackMemory.TypeInfo;
                     string pureName = typeInfo.PureName;
 
@@ -634,9 +728,9 @@ namespace CppMemoryVisualizer.ViewModels
                     TypeInfo pure = new TypeInfo();
                     pure.PureName = pureName;
                     
-                    RequestInstruction(string.Format(GdbInstructionSet.EVALUATE_SIZEOF, pureName),
-                        GdbInstructionSet.REQUEST_START_SIZEOF + ' ' + pureName, GdbInstructionSet.REQUEST_END_SIZEOF);
-                    ReadResultLine(GdbInstructionSet.REQUEST_START_SIZEOF, GdbInstructionSet.REQUEST_END_SIZEOF, (string innerLine) =>
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureName),
+                        GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + pureName, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string innerLine) =>
                     {
                         int lastIndex = innerLine.LastIndexOf(' ');
                         Debug.Assert(lastIndex >= 0);
@@ -730,9 +824,9 @@ namespace CppMemoryVisualizer.ViewModels
                         TypeInfo pure = new TypeInfo();
                         pure.PureName = pureName;
 
-                        RequestInstruction(string.Format(GdbInstructionSet.EVALUATE_SIZEOF, pureName),
-                            GdbInstructionSet.REQUEST_START_SIZEOF + ' ' + pureName, GdbInstructionSet.REQUEST_END_SIZEOF);
-                        ReadResultLine(GdbInstructionSet.REQUEST_START_SIZEOF, GdbInstructionSet.REQUEST_END_SIZEOF, (string innerLine) =>
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureName),
+                            GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + pureName, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string innerLine) =>
                         {
                             int lastIndex = innerLine.LastIndexOf(' ');
                             Debug.Assert(lastIndex >= 0);
@@ -824,7 +918,7 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 foreach (var name in stackFrame.LocalVariableNames)
                 {
-                    LocalVariable local = stackFrame.GetLocalVariableOrNull(name);
+                    LocalVariable local = stackFrame.GetLocalVariable(name);
                     RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, local.StackMemory.ByteValues.Length / 4, "0x" + local.StackMemory.Address.ToString("X")),
                         GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY + ' ' + name, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
                     ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
@@ -839,7 +933,7 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 foreach (var name in stackFrame.LocalVariableNames)
                 {
-                    LocalVariable local = stackFrame.GetLocalVariableOrNull(name);
+                    LocalVariable local = stackFrame.GetLocalVariable(name);
                     if (local.StackMemory.TypeInfo.Flags.HasFlag(EMemoryTypeFlags.POINTER) && local.StackMemory.IsChanged)
                     {
                         byte[] byteValues = local.StackMemory.ByteValues;
@@ -893,6 +987,7 @@ namespace CppMemoryVisualizer.ViewModels
             }
             #endregion
         }
+        */
 
         public void ActionLinePointer(string line)
         {

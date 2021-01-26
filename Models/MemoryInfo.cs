@@ -23,16 +23,12 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        protected TypeInfo mTypeInfo;
+        protected readonly TypeInfo mTypeInfo = new TypeInfo();
         public TypeInfo TypeInfo
         {
             get
             {
                 return mTypeInfo;
-            }
-            set
-            {
-                mTypeInfo = value;
             }
         }
 
