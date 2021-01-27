@@ -46,7 +46,8 @@ namespace CppMemoryVisualizer.Commands
 
             if (parameter is string)
             {
-                Debug.Assert(uint.TryParse((string)parameter, out selectedLineNumber));
+                bool bSuccess = uint.TryParse((string)parameter, out selectedLineNumber);
+                Debug.Assert(bSuccess);
             }
             else if (parameter is uint)
             {
@@ -70,7 +71,8 @@ namespace CppMemoryVisualizer.Commands
                     if (match.Success)
                     {
                         uint realLineNumber = 0;
-                        Debug.Assert(uint.TryParse(match.Groups[1].Value, out realLineNumber));
+                        bool bSuccess = uint.TryParse(match.Groups[1].Value, out realLineNumber);
+                        Debug.Assert(bSuccess);
                         Debug.Assert(realLineNumber > 0);
 
                         ++mMainViewModel.BreakPointList.Count;

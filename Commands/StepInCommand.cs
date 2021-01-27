@@ -66,7 +66,8 @@ namespace CppMemoryVisualizer.Commands
                     if (match.Success)
                     {
                         uint lineNumber = 0;
-                        uint.TryParse(match.Groups[1].Value, out lineNumber);
+                        bool bSuccess = uint.TryParse(match.Groups[1].Value, out lineNumber);
+                        Debug.Assert(bSuccess);
                         Debug.Assert(lineNumber > 0);
                         mMainViewModel.LinePointer = lineNumber;
                     }

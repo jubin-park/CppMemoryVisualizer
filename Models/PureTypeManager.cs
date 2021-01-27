@@ -128,7 +128,8 @@ namespace CppMemoryVisualizer.Models
             Debug.Assert(typeName != null);
 
             TypeInfo pure = null;
-            Debug.Assert(mTypes.TryGetValue(typeName, out pure));
+            bool bSuccess = mTypes.TryGetValue(typeName, out pure);
+            Debug.Assert(bSuccess);
 
             return pure;
         }

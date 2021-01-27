@@ -208,8 +208,9 @@ namespace CppMemoryVisualizer.Models
 
                         while (matchDimension.Success)
                         {
-                            uint size;
-                            Debug.Assert(uint.TryParse(matchDimension.Groups[1].Value, out size));
+                            uint size = 0;
+                            bool bSuccess = uint.TryParse(matchDimension.Groups[1].Value, out size);
+                            Debug.Assert(bSuccess);
                             mArrayLengths.Add(size);
 
                             matchDimension = matchDimension.NextMatch();

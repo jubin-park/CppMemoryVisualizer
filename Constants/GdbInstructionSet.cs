@@ -16,8 +16,8 @@ namespace CppMemoryVisualizer.Constants
         public static readonly string GO = "continue";
         public static readonly string FINISH = "finish";
 
-        public static readonly string ADD_BREAK_POINT = "break {0}:{1}"; // src_name:line
-        public static readonly string REMOVE_BREAK_POINT = "clear {0}:{1}"; // src_name:line
+        public static readonly string ADD_BREAK_POINT = "break {0}:{1}"; // <src_name.cpp>:line
+        public static readonly string REMOVE_BREAK_POINT = "clear {0}:{1}"; // <src_name.cpp>:line
         public static readonly string SET_BREAK_POINT_MAIN = "b main";
         public static readonly string CLEAR_ALL_BREAK_POINTS = "delete";
 
@@ -25,29 +25,21 @@ namespace CppMemoryVisualizer.Constants
         public static readonly string DISPLAY_INFO_FRAME = "info frame {0}"; // index
         public static readonly string DISPLAY_ARGUMENTS = "info args -q";
         public static readonly string DISPLAY_LOCAL_VARIABLES = "info locals -q";
-        public static readonly string DISPLAY_ADDRESS = "call &{0}";
+        public static readonly string DISPLAY_ADDRESS = "call &{0}"; // <name>
         public static readonly string DISPLAY_TYPE_NAME = "whatis {0}"; // <name>
         public static readonly string DISPLAY_TYPE_INFO = "ptype /o {0}"; // <name>
         public static readonly string DISPLAY_SIZEOF = "call sizeof({0})"; // 0xADDRESS | <name>
         public static readonly string DISPLAY_INFO_SYMBOL = "info symbol {0}"; // 0xADDRESS | <name>
         public static readonly string DISPLAY_MEMORY = "x/{0}x {1}"; // count, 0xADDRESS
+        public static readonly string DISPLAY_HEAP_SIZEOF = "call (int)'msvcrt!_msize'({0})"; // 0xADDRESS
 
         public static readonly string SELECT_FRAME = "select-frame {0}"; // index
-
-        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/-heap
-        public static readonly string DISPLAY_HEAP = "!heap -x {0}";
-
-        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/dx--display-visualizer-variables-
-        public static readonly string DISPLAY_EXPRESSION = "dx {0}";
-
 
         // https://sourceware.org/gdb/current/onlinedocs/gdb/Output.html
         // https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_57.html#SEC58
         public static readonly string PRINTF = "printf \"{0}\\n\"";
 
         public static readonly string SET_PAGINATION_OFF = "set pagination off";
-
-        // https://sourceware.org/gdb/onlinedocs/gdb/Skipping-Over-Functions-and-Files.html
 
         #region Request by Echo
         public static readonly string OUTPUT_HEADER = "(gdb) ";

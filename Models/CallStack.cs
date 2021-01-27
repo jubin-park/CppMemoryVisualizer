@@ -61,7 +61,8 @@ namespace CppMemoryVisualizer.Models
             }
             else
             {
-                Debug.Assert(mStackFrames.TryGetValue(key, out frame));
+                bool bSuccess = mStackFrames.TryGetValue(key, out frame);
+                Debug.Assert(bSuccess);
             }
             frame.Index = (uint)mStack.Count;
             frame.Y = frame.Index * 50;
@@ -81,7 +82,8 @@ namespace CppMemoryVisualizer.Models
             Debug.Assert(key > 0);
 
             StackFrame stackFrame = null;
-            Debug.Assert(mStackFrames.TryGetValue(key, out stackFrame));
+            bool bSuccess = mStackFrames.TryGetValue(key, out stackFrame);
+            Debug.Assert(bSuccess);
 
             return stackFrame;
         }

@@ -22,13 +22,6 @@ namespace CppMemoryVisualizer.Models
         }
 
         private Dictionary<string, LocalVariable> mLocalVariableCaches = new Dictionary<string, LocalVariable>();
-        public Dictionary<string, LocalVariable> LocalVariableCaches
-        {
-            get
-            {
-                return mLocalVariableCaches;
-            }
-        }
 
         private List<LocalVariable> mLocalVariables = new List<LocalVariable>();
         public List<LocalVariable> LocalVariables

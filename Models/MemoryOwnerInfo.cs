@@ -22,16 +22,18 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        public void SetValue(string wordPattern)
+        public void SetValue(StringBuilder wordPattern)
         {
+            Debug.Assert(wordPattern != null);
+
             bool isChanged = false;
 
             uint count = 0;
-            for (int i = 9; i < wordPattern.Length && count < mTypeInfo.Size; i += 9)
+            for (int i = 0; i < wordPattern.Length && count < mTypeInfo.Size; i += 11)
             {
-                for (int j = 0; j < 4; ++j)
+                for (int j = 3; j >= 0; --j)
                 {
-                    char c = wordPattern[i + (3 - j) * 2 + 1];
+                    char c = wordPattern[i + j * 2 + 3];
                     if (c >= '0' && c <= '9')
                     {
                         c -= '0';
@@ -51,7 +53,7 @@ namespace CppMemoryVisualizer.Models
                         Debug.Assert(false);
                     }
 
-                    char d = wordPattern[i + (3 - j) * 2 + 2];
+                    char d = wordPattern[i + j * 2 + 4];
                     if (d >= '0' && d <= '9')
                     {
                         d -= '0';

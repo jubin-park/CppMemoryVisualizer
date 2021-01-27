@@ -212,6 +212,19 @@ namespace CppMemoryVisualizer.ViewModels
                 ReadResultLine(GdbInstructionSet.REQUEST_START_INIT, GdbInstructionSet.REQUEST_END_INIT, ActionLinePointer);
                 RequestInstruction(GdbInstructionSet.CLEAR_ALL_BREAK_POINTS,
                     null, null);
+
+                if (BreakPointList.Count > 0)
+                {
+                    string fileName = Path.GetFileName(SourcePathOrNull);
+                    for (int line = 1; line < BreakPointList.Indices.Count; ++line)
+                    {
+                        if (BreakPointList.Indices[line])
+                        {
+                            RequestInstruction(string.Format(GdbInstructionSet.ADD_BREAK_POINT, fileName, line),
+                                null, null);
+                        }
+                    }
+                }
             }
             #endregion
 
@@ -351,11 +364,13 @@ namespace CppMemoryVisualizer.ViewModels
                     Debug.Assert(stackAddressHex != null);
                     Debug.Assert(functionWithOffsetAddressHex != null);
 
-                    uint stackAddress;
-                    Debug.Assert(uint.TryParse(stackAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out stackAddress));
+                    uint stackAddress = 0;
+                    bool bSuccess = uint.TryParse(stackAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out stackAddress);
+                    Debug.Assert(bSuccess);
 
-                    uint functionAddress; // may have offset
-                    Debug.Assert(uint.TryParse(functionWithOffsetAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out functionAddress));
+                    uint functionAddress = 0; // may have offset
+                    bSuccess = uint.TryParse(functionWithOffsetAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out functionAddress);
+                    Debug.Assert(bSuccess);
 
                     string functionName = null;
                     RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_INFO_SYMBOL, "0x" + functionWithOffsetAddressHex),
@@ -373,7 +388,8 @@ namespace CppMemoryVisualizer.ViewModels
                             if (signature.Length == 0)
                             {
                                 signature = match.Groups[2].Value;
-                                Debug.Assert(uint.TryParse(match.Groups[3].Value, out offset));
+                                bSuccess = uint.TryParse(match.Groups[3].Value, out offset);
+                                Debug.Assert(bSuccess);
                                 functionAddress -= offset;
                             }
 
@@ -405,12 +421,14 @@ namespace CppMemoryVisualizer.ViewModels
                 return;
             }
 
+            #region Get StackFrames
             {
                 Regex regexLocalAddress = new Regex(@"\s0x([a-z0-9]+)");
 
                 for (int i = 0; i < mCallStackViewModel.CallStack.Keys.Count; ++i)
                 {
                     Models.StackFrame frame = mCallStackViewModel.CallStack.GetStackFrame(mCallStackViewModel.CallStack.Keys[i]);
+                    Console.WriteLine("key = " + mCallStackViewModel.CallStack.Keys[i]);
                     if (frame.IsInitialized)
                     {
                         continue;
@@ -456,7 +474,8 @@ namespace CppMemoryVisualizer.ViewModels
                             {
                                 string addressHex = match.Groups[1].Value;
                                 uint address = 0;
-                                Debug.Assert(uint.TryParse(addressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address));
+                                bool bSuccess = uint.TryParse(addressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address);
+                                Debug.Assert(bSuccess);
                                 local.StackMemory.Address = address;
                             }
                         });
@@ -469,12 +488,13 @@ namespace CppMemoryVisualizer.ViewModels
                             Debug.Assert(index > 0);
 
                             uint size = 0;
-                            Debug.Assert(uint.TryParse(line.Substring(index + 1), out size));
+                            bool bSuccess = uint.TryParse(line.Substring(index + 1), out size);
+                            Debug.Assert(bSuccess);
                             local.StackMemory.TypeInfo.Size = size;
                             
-                            uint wordSize = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
+                            uint wordCount = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
                             Debug.Assert(local.StackMemory.ByteValues == null);
-                            local.StackMemory.ByteValues = new byte[wordSize * 4];
+                            local.StackMemory.ByteValues = new byte[wordCount * 4];
                         });
 
                         RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE_NAME, name),
@@ -500,8 +520,9 @@ namespace CppMemoryVisualizer.ViewModels
                                 int index = line.LastIndexOf(' ');
                                 Debug.Assert(index > 0);
 
-                                uint size;
-                                Debug.Assert(uint.TryParse(line.Substring(index + 1), out size));
+                                uint size = 0;
+                                bool bSuccess = uint.TryParse(line.Substring(index + 1), out size);
+                                Debug.Assert(bSuccess);
                                 newPureType.Size = size;
                             });
 
@@ -544,11 +565,14 @@ namespace CppMemoryVisualizer.ViewModels
                                     {
                                         var memberType = new TypeInfo();
 
-                                        uint offset;
-                                        uint size;
+                                        uint offset = 0;
+                                        uint size = 0;
 
-                                        Debug.Assert(uint.TryParse(matchOffsetAndSize.Groups[1].Value, out offset));
-                                        Debug.Assert(uint.TryParse(matchOffsetAndSize.Groups[2].Value, out size));
+                                        bool bSuccess = uint.TryParse(matchOffsetAndSize.Groups[1].Value, out offset);
+                                        Debug.Assert(bSuccess);
+
+                                        bSuccess = uint.TryParse(matchOffsetAndSize.Groups[2].Value, out size);
+                                        Debug.Assert(bSuccess);
 
                                         Regex regexMemberName = new Regex(@"[a-zA-Z_$][a-zA-Z_$0-9]*", RegexOptions.RightToLeft);
                                         Match matchMemberName = regexMemberName.Match(line);
@@ -608,498 +632,40 @@ namespace CppMemoryVisualizer.ViewModels
 
                     frame.IsInitialized = true;
                 }
+            }
+            #endregion
 
-                RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, 0),
-                    null, null);
+            {
+                StringBuilder memoryWords = new StringBuilder(8192);
 
+                for (int i = 0; i < mCallStackViewModel.CallStack.Stack.Count; ++i)
+                {
+                    RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, i),
+                        null, null);
+
+                    Models.StackFrame frame = mCallStackViewModel.CallStack.Stack[i];
+
+                    foreach (var local in frame.LocalVariables)
+                    {
+                        memoryWords.Clear();
+
+                        uint wordCount = local.StackMemory.TypeInfo.Size / 4 + (uint)(local.StackMemory.TypeInfo.Size % 4 > 0 ? 1 : 0);
+
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, wordCount, '&' + local.Name),
+                            GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
+                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
+                        {
+                            int index = line.IndexOf(':');
+                            Debug.Assert(index != 6);
+
+                            memoryWords.Append(line.Substring(index + 1));
+                        });
+
+                        local.StackMemory.SetValue(memoryWords);
+                    }
+                }
             }
         }
-
-        /*
-        public void Update()
-        {
-            Models.StackFrame stackFrame = mCallStackViewModel.CallStack.GetStackFrame(mCallStackViewModel.CallStack.Top());
-
-            #region Get Local Variable Info
-            {
-                bool isFailed = false;
-
-                //RequestInstruction(GdbInstructionSet.DISPLAY_LOCAL_VARIABLE,
-                    //GdbInstructionSet.REQUEST_START_DISPLAY_LOCAL_VARIABLES, GdbInstructionSet.REQUEST_END_DISPLAY_LOCAL_VARIABLES);
-                ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_LOCAL_VARIABLES, GdbInstructionSet.REQUEST_END_DISPLAY_LOCAL_VARIABLES, (string line) =>
-                {
-                    if (!stackFrame.IsInitialized)
-                    {
-                        Regex rx = new Regex(@"^prv\s(local|param)\s+([0-9a-f]{8})\s+(\w+|\w+\s[a-zA-Z0-9_<>,: ]+|<function>)\s(\**)([\(\*+\)]*)([\[\d+\]]*)\s*(\w+)\s=\s");
-                        Match match = rx.Match(line);
-
-                        if (match.Success)
-                        {
-                            string localOrParam = match.Groups[1].Value;
-                            string stackAddr = match.Groups[2].Value;
-                            string pureTypeName = match.Groups[3].Value;
-                            string pointerChars = match.Groups[4].Value;
-                            string arrayOrFunctionPointerChars = match.Groups[5].Value;
-                            string dimensions = match.Groups[6].Value;
-                            string variableName = match.Groups[7].Value;
-                            
-                            stackFrame.TryAdd(variableName);
-                            LocalVariable local = stackFrame.GetLocalVariable(variableName);
-
-                            // local or parameter (fixed)
-                            local.IsArgument = (localOrParam == "param");
-
-                            // name (fixed)
-                            local.Name = variableName;
-
-                            // address in stack
-                            uint address = 0;
-                            Debug.Assert(uint.TryParse(stackAddr, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address));
-                            local.StackMemory.Address = address;
-
-                            // type (fixed)
-                            TypeInfo newType = new TypeInfo();
-
-                            // typename
-                            if (pureTypeName.StartsWith("struct "))
-                            {
-                                pureTypeName = pureTypeName.Substring(7);
-                                newType.Flags |= EMemoryTypeFlags.STRUCT;
-                            }
-                            else if (pureTypeName.StartsWith("class "))
-                            {
-                                pureTypeName = pureTypeName.Substring(6);
-                                newType.Flags |= EMemoryTypeFlags.CLASS;
-                            }
-                            else if (pureTypeName.StartsWith("enum "))
-                            {
-                                pureTypeName = pureTypeName.Substring(5);
-                                newType.Flags |= EMemoryTypeFlags.ENUM;
-                            }
-                            else if (pureTypeName.StartsWith("union "))
-                            {
-                                pureTypeName = pureTypeName.Substring(6);
-                                newType.Flags |= EMemoryTypeFlags.UNION;
-                            }
-                            else if (pureTypeName == "<function>")
-                            {
-                                newType.Flags |= EMemoryTypeFlags.FUNCTION;
-                            }
-
-                            // STL
-                            if (pureTypeName.Contains("std::"))
-                            {
-                                newType.Flags |= EMemoryTypeFlags.STL;
-                            }
-
-                            newType.PureName = pureTypeName;
-
-                            // Pointer
-                            if (pointerChars.Length > 0 || arrayOrFunctionPointerChars.Length > 0)
-                            {
-                                newType.Flags |= EMemoryTypeFlags.POINTER;
-                            }
-
-                            // Array
-                            if (dimensions.Length > 0)
-                            {
-                                newType.Flags |= EMemoryTypeFlags.ARRAY;
-                            }
-                            newType.PointerLevel = (uint)pointerChars.Length;
-
-                            // ArrayOrFunctionPointer
-                            {
-                                Regex regex = new Regex(@"\((\*+)\)");
-                                Match matchPointer = regex.Match(arrayOrFunctionPointerChars);
-
-                                while (matchPointer.Success)
-                                {
-                                    uint size = (uint)matchPointer.Groups[1].Length;
-                                    newType.ArrayOrFunctionPointerLevels.Add(size);
-
-                                    matchPointer = matchPointer.NextMatch();
-                                }
-                            }
-
-                            // Array Lengths
-                            {
-                                Regex regex = new Regex(@"\[(\d+)\]");
-                                Match matchDimension = regex.Match(dimensions);
-
-                                while (matchDimension.Success)
-                                {
-                                    uint size = 0;
-                                    Debug.Assert(uint.TryParse(matchDimension.Groups[1].Value, out size));
-
-                                    newType.ArrayLengths.Add(size);
-
-                                    matchDimension = matchDimension.NextMatch();
-                                }
-                            }
-
-                            if (local.StackMemory.TypeInfo == null)
-                            {
-                                local.StackMemory.TypeInfo = newType;
-                            }
-                        }
-                    }
-                    // Update stack address only
-                    else
-                    {
-                        Regex rx = new Regex(@"\s{2}([0-9a-f]{8}).*\s(\w+)\s=\s");
-                        Match match = rx.Match(line);
-
-                        if (match.Success)
-                        {
-                            string stackAddr = match.Groups[1].Value;
-                            string variableName = match.Groups[2].Value;
-                            LocalVariable local = stackFrame.GetLocalVariable(variableName);
-
-                            if (local == null)
-                            {
-                                isFailed = true;
-                                stackFrame.IsInitialized = false;
-                            }
-                            else
-                            {
-                                uint address = 0;
-                                Debug.Assert(uint.TryParse(stackAddr, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out address));
-                                local.StackMemory.Address = address;
-                            }
-                        }
-                    }
-                });
-
-                if (isFailed)
-                {
-                    return;
-                }
-            }
-            #endregion
-
-            // Check if initialized
-            if (!mCallStackViewModel.CallStack.IsEmpty() && stackFrame.IsInitialized)
-            {
-                goto UpdateMemory;
-            }
-
-            #region Get Local Variable SizeOf
-            {
-                foreach (var name in stackFrame.LocalVariableNames)
-                {
-                    LocalVariable local = stackFrame.GetLocalVariable(name);
-
-                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, name),
-                        GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + name, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
-                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
-                    {
-                        int lastIndex = line.LastIndexOf(' ');
-                        Debug.Assert(lastIndex >= 0);
-
-                        string value = line.Substring(lastIndex + 1);
-
-                        uint size = uint.MaxValue;
-                        if (value.StartsWith("0x")) // hexadecimal
-                        {
-                            Debug.Assert(uint.TryParse(value.Substring(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out size));
-                        }
-                        else // decimal
-                        {
-                            Debug.Assert(uint.TryParse(value, out size));
-                        }
-                        Debug.Assert(size < uint.MaxValue);
-                        local.StackMemory.TypeInfo.Size = size;
-
-                        uint wordSize = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
-
-                        if (local.StackMemory.ByteValues == null)
-                        {
-                            local.StackMemory.ByteValues = new byte[wordSize * 4];
-                        }
-                    });
-                }                
-            }
-            #endregion
-
-            #region Get Struct/Class Members
-            {
-                Queue<string> memberQueue = new Queue<string>();
-
-                foreach (var name in stackFrame.LocalVariableNames)
-                {
-                    LocalVariable local = stackFrame.GetLocalVariable(name);
-                    TypeInfo typeInfo = local.StackMemory.TypeInfo;
-                    string pureTypeName = typeInfo.PureName;
-
-                    if (mPureTypeManagerOrNull.HasType(pureTypeName))
-                    {
-                        local.StackMemory.PureTypeInfo = mPureTypeManagerOrNull.GetType(pureTypeName);
-                        continue;
-                    }
-
-                    TypeInfo pure = new TypeInfo();
-                    pure.PureName = pureTypeName;
-                    
-                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureTypeName),
-                        GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + pureTypeName, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
-                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string innerLine) =>
-                    {
-                        int lastIndex = innerLine.LastIndexOf(' ');
-                        Debug.Assert(lastIndex >= 0);
-
-                        string value = innerLine.Substring(lastIndex + 1);
-                        uint size = uint.MaxValue;
-
-                        if (value.StartsWith("0x")) // hexadecimal
-                        {
-                            Debug.Assert(uint.TryParse(value.Substring(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out size));
-                        }
-                        else // decimal
-                        {
-                            Debug.Assert(uint.TryParse(value, out size));
-                        }
-                        Debug.Assert(size < uint.MaxValue);
-
-                        pure.Size = size;
-                    });
-
-                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE_NAME, pureTypeName),
-                        GdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureTypeName, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
-                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
-                    {
-                        Regex rx = new Regex(@"^\+0x([0-9a-f]+)\s(\w+)\s+:\s(Ptr32|[\[\d+\]]+\s\w+$|\w+$)");
-                        Match match = rx.Match(line);
-
-                        if (match.Success)
-                        {
-                            TypeInfo newMember = new TypeInfo();
-
-                            string offsetHex = match.Groups[1].Value;
-                            string memberName = match.Groups[2].Value;
-                            string arrayTypeOrType = match.Groups[3].Value;
-
-                            // offset
-                            uint offset = 0;
-                            Debug.Assert(uint.TryParse(offsetHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out offset));
-                            newMember.Offset = offset;
-
-                            // member name
-                            newMember.MemberNameOrNull = memberName;
-
-                            // arrayTypeOrType name
-                            int lastIndex = arrayTypeOrType.LastIndexOf(' ');
-                            if (lastIndex >= 0) // array
-                            {
-                                string dimensions = arrayTypeOrType.Substring(0, lastIndex);
-                                string memberTypeName = arrayTypeOrType.Substring(lastIndex + 1);
-
-                                Regex regex = new Regex(@"\[(\d+)\]");
-                                Match matchDimension = regex.Match(dimensions);
-
-                                newMember.PureName = memberTypeName;
-                                memberQueue.Enqueue(memberTypeName);
-
-                                while (matchDimension.Success)
-                                {
-                                    uint size = 0;
-                                    Debug.Assert(uint.TryParse(matchDimension.Groups[1].Value, out size));
-
-                                    newMember.ArrayLengths.Add(size);
-
-                                    matchDimension = matchDimension.NextMatch();
-                                }
-                            }
-                            else
-                            {
-                                newMember.PureName = arrayTypeOrType;
-                                memberQueue.Enqueue(arrayTypeOrType);
-                            }
-
-                            pure.Members.Add(newMember);
-                        }
-                    });
-
-                    local.StackMemory.PureTypeInfo = pure;
-                    mPureTypeManagerOrNull.AddType(pureTypeName, pure);
-                }
-
-                #region member Queue
-                {
-                    while (memberQueue.Count > 0)
-                    {
-                        string pureTypeName = memberQueue.Dequeue();
-                        if (mPureTypeManagerOrNull.HasType(pureTypeName))
-                        {
-                            continue;
-                        }
-
-                        TypeInfo pure = new TypeInfo();
-                        pure.PureName = pureTypeName;
-
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureTypeName),
-                            GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF + ' ' + pureTypeName, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
-                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string innerLine) =>
-                        {
-                            int lastIndex = innerLine.LastIndexOf(' ');
-                            Debug.Assert(lastIndex >= 0);
-
-                            string value = innerLine.Substring(lastIndex + 1);
-                            uint size = uint.MaxValue;
-
-                            if (value.StartsWith("0x")) // hexadecimal
-                            {
-                                Debug.Assert(uint.TryParse(value.Substring(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out size));
-                            }
-                            else // decimal
-                            {
-                                Debug.Assert(uint.TryParse(value, out size));
-                            }
-                            Debug.Assert(size < uint.MaxValue);
-
-                            pure.Size = size;
-                        });
-
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPE_NAME, pureTypeName),
-                            GdbInstructionSet.REQUEST_START_DISPLAY_TYPE + ' ' + pureTypeName, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
-                        ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
-                        {
-                            Regex rx = new Regex(@"^\+0x([0-9a-f]+)\s(\w+)\s+:\s(Ptr32|[\[\d+\]]+\s\w+$|\w+$)");
-                            Match match = rx.Match(line);
-
-                            if (match.Success)
-                            {
-                                TypeInfo newMember = new TypeInfo();
-
-                                string offsetHex = match.Groups[1].Value;
-                                string memberName = match.Groups[2].Value;
-                                string arrayTypeOrType = match.Groups[3].Value;
-
-                                // offset
-                                uint offset = 0;
-                                Debug.Assert(uint.TryParse(offsetHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out offset));
-                                newMember.Offset = offset;
-
-                                // member name
-                                newMember.MemberNameOrNull = memberName;
-
-                                // arrayTypeOrType name
-                                int lastIndex = arrayTypeOrType.LastIndexOf(' ');
-                                if (lastIndex >= 0) // array
-                                {
-                                    string dimensions = arrayTypeOrType.Substring(0, lastIndex);
-                                    string memberTypeName = arrayTypeOrType.Substring(lastIndex + 1);
-
-                                    Regex regex = new Regex(@"\[(\d+)\]");
-                                    Match matchDimension = regex.Match(dimensions);
-
-                                    newMember.PureName = memberTypeName;
-                                    memberQueue.Enqueue(memberTypeName);
-
-                                    while (matchDimension.Success)
-                                    {
-                                        uint size = 0;
-                                        Debug.Assert(uint.TryParse(matchDimension.Groups[1].Value, out size));
-
-                                        newMember.ArrayLengths.Add(size);
-
-                                        matchDimension = matchDimension.NextMatch();
-                                    }
-                                }
-                                else
-                                {
-                                    newMember.PureName = arrayTypeOrType;
-                                    memberQueue.Enqueue(arrayTypeOrType);
-                                }
-
-                                pure.Members.Add(newMember);
-                            }
-                        });
-
-                        mPureTypeManagerOrNull.AddType(pureTypeName, pure);
-                    }
-                    #endregion
-                }
-
-                stackFrame.IsInitialized = true;
-            }
-            #endregion
-
-            UpdateMemory:
-
-            #region Get Memory Words
-            {
-                foreach (var name in stackFrame.LocalVariableNames)
-                {
-                    LocalVariable local = stackFrame.GetLocalVariable(name);
-                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, local.StackMemory.ByteValues.Length / 4, "0x" + local.StackMemory.Address.ToString("X")),
-                        GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY + ' ' + name, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
-                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
-                    {
-                        local.StackMemory.SetValue(line);
-                    });
-                }
-            }
-            #endregion
-
-            #region Get Heap Memory
-            {
-                foreach (var name in stackFrame.LocalVariableNames)
-                {
-                    LocalVariable local = stackFrame.GetLocalVariable(name);
-                    if (local.StackMemory.TypeInfo.Flags.HasFlag(EMemoryTypeFlags.POINTER) && local.StackMemory.IsChanged)
-                    {
-                        byte[] byteValues = local.StackMemory.ByteValues;
-                        uint wordValue = ((uint)byteValues[0] << 24) | ((uint)byteValues[1] << 16) | ((uint)byteValues[2] << 8) | (uint)byteValues[3];
-
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_HEAP, wordValue.ToString("X")),
-                            GdbInstructionSet.REQUEST_START_HEAP + ' ' + name, GdbInstructionSet.REQUEST_END_HEAP);
-                        ReadResultLine(GdbInstructionSet.REQUEST_START_HEAP, GdbInstructionSet.REQUEST_END_HEAP, (string line) =>
-                        {
-                            Regex rx = new Regex(@"^([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s\s([0-9a-f]{8})\s+([0-9a-f]+)\s+([0-9a-f]+)\s+([0-9a-f]+)\s+(busy)\s$");
-                            Match match = rx.Match(line);
-
-                            //Entry     User      Heap      Segment       Size  PrevSize  Unused    Flags
-                            //-----------------------------------------------------------------------------
-                            //00f3d0f0  00f3d0f8  00f30000  00f30000        18      1f20         c  busy 
-
-                            if (match.Success)
-                            {
-                                //string entryAddr = match.Groups[1].Value;
-                                string userAddr = match.Groups[2].Value;
-                                //string heapAddr = match.Groups[3].Value;
-                                //string segmentAddr = match.Groups[4].Value;
-                                string sizeHex = match.Groups[5].Value;
-                                //string prevSizeStr = match.Groups[6].Value;
-                                string unusedHex = match.Groups[7].Value;
-
-                                uint size = 0;
-                                Debug.Assert(uint.TryParse(sizeHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out size));
-
-                                uint unused = 0;
-                                Debug.Assert(uint.TryParse(unusedHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out unused));
-
-                                Debug.Assert(size >= unused);
-                                uint used = size - unused;
-
-                                // 포인터만이 heap을 가리킬 수 있다.
-                                if (local.StackMemory.TypeInfo.PointerLevel > 0)
-                                {
-                                    Debug.Assert(mPureTypeManagerOrNull.HasType(local.StackMemory.TypeInfo.PureName));
-
-                                    uint unitSize = local.StackMemory.TypeInfo.PointerLevel == 1 ? mPureTypeManagerOrNull.GetType(local.StackMemory.TypeInfo.PureName).Size : 4;
-                                    Debug.Assert(used % unitSize == 0);
-                                    uint length = used / unitSize;
-
-                                    Debug.WriteLine("used memory: {0}, Length : {1}", used, length);
-                                }
-                            }
-                        });
-                    }
-                }
-            }
-            #endregion
-        }
-        */
 
         public void ActionLinePointer(string line)
         {
@@ -1111,7 +677,8 @@ namespace CppMemoryVisualizer.ViewModels
                 Debug.WriteLine("Line {0}: `{1}`", match.Groups[1].Value, match.Groups[2].Value);
 
                 uint lineNumber = 0;
-                uint.TryParse(match.Groups[1].Value, out lineNumber);
+                bool bSuccess = uint.TryParse(match.Groups[1].Value, out lineNumber);
+                Debug.Assert(bSuccess);
                 Debug.Assert(lineNumber > 0);
                 LinePointer = lineNumber;
             }
