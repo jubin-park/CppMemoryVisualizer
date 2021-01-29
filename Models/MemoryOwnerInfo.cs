@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
-    sealed class MemoryOwnerInfo : MemoryInfo
+    class MemoryOwnerInfo : MemoryInfo
     {
-        private byte[] mByteValues;
+        protected byte[] mByteValues;
         public byte[] ByteValues
         {
             get

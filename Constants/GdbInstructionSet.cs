@@ -26,31 +26,43 @@ namespace CppMemoryVisualizer.Constants
         public static readonly string DISPLAY_ARGUMENTS = "info args -q";
         public static readonly string DISPLAY_LOCAL_VARIABLES = "info locals -q";
         public static readonly string DISPLAY_ADDRESS = "call &{0}"; // <name>
-        public static readonly string DISPLAY_TYPE_NAME = "whatis {0}"; // <name>
-        public static readonly string DISPLAY_TYPE_INFO = "ptype /o {0}"; // <name>
+        public static readonly string DISPLAY_TYPENAME = "whatis {0}"; // <name>
+        public static readonly string DISPLAY_TYPEINFO = "ptype /o {0}"; // <name>
         public static readonly string DISPLAY_SIZEOF = "call sizeof({0})"; // 0xADDRESS | <name>
-        public static readonly string DISPLAY_INFO_SYMBOL = "info symbol {0}"; // 0xADDRESS | <name>
+        public static readonly string DISPLAY_SYMBOLINFO = "info symbol {0}"; // 0xADDRESS | <name>
         public static readonly string DISPLAY_MEMORY = "x/{0}x {1}"; // count, 0xADDRESS
-        public static readonly string DISPLAY_HEAP_SIZEOF = "call (int)'msvcrt!_msize'({0})"; // 0xADDRESS
 
         public static readonly string SELECT_FRAME = "select-frame {0}"; // index
 
-        // https://sourceware.org/gdb/current/onlinedocs/gdb/Output.html
-        // https://ftp.gnu.org/old-gnu/Manuals/gdb/html_node/gdb_57.html#SEC58
         public static readonly string PRINTF = "printf \"{0}\\n\"";
-
+        
+        public static readonly string CREATE_HEAPINFO = "create_heapinfo";
+        public static readonly string DISPLAY_HEAPINFO = "display_heapinfo";
+        public static readonly string SET_UNWINDONSIGNAL_ON = "set unwindonsignal on";
         public static readonly string SET_PAGINATION_OFF = "set pagination off";
+        public static readonly string DEFINE_COMMANDS =
+$@"define {CREATE_HEAPINFO}
+set $heapinfo = (_HEAPINFO*)malloc(sizeof(_HEAPINFO))
+printf ""$heapinfo is created: 0x%08x\n"", $heapinfo
+end
+define {DISPLAY_HEAPINFO}
+set $heapinfo->_pentry = 0
+while(1)
+set $ret=(int)'msvcrt!_heapwalk'($heapinfo)
+if($ret!=-2)
+loop_break
+end
+printf ""%08x%08x%d\n"", $heapinfo->_size, $heapinfo->_pentry, $heapinfo->_useflag
+end
+end
+end";
 
-        #region Request by Echo
         public static readonly string OUTPUT_HEADER = "(gdb) ";
         public static readonly string REQUEST_START_CONSOLE = "@S=CONSOLE";
         public static readonly string REQUEST_END_CONSOLE = "@E=CONSOLE";
 
         public static readonly string REQUEST_START = "@S=";
         public static readonly string REQUEST_END = "@E=";
-
-        public static readonly string REQUEST_START_INIT = "@S=INIT";
-        public static readonly string REQUEST_END_INIT = "@E=INIT";
 
         public static readonly string REQUEST_START_DISPLAY_CALL_STACK = "@S=DISPLAY_CALL_STACK";
         public static readonly string REQUEST_END_DISPLAY_CALL_STACK = "@E=DISPLAY_CALL_STACK";
@@ -73,14 +85,14 @@ namespace CppMemoryVisualizer.Constants
         public static readonly string REQUEST_START_DISPLAY_SIZEOF = "@S=SIZEOF";
         public static readonly string REQUEST_END_DISPLAY_SIZEOF = "@E=SIZEOF";
 
-        public static readonly string REQUEST_START_DISPLAY_INFO_SYMBOL = "@S=DISPLAY_INFO_SYMBOL";
-        public static readonly string REQUEST_END_DISPLAY_INFO_SYMBOL = "@E=DISPLAY_INFO_SYMBOL";
+        public static readonly string REQUEST_START_DISPLAY_SYMBOLINFO = "@S=DISPLAY_SYMBOLINFO";
+        public static readonly string REQUEST_END_DISPLAY_SYMBOLINFO = "@E=DISPLAY_SYMBOLINFO";
 
         public static readonly string REQUEST_START_DISPLAY_MEMORY = "@S=DM";
         public static readonly string REQUEST_END_DISPLAY_MEMORY = "@E=DM";
 
-        public static readonly string REQUEST_START_HEAP = "@S=HEAP";
-        public static readonly string REQUEST_END_HEAP = "@E=HEAP";
+        public static readonly string REQUEST_START_DISPLAY_HEAPINFO = "@S=HEAPINFO";
+        public static readonly string REQUEST_END_DISPLAY_HEAPINFO = "@E=HEAPINFO";
 
         public static readonly string REQUEST_START_GO_COMMAND = "@S=GO";
         public static readonly string REQUEST_END_GO_COMMAND = "@E=GO";
@@ -96,6 +108,5 @@ namespace CppMemoryVisualizer.Constants
 
         public static readonly string REQUEST_START_ADD_BREAK_POINT = "@S=DBPL";
         public static readonly string REQUEST_END_ADD_BREAK_POINT = "@E=DBPL";
-        #endregion
     }
 }

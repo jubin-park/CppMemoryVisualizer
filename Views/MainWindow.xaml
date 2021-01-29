@@ -223,7 +223,7 @@
                 <RowDefinition
                     Height="4*" />
                 <RowDefinition
-                    Height="4*" />
+                    Height="1*" />
                 <RowDefinition
                     Height="24" />
             </Grid.RowDefinitions>

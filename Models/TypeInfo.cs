@@ -129,33 +129,6 @@ namespace CppMemoryVisualizer.Models
         {
             get
             {
-                /*
-                StringBuilder sb = new StringBuilder(mPureName, 128);
-                sb.Append(' ');
-
-                if (mPointerLevel > 0)
-                {
-                    sb.Append('*', (int)mPointerLevel);
-                }
-                foreach (uint len in mArrayOrFunctionPointerLevels)
-                {
-                    sb.Append('(');
-                    sb.Append(new string('*', (int)len));
-                    sb.Append(')');
-                }
-                foreach (uint len in mArrayLengths)
-                {
-                    sb.AppendFormat("[{0}]", len);
-                }
-
-                if (sb[sb.Length - 1] == ' ')
-                {
-                    --sb.Length;
-                }
-
-                return sb.ToString();
-                */
-
                 return mFullName;
             }
             set
@@ -223,6 +196,23 @@ namespace CppMemoryVisualizer.Models
                     }
                 }
             }
+        }
+
+        public TypeInfo GetDereferenceOrNull()
+        {
+            Debug.Assert(mFlags.HasFlag(EMemoryTypeFlags.POINTER) && mPointerLevel > 0);
+
+            TypeInfo type = new TypeInfo();
+
+            string name = mPureName;
+            if (mPointerLevel > 0)
+            {
+                name += ' ';
+                name += new string('*', (int)mPointerLevel - 1);
+            }
+            type.FullName = name;
+
+            return type;
         }
     }
 }

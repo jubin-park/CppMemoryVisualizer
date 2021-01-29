@@ -64,6 +64,8 @@
     <Compile Include="Enums\EMemoryTypeFlags.cs" />
     <Compile Include="Models\BreakPointList.cs" />
     <Compile Include="Models\CallStack.cs" />
+    <Compile Include="Models\HeapManager.cs" />
+    <Compile Include="Models\HeapMemoryInfo.cs" />
     <Compile Include="Models\MemoryOwnerInfo.cs" />
     <Compile Include="Models\TypeInfo.cs" />
     <Compile Include="Models\MemoryInfo.cs" />
