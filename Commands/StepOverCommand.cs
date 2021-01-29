@@ -47,6 +47,7 @@ namespace CppMemoryVisualizer.Commands
                 GdbInstructionSet.REQUEST_START_STEP_OVER_COMMAND, GdbInstructionSet.REQUEST_END_STEP_OVER_COMMAND);
             mMainViewModel.ReadResultLine(GdbInstructionSet.REQUEST_START_STEP_OVER_COMMAND, GdbInstructionSet.REQUEST_END_STEP_OVER_COMMAND,
                 mMainViewModel.ActionLinePointer);
+
             /*
             var thread = new Thread(() =>
             {

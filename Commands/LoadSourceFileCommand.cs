@@ -77,7 +77,7 @@ namespace CppMemoryVisualizer.Commands
                     string line;
                     TextReader reader = new StreamReader(openFileDialog.FileName);
 
-                    Regex rx = new Regex(@"^\s*#include\s*<(stdlib.h|cstdlib|malloc.h)>\s*$");
+                    Regex rx = new Regex(@"^\s*#include\s*<(stdlib.h|cstdlib|malloc.h)>");
 
                     while ((line = reader.ReadLine()) != null)
                     {
@@ -97,9 +97,8 @@ namespace CppMemoryVisualizer.Commands
                 if (!hasMallocHeader)
                 {
                     ++lineCount;
-                    File.WriteAllText(openFileDialog.FileName, "#include <malloc.h> // auto-generated" + Environment.NewLine + File.ReadAllText(openFileDialog.FileName));
-
-                    MessageBox.Show("힙 메모리 분석을 위해 헤더 <malloc.h> 를 자동으로 추가합니다.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Information);
+                    File.WriteAllText(openFileDialog.FileName, "#include <malloc.h> /* auto-generated */" + Environment.NewLine + File.ReadAllText(openFileDialog.FileName));
+                    //MessageBox.Show("힙 메모리 분석을 위해 헤더 <malloc.h> 를 자동으로 추가합니다.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 mMainViewModel.BreakPointList = new BreakPointList(lineCount + 1);
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
