@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace CppMemoryVisualizer.Views
+namespace CppMemoryVisualizer.Converters
 {
     // https://stackoverflow.com/questions/3652688/mutually-exclusive-checkable-menu-items/11497189#11497189
 

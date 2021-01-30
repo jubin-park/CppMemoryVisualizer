@@ -48,21 +48,6 @@ namespace CppMemoryVisualizer.Commands
             mMainViewModel.ReadResultLine(GdbInstructionSet.REQUEST_START_STEP_OVER_COMMAND, GdbInstructionSet.REQUEST_END_STEP_OVER_COMMAND,
                 mMainViewModel.ActionLinePointer);
 
-            /*
-            var thread = new Thread(() =>
-            {
-                lock (mMainViewModel.LockObject)
-                {
-                    mMainViewModel.Update();
-                    mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
-                }
-            });
-
-            thread.IsBackground = true;
-            thread.Start();
-            thread.Join();
-            */
-
             mMainViewModel.UpdateGdb();
 
             mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;

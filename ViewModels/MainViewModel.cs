@@ -164,8 +164,6 @@ namespace CppMemoryVisualizer.ViewModels
 
         private HeapManager mHeapManagerOrNull;
 
-        public readonly object LockObject = new object();
-
         public MainViewModel()
         {
             LoadSourceFileCommand = new LoadSourceFileCommand(this);
@@ -424,6 +422,9 @@ namespace CppMemoryVisualizer.ViewModels
                     Debug.WriteLine("Stack addr: {0}, Function addr: {1}, name: {2}", stackAddress, functionAddress, functionName);
                     mCallStackViewModel.CallStack.Push(stackAddress, functionAddress, functionName);
                 }
+
+                List<Models.StackFrame> tempStackFrames = new List<Models.StackFrame>(mCallStackViewModel.CallStack.StackFrames);
+                mCallStackViewModel.CallStack.StackFrames = tempStackFrames;
             }
             #endregion
 
@@ -445,9 +446,9 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 Regex regexLocalAddress = new Regex(@"\s0x([a-z0-9]+)");
 
-                for (int i = 0; i < mCallStackViewModel.CallStack.Keys.Count; ++i)
+                for (int i = 0; i < mCallStackViewModel.CallStack.StackFrameKeys.Count; ++i)
                 {
-                    Models.StackFrame frame = mCallStackViewModel.CallStack.GetStackFrame(mCallStackViewModel.CallStack.Keys[i]);
+                    Models.StackFrame frame = mCallStackViewModel.CallStack.GetStackFrame(mCallStackViewModel.CallStack.StackFrameKeys[i]);
                     if (frame.IsInitialized)
                     {
                         continue;
@@ -661,12 +662,12 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 StringBuilder memoryStringBuilder = new StringBuilder(8192);
 
-                for (int i = 0; i < mCallStackViewModel.CallStack.Stack.Count; ++i)
+                for (int i = 0; i < mCallStackViewModel.CallStack.StackFrames.Count; ++i)
                 {
                     RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, i),
                         null, null);
 
-                    Models.StackFrame frame = mCallStackViewModel.CallStack.Stack[i];
+                    Models.StackFrame frame = mCallStackViewModel.CallStack.StackFrames[i];
 
                     foreach (var local in frame.LocalVariables)
                     {

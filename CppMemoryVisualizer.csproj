@@ -73,16 +73,16 @@
     <Compile Include="Models\PureTypeManager.cs" />
     <Compile Include="Models\StackFrame.cs" />
     <Compile Include="ViewModels\CallStackViewModel.cs" />
-    <Compile Include="Views\BytesToPointerConverter.cs" />
-    <Compile Include="Views\BytesToValueArrayConverter.cs" />
-    <Compile Include="Views\BytesToValueConverter.cs" />
+    <Compile Include="Converters\BytesToPointerConverter.cs" />
+    <Compile Include="Converters\BytesToValueArrayConverter.cs" />
+    <Compile Include="Converters\BytesToValueConverter.cs" />
     <Compile Include="Views\MemoryDataTemplateSelector.cs" />
-    <Compile Include="Views\UIntToHexadecimalConverter.cs" />
+    <Compile Include="Converters\UIntToHexadecimalConverter.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\StandardCppVersionEnumToBooleanConverter.cs" />
-    <Compile Include="Views\WindowTitleConverter.cs" />
+    <Compile Include="Converters\StandardCppVersionEnumToBooleanConverter.cs" />
+    <Compile Include="Converters\WindowTitleConverter.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>

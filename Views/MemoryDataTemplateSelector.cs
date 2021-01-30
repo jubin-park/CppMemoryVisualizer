@@ -17,11 +17,12 @@ namespace CppMemoryVisualizer.Views
             MemoryOwnerInfo memory = item as MemoryOwnerInfo;
             FrameworkElement el = container as FrameworkElement;
 
-            string resourceName = "Unobservable";
+            string resourceName = "ValueArrayOnly";
 
+            /*
             if (memory.TypeInfo.Flags == EMemoryTypeFlags.NONE)
             {
-                resourceName = "ValueOnly";
+                resourceName = "ValueArrayOnly";
             }
             else if (memory.TypeInfo.Flags.HasFlag(EMemoryTypeFlags.POINTER))
             {
@@ -34,6 +35,7 @@ namespace CppMemoryVisualizer.Views
                     resourceName = "ValueArrayOnly";
                 }
             }
+            */
 
             return (DataTemplate)el.FindResource(resourceName);
         }

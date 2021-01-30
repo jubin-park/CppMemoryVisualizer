@@ -1,40 +1,51 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:CppMemoryVisualizer.Views">
+    xmlns:local="clr-namespace:CppMemoryVisualizer.Views"
+    xmlns:cvt="clr-namespace:CppMemoryVisualizer.Converters">
 
-    <local:UIntToHexadecimalConverter x:Key="UIntToHexadecimalConverter" />
-    <local:BytesToValueConverter x:Key="BytesToValueConverter" />
-    <local:BytesToPointerConverter x:Key="BytesToPointerConverter" />
-    <local:BytesToValueArrayConverter x:Key="BytesToValueArrayConverter" />
-
-    <DataTemplate x:Key="ValueOnly">
-        <Grid
-            Background="LightYellow"
-            Margin="8, 0, 0, 0">
-            <TextBlock
-                Text="{Binding ., Converter={StaticResource BytesToValueConverter}}"
-                Foreground="Blue" />
-        </Grid>
-    </DataTemplate>
+    <cvt:UIntToHexadecimalConverter x:Key="UIntToHexadecimalConverter" />
+    <cvt:BytesToValueConverter x:Key="BytesToValueConverter" />
+    <cvt:BytesToPointerConverter x:Key="BytesToPointerConverter" />
+    <cvt:BytesToValueArrayConverter x:Key="BytesToValueArrayConverter" />
 
     <DataTemplate
         x:Key="PointerOnly">
         <Grid
-            Background="LightYellow"
             Margin="8, 0, 0, 0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition
+                    Width="auto" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition
+                    Width="64" />
+            </Grid.ColumnDefinitions>
             <TextBlock
+                Grid.Column="0"
                 Text="{Binding ., Converter={StaticResource BytesToPointerConverter}}"
                 Foreground="Brown" />
+            <TextBlock
+                Grid.Column="2"
+                Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                Foreground="LightSlateGray" />
         </Grid>
     </DataTemplate>
 
     <DataTemplate
         x:Key="ValueArrayOnly">
         <Grid
-            Background="LightYellow"
             Margin="8, 0, 0, 0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition
+                    Width="auto" />
+                <ColumnDefinition
+                    Width="8" />
+                <ColumnDefinition
+                    Width="64" />
+            </Grid.ColumnDefinitions>
+            
             <ItemsControl
+                Grid.Column="0"
                 ItemsSource="{Binding ., Converter={StaticResource BytesToValueArrayConverter}}">
                 
                 <ItemsControl.ItemTemplate>
@@ -57,10 +68,15 @@
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel
-                            Orientation="Horizontal" />
+                            Orientation="Vertical" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
+
+            <TextBlock
+                Grid.Column="2"
+                Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                Foreground="LightSlateGray" />
         </Grid>
     </DataTemplate>
 

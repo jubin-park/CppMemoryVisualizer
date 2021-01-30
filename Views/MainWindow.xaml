@@ -9,6 +9,7 @@
     xmlns:vm="clr-namespace:CppMemoryVisualizer.ViewModels"
     xmlns:v="clr-namespace:CppMemoryVisualizer.Views"
     xmlns:m="clr-namespace:CppMemoryVisualizer.Models"
+    xmlns:cvt="clr-namespace:CppMemoryVisualizer.Converters"
     xmlns:enum="clr-namespace:CppMemoryVisualizer.Enums"
     mc:Ignorable="d"
     Height="600"
@@ -33,17 +34,15 @@
     </Window.InputBindings>
 
     <Window.Resources>
-
         <ResourceDictionary>
-
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary
                     Source="MemoryDataTemplate.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <v:WindowTitleConverter
+            <cvt:WindowTitleConverter
                 x:Key="WindowTitleConverter" />
-            <v:StandardCppVersionEnumToBooleanConverter
+            <cvt:StandardCppVersionEnumToBooleanConverter
                 x:Key="StandardCppVersionEnumToBooleanConverter" />
             <v:MemoryDataTemplateSelector
                 x:Key="MemoryDataTemplateSelector" />
@@ -53,75 +52,56 @@
 
                 <Grid
                     Margin="0, 0, 0, 12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition
-                            Width="64" />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
 
                     <TextBlock
-                        Grid.Column="0"
+                        Background="AliceBlue"
+                        Grid.Row="0"
                         Text="{Binding Name}"
                         TextWrapping="Wrap"
                         FontWeight="Bold" />
 
                     <ItemsControl
-                        Grid.Column="1"
+                        Grid.Row="1"
                         ItemsSource="{Binding LocalVariables}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border
-                                    BorderBrush="#1266a7"
-                                    BorderThickness="1"
-                                    Margin="0, -1, 0, 0">
+
+                                <Grid
+                                    Margin="0, 0, 0, 8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition
+                                            Width="3*" />
+                                    </Grid.ColumnDefinitions>
+
                                     <Grid
-                                        Margin="0, 0, 0, 8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition
-                                                Width="160" />
-                                            <ColumnDefinition
-                                                Width="3*" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <Grid
-                                            Grid.Column="0">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition />
-                                                <RowDefinition />
-                                                <RowDefinition />
-                                            </Grid.RowDefinitions>
-
-                                            <TextBlock
-                                                Grid.Row="0"
-                                                Text="{Binding StackMemory.Address, Converter={StaticResource UIntToHexadecimalConverter}}"
-                                                TextAlignment="Right"
-                                                TextWrapping="Wrap"
-                                                Foreground="LightSlateGray" />
-
-                                            <TextBlock
-                                                Grid.Row="1"
-                                                Text="{Binding StackMemory.TypeInfo.FullName}"
-                                                TextAlignment="Right"
-                                                TextWrapping="Wrap"
+                                        Grid.Column="0"
+                                        Margin="8, 0, 0, 0"
+                                        >
+                                        <TextBlock
+                                            TextWrapping="Wrap">
+                                            <Run
+                                                Text="{Binding StackMemory.TypeInfo.FullName, Mode=OneWay}"
                                                 Foreground="LightSlateGray"
                                                 FontStyle="Italic" />
-
-                                            <TextBlock
-                                                Grid.Row="2"
-                                                Text="{Binding Name}"
-                                                TextAlignment="Right"
-                                                TextWrapping="Wrap"
+                                            <Run
+                                                Text="{Binding Name, Mode=OneWay}"
                                                 FontWeight="Bold" />
-                                        </Grid>
-
-                                        <ContentControl
-                                            Grid.Column="1"
-                                            Content="{Binding StackMemory}"
-                                            ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
-                                        </ContentControl>
-
+                                        </TextBlock>
                                     </Grid>
-                                </Border>
+
+                                    <ContentControl
+                                        Grid.Column="1"
+                                        Content="{Binding StackMemory}"
+                                        ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
+                                    </ContentControl>
+
+                                </Grid>
+
 
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -135,8 +115,6 @@
                     </ItemsControl>
 
                 </Grid>
-
-
             </DataTemplate>
 
         </ResourceDictionary>
@@ -259,7 +237,7 @@
                     HorizontalScrollBarVisibility="Visible">
                     <Grid>
                         <ItemsControl
-                            ItemsSource="{Binding CallStackViewModel.CallStack.Stack}">
+                            ItemsSource="{Binding CallStackViewModel.CallStack.StackFrames}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel
@@ -269,7 +247,6 @@
                         </ItemsControl>
                     </Grid>
                 </ScrollViewer>
-
             </Grid>
 
             <TextBox

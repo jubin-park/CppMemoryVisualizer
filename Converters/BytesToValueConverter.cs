@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace CppMemoryVisualizer.Views
+namespace CppMemoryVisualizer.Converters
 {
     class BytesToValueConverter : IValueConverter
     {
