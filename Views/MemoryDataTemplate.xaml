@@ -80,13 +80,14 @@
         </Grid>
     </DataTemplate>
 
-    <DataTemplate x:Key="Unobservable">
+    <DataTemplate
+        x:Key="Unobservable">
         <Grid
             Margin="8, 0, 0, 0">
             <TextBlock
                 Text="Cannot observe"
                 Foreground="Red" />
         </Grid>
-        
     </DataTemplate>
+
 </ResourceDictionary>

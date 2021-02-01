@@ -55,7 +55,7 @@ end
 printf ""%08x%08x%d\n"", (int*)$heapinfo[0], $heapinfo[1], $heapinfo[2]
 end
 end
-end";
+end"; // _pentry, _size, _useflag
 
         public static readonly string OUTPUT_HEADER = "(gdb) ";
         public static readonly string REQUEST_START_CONSOLE = "@S=CONSOLE";

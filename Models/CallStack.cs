@@ -24,8 +24,8 @@ namespace CppMemoryVisualizer.Models
         private Dictionary<ulong, StackFrame> mStackFrameCaches = new Dictionary<ulong, StackFrame>();
 
         // https://stackoverflow.com/questions/21976979/mvvm-model-with-collections-use-or-not-observablecollection-in-model
-        private List<StackFrame> mStackFrames = new List<StackFrame>();
-        public List<StackFrame> StackFrames
+        private ObservableCollection<StackFrame> mStackFrames = new ObservableCollection<StackFrame>();
+        public ObservableCollection<StackFrame> StackFrames
         {
             get
             {
@@ -34,7 +34,7 @@ namespace CppMemoryVisualizer.Models
             set
             {
                 mStackFrames = value;
-                onPropertyChanged("StackFrames");
+                OnPropertyChanged("StackFrames");
             }
         }
 
@@ -64,8 +64,6 @@ namespace CppMemoryVisualizer.Models
                 bool bSuccess = mStackFrameCaches.TryGetValue(key, out frame);
                 Debug.Assert(bSuccess);
             }
-            frame.Index = (uint)mStackFrames.Count;
-            frame.Y = frame.Index * 50;
 
             mStackFrames.Add(frame);
         }
@@ -95,7 +93,7 @@ namespace CppMemoryVisualizer.Models
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void onPropertyChanged(string propertyName)
+        private void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

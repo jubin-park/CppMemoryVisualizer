@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
-    sealed class StackFrame : INotifyPropertyChanged
+    sealed class StackFrame
     {
         public bool IsInitialized = false;
 
@@ -33,7 +33,6 @@ namespace CppMemoryVisualizer.Models
             set
             {
                 mLocalVariables = value;
-                onPropertyChanged(nameof(mLocalVariables));
             }
         }
 
@@ -77,34 +76,6 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        private double mX;
-        public double X
-        {
-            get
-            {
-                return mX;
-            }
-            set
-            {
-                mX = value;
-                onPropertyChanged("X");
-            }
-        }
-
-        private double mY;
-        public double Y
-        {
-            get
-            {
-                return mY;
-            }
-            set
-            {
-                mY = value;
-                onPropertyChanged("Y");
-            }
-        }
-
         public StackFrame(uint stackAddress, uint functionAddress, string functionName)
         {
             Debug.Assert(stackAddress > 0);
@@ -142,13 +113,6 @@ namespace CppMemoryVisualizer.Models
             mLocalVariableCaches.TryGetValue(localVariableName, out localVariable);
 
             return localVariable;
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void onPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

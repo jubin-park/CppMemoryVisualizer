@@ -1,16 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Data;
 
 namespace CppMemoryVisualizer.Models
 {
-    sealed class HeapManager
+    sealed class HeapManager : INotifyPropertyChanged
     {
-        private readonly List<ulong> mHeapKeys = new List<ulong>(32); // (ulong)heapSize << 32 | heapAddress;
+        private readonly List<ulong> mHeapKeys = new List<ulong>(32); // heapAddress << 32 | (ulong)heapSize;
+
         private Dictionary<ulong, HeapMemoryInfo> mCaches = new Dictionary<ulong, HeapMemoryInfo>();
+
+        private readonly ObservableCollection<HeapMemoryInfo> mHeaps = new ObservableCollection<HeapMemoryInfo>();
+        public ObservableCollection<HeapMemoryInfo> Heaps
+        {
+            get
+            {
+                return mHeaps;
+            }
+        }
 
         public void Add(ulong key)
         {
@@ -48,9 +61,20 @@ namespace CppMemoryVisualizer.Models
             {
                 if (!mCaches.ContainsKey(key))
                 {
-                    mCaches.Add(key, new HeapMemoryInfo((uint)(key & uint.MaxValue), (uint)(key >> 32)));
+                    mCaches.Add(key, new HeapMemoryInfo((uint)(key >> 32), (uint)(key & uint.MaxValue)));
                 }
             }
+
+            Heaps.Clear();
+            foreach (var heap in mCaches.Values)
+            {
+                if (heap.IsVisible)
+                {
+                    Heaps.Add(heap);
+                }
+            }
+
+            CollectionViewSource.GetDefaultView(mHeaps).Refresh();
         }
 
         public HeapMemoryInfo GetHeapOrNull(uint heapAddress)
@@ -67,8 +91,8 @@ namespace CppMemoryVisualizer.Models
             {
                 int mid = (left + right) / 2;
 
-                uint nowAddress = (uint)(mHeapKeys[mid] & uint.MaxValue);
-                uint nowSize = (uint)(mHeapKeys[mid] >> 32);
+                uint nowAddress = (uint)(mHeapKeys[mid] >> 32);
+                uint nowSize = (uint)(mHeapKeys[mid] & uint.MaxValue);
 
                 if (nowAddress <= heapAddress && heapAddress < nowAddress + nowSize)
                 {
@@ -101,6 +125,13 @@ namespace CppMemoryVisualizer.Models
             {
                 heap.IsVisible = false;
             }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

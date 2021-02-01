@@ -22,6 +22,8 @@ using CppMemoryVisualizer.ViewModels;
 using CppMemoryVisualizer.Constants;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Rendering;
+using System.Windows.Controls.Primitives;
+using CppMemoryVisualizer.Models;
 
 namespace CppMemoryVisualizer.Views
 {
@@ -56,6 +58,15 @@ namespace CppMemoryVisualizer.Views
 
                 xTextBoxInput.Text = string.Empty;
             }
+        }
+
+        private void xThumbHeap_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+        {
+            var thumb = (Thumb)sender;
+            var heap = (HeapMemoryInfo)thumb.DataContext;
+
+            heap.X += e.HorizontalChange;
+            heap.Y += e.VerticalChange;
         }
     }
 }

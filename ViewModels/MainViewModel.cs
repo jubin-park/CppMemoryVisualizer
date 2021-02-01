@@ -142,7 +142,7 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 mLinePointer = value;
                 OnPropertyChanged("LinePointer");
-                OnLinePointerChanged();
+                onLinePointerChanged();
             }
         }
 
@@ -163,6 +163,18 @@ namespace CppMemoryVisualizer.ViewModels
         private PureTypeManager mPureTypeManagerOrNull;
 
         private HeapManager mHeapManagerOrNull;
+        public HeapManager HeapManagerOrNull
+        {
+            get
+            {
+                return mHeapManagerOrNull;
+            }
+            set
+            {
+                mHeapManagerOrNull = value;
+                OnPropertyChanged("HeapManagerOrNull");
+            }
+        }
 
         public MainViewModel()
         {
@@ -200,7 +212,7 @@ namespace CppMemoryVisualizer.ViewModels
             LinePointer = 0;
             CallStackViewModel = new CallStackViewModel();
             mPureTypeManagerOrNull = new PureTypeManager();
-            mHeapManagerOrNull = new HeapManager();
+            HeapManagerOrNull = new HeapManager();
 
             #region set main breakpoint
             {
@@ -236,8 +248,8 @@ namespace CppMemoryVisualizer.ViewModels
                 RequestInstruction(GdbInstructionSet.DISPLAY_HEAPINFO,
                     GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO);
                 ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO, actionAddHeap);
-                mHeapManagerOrNull.Update();
-                mHeapManagerOrNull.SetAllInvisible();
+                HeapManagerOrNull.Update();
+                HeapManagerOrNull.SetAllInvisible();
             }
             #endregion
 
@@ -422,9 +434,6 @@ namespace CppMemoryVisualizer.ViewModels
                     Debug.WriteLine("Stack addr: {0}, Function addr: {1}, name: {2}", stackAddress, functionAddress, functionName);
                     mCallStackViewModel.CallStack.Push(stackAddress, functionAddress, functionName);
                 }
-
-                List<Models.StackFrame> tempStackFrames = new List<Models.StackFrame>(mCallStackViewModel.CallStack.StackFrames);
-                mCallStackViewModel.CallStack.StackFrames = tempStackFrames;
             }
             #endregion
 
@@ -436,11 +445,11 @@ namespace CppMemoryVisualizer.ViewModels
                 return;
             }
 
-            mHeapManagerOrNull.Clear();
+            HeapManagerOrNull.Clear();
             RequestInstruction(GdbInstructionSet.DISPLAY_HEAPINFO,
                 GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO);
             ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO, actionAddHeap);
-            mHeapManagerOrNull.Update();
+            HeapManagerOrNull.Update();
 
             #region Initialize StackFrames
             {
@@ -702,7 +711,7 @@ namespace CppMemoryVisualizer.ViewModels
                                     ((uint)local.StackMemory.ByteValues[j * 4 + 2] << 16) +
                                     ((uint)local.StackMemory.ByteValues[j * 4 + 3] << 24);
 
-                                var heapOrNull = mHeapManagerOrNull.GetHeapOrNull(address);
+                                var heapOrNull = HeapManagerOrNull.GetHeapOrNull(address);
                                 if (heapOrNull != null)
                                 {
                                     uint heapSize = heapOrNull.Size;
@@ -764,7 +773,7 @@ namespace CppMemoryVisualizer.ViewModels
             bool bUsed = (line[16] == '1');
             if (bUsed)
             {
-                mHeapManagerOrNull.Add(heapKey);
+                HeapManagerOrNull.Add(heapKey);
             }
         }
 
@@ -776,7 +785,7 @@ namespace CppMemoryVisualizer.ViewModels
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public void OnLinePointerChanged()
+        public void onLinePointerChanged()
         {
             LinePointerChanged?.Invoke(this, new PropertyChangedEventArgs("LinePointer"));
         }

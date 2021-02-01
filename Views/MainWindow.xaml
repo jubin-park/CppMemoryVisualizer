@@ -69,7 +69,6 @@
                         ItemsSource="{Binding LocalVariables}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-
                                 <Grid
                                     Margin="0, 0, 0, 8">
                                     <Grid.ColumnDefinitions>
@@ -80,8 +79,7 @@
 
                                     <Grid
                                         Grid.Column="0"
-                                        Margin="8, 0, 0, 0"
-                                        >
+                                        Margin="8, 0, 0, 0">
                                         <TextBlock
                                             TextWrapping="Wrap">
                                             <Run
@@ -101,20 +99,63 @@
                                     </ContentControl>
 
                                 </Grid>
-
-
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
+
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel
-                                    Orientation="Vertical">
-                                </StackPanel>
+                                    Orientation="Vertical" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
-
                 </Grid>
+            </DataTemplate>
+
+            <DataTemplate
+                DataType="{x:Type m:HeapMemoryInfo}">
+                <Grid>
+                    <Thumb
+                        x:Name="xThumbHeap"
+                        DragDelta="xThumbHeap_DragDelta">
+                        <Thumb.Template>
+                            <ControlTemplate>
+                                <Grid
+                                    Cursor="Hand"
+                                    Background="LightGoldenrodYellow">
+
+                                    <Grid
+                                        Cursor="Hand"
+                                        Background="LightGoldenrodYellow">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition
+                                                Width="3*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            TextWrapping="Wrap">
+                                        <Run
+                                                Text="{Binding TypeInfo.FullName, Mode=OneWay}"
+                                                Foreground="LightSlateGray"
+                                                FontStyle="Italic" />
+                                        <Run
+                                                Text="Size:" />
+                                        <Run
+                                                Text="{Binding Size, Mode=OneWay}"
+                                                FontWeight="Bold" />
+                                        </TextBlock>
+                                        <ContentControl
+                                            Grid.Column="1"
+                                            Content="{Binding .}"
+                                            ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
+                                        </ContentControl>
+                                    </Grid>
+                                </Grid>
+                            </ControlTemplate>
+                        </Thumb.Template>
+                    </Thumb>
+                </Grid>
+                
             </DataTemplate>
 
         </ResourceDictionary>
@@ -231,22 +272,38 @@
                     Background="Gray"
                     ShowsPreview="true"
                     HorizontalAlignment="Stretch" />
-                <ScrollViewer
-                    Grid.Column="2"
-                    VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollBarVisibility="Visible">
-                    <Grid>
-                        <ItemsControl
-                            ItemsSource="{Binding CallStackViewModel.CallStack.StackFrames}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel
-                                        Orientation="Vertical" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </Grid>
-                </ScrollViewer>
+                
+                <Grid
+                    Grid.Column="2">
+                    <ItemsControl
+                        ItemsSource="{Binding CallStackViewModel.CallStack.StackFrames}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel
+                                    Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+
+                    <ItemsControl
+                        ItemsSource="{Binding HeapManagerOrNull.Heaps}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style>
+                                <Setter
+                                    Property="Canvas.Left"
+                                    Value="{Binding X}" />
+                                <Setter
+                                    Property="Canvas.Top"
+                                    Value="{Binding Y}" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                    </ItemsControl>
+                </Grid>
             </Grid>
 
             <TextBox

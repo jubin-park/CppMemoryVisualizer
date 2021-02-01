@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
-    sealed class HeapMemoryInfo : MemoryOwnerInfo
+    sealed class HeapMemoryInfo : MemoryOwnerInfo, INotifyPropertyChanged
     {
         private uint mSize;
         public uint Size
@@ -17,7 +18,7 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        private bool mbVisible;
+        private bool mbVisible = true;
         public bool IsVisible
         {
             get
@@ -30,6 +31,37 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
+        private double mX;
+        public double X
+        {
+            get
+            {
+                return mX;
+            }
+            set
+            {
+                mX = value;
+                OnPropertyChanged("X");
+            }
+        }
+
+        private double mY;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public double Y
+        {
+            get
+            {
+                return mY;
+            }
+            set
+            {
+                mY = value;
+                OnPropertyChanged("Y");
+            }
+        }
+
         public HeapMemoryInfo(uint address, uint size)
         {
             mAddress = address;
@@ -37,6 +69,11 @@ namespace CppMemoryVisualizer.Models
 
             uint wordCount = size / 4 + (size % 4 > 0 ? 1u : 0);
             mByteValues = new byte[wordCount * 4];
+        }
+
+        public void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

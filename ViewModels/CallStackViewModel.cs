@@ -26,7 +26,7 @@ namespace CppMemoryVisualizer.ViewModels
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void onPropertyChanged(string propertyName)
+        private void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
