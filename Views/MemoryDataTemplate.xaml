@@ -5,39 +5,19 @@
     xmlns:cvt="clr-namespace:CppMemoryVisualizer.Converters">
 
     <cvt:UIntToHexadecimalConverter x:Key="UIntToHexadecimalConverter" />
-    <cvt:BytesToValueConverter x:Key="BytesToValueConverter" />
-    <cvt:BytesToPointerConverter x:Key="BytesToPointerConverter" />
-    <cvt:BytesToValueArrayConverter x:Key="BytesToValueArrayConverter" />
-
+    <cvt:BytesToStackPrimitiveConverter
+        x:Key="BytesToStackPrimitiveConverter" />
+    <cvt:BytesToHeapPrimitiveConverter
+        x:Key="BytesToHeapPrimitiveConverter" />
+    <local:MemoryDataTemplateSelector
+        x:Key="MemoryDataTemplateSelector" />
+ 
     <DataTemplate
-        x:Key="PointerOnly">
-        <Grid
-            Margin="8, 0, 0, 0">
+        x:Key="StackPrimitive">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition
-                    Width="auto" />
-                <ColumnDefinition Width="8" />
-                <ColumnDefinition
-                    Width="64" />
-            </Grid.ColumnDefinitions>
-            <TextBlock
-                Grid.Column="0"
-                Text="{Binding ., Converter={StaticResource BytesToPointerConverter}}"
-                Foreground="Brown" />
-            <TextBlock
-                Grid.Column="2"
-                Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
-                Foreground="LightSlateGray" />
-        </Grid>
-    </DataTemplate>
-
-    <DataTemplate
-        x:Key="ValueArrayOnly">
-        <Grid
-            Margin="8, 0, 0, 0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition
-                    Width="auto" />
+                    Width="Auto" />
                 <ColumnDefinition
                     Width="8" />
                 <ColumnDefinition
@@ -46,7 +26,7 @@
             
             <ItemsControl
                 Grid.Column="0"
-                ItemsSource="{Binding ., Converter={StaticResource BytesToValueArrayConverter}}">
+                ItemsSource="{Binding ., Converter={StaticResource BytesToStackPrimitiveConverter}}">
                 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -80,6 +60,85 @@
         </Grid>
     </DataTemplate>
 
+    <DataTemplate
+        x:Key="HeapPrimitive">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition
+                    Width="Auto" />
+                <ColumnDefinition
+                    Width="8" />
+                <ColumnDefinition
+                    Width="64" />
+            </Grid.ColumnDefinitions>
+
+            <ItemsControl
+                Grid.Column="0"
+                ItemsSource="{Binding ., Converter={StaticResource BytesToHeapPrimitiveConverter}}">
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border
+                            BorderBrush="#1266a7"
+                            BorderThickness="1">
+                            <Grid
+                                Width="80">
+                                <TextBlock
+                                    Text="{Binding }"
+                                    HorizontalAlignment="Center"
+                                    TextAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel
+                            Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+
+            <TextBlock
+                Grid.Column="2"
+                Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                Foreground="LightSlateGray" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate
+        x:Key="StructOrClass">
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition
+                    Width="Auto" />
+                <ColumnDefinition
+                    Width="8" />
+                <ColumnDefinition
+                    Width="64" />
+            </Grid.ColumnDefinitions>
+
+            <ItemsControl
+                Grid.Column="0">
+
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border
+                            BorderBrush="#1266a7"
+                            BorderThickness="1">
+                            <ContentControl
+                                Content="{Binding .}"
+                                ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
+                            </ContentControl>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Grid>
+    </DataTemplate>
+    
     <DataTemplate
         x:Key="Unobservable">
         <Grid

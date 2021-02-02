@@ -60,6 +60,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Converters\BytesToHeapPrimitiveConverter.cs" />
     <Compile Include="Enums\EStandardCppVersion.cs" />
     <Compile Include="Enums\EMemoryTypeFlags.cs" />
     <Compile Include="Models\BreakPointList.cs" />
@@ -73,9 +74,7 @@
     <Compile Include="Models\PureTypeManager.cs" />
     <Compile Include="Models\StackFrame.cs" />
     <Compile Include="ViewModels\CallStackViewModel.cs" />
-    <Compile Include="Converters\BytesToPointerConverter.cs" />
-    <Compile Include="Converters\BytesToValueArrayConverter.cs" />
-    <Compile Include="Converters\BytesToValueConverter.cs" />
+    <Compile Include="Converters\BytesToStackPrimitiveConverter.cs" />
     <Compile Include="Views\MemoryDataTemplateSelector.cs" />
     <Compile Include="Converters\UIntToHexadecimalConverter.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">

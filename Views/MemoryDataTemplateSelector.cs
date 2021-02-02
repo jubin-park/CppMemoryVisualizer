@@ -17,25 +17,22 @@ namespace CppMemoryVisualizer.Views
             MemoryOwnerInfo memory = item as MemoryOwnerInfo;
             FrameworkElement el = container as FrameworkElement;
 
-            string resourceName = "ValueArrayOnly";
-
-            /*
-            if (memory.TypeInfo.Flags == EMemoryTypeFlags.NONE)
+            string resourceName;
+            if (memory.TypeInfo.Flags.HasFlag(EMemoryTypeFlags.CLASS | EMemoryTypeFlags.STRUCT))
             {
-                resourceName = "ValueArrayOnly";
+                resourceName = "Unobservable";
             }
-            else if (memory.TypeInfo.Flags.HasFlag(EMemoryTypeFlags.POINTER))
+            else
             {
-                resourceName = "PointerOnly";
-            }
-            else if (memory.TypeInfo.Flags.HasFlag(EMemoryTypeFlags.ARRAY))
-            {
-                if (memory.PureTypeInfo.PureName == "int")
+                if (memory is HeapMemoryInfo)
                 {
-                    resourceName = "ValueArrayOnly";
+                    resourceName = "HeapPrimitive";
+                }
+                else
+                {
+                    resourceName = "StackPrimitive";
                 }
             }
-            */
 
             return (DataTemplate)el.FindResource(resourceName);
         }

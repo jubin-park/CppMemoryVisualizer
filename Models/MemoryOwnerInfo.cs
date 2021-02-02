@@ -29,7 +29,7 @@ namespace CppMemoryVisualizer.Models
             bool isChanged = false;
 
             uint count = 0;
-            for (int i = 0; i < wordPattern.Length && count < mTypeInfo.Size; i += 11)
+            for (int i = 0; i < wordPattern.Length; i += 11)
             {
                 for (int j = 3; j >= 0; --j)
                 {

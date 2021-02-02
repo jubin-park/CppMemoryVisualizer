@@ -123,33 +123,28 @@
                                 <Grid
                                     Cursor="Hand"
                                     Background="LightGoldenrodYellow">
-
-                                    <Grid
-                                        Cursor="Hand"
-                                        Background="LightGoldenrodYellow">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition />
-                                            <ColumnDefinition
-                                                Width="3*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock
-                                            TextWrapping="Wrap">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition
+                                            Width="3*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        TextWrapping="Wrap">
                                         <Run
-                                                Text="{Binding TypeInfo.FullName, Mode=OneWay}"
-                                                Foreground="LightSlateGray"
-                                                FontStyle="Italic" />
+                                            Text="{Binding TypeInfo.FullName, Mode=OneWay}"
+                                            Foreground="LightSlateGray"
+                                            FontStyle="Italic" />
                                         <Run
-                                                Text="Size:" />
+                                            Text="Size:" />
                                         <Run
-                                                Text="{Binding Size, Mode=OneWay}"
-                                                FontWeight="Bold" />
-                                        </TextBlock>
-                                        <ContentControl
-                                            Grid.Column="1"
-                                            Content="{Binding .}"
-                                            ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
-                                        </ContentControl>
-                                    </Grid>
+                                            Text="{Binding Size, Mode=OneWay}"
+                                            FontWeight="Bold" />
+                                    </TextBlock>
+                                    <ContentControl
+                                        Grid.Column="1"
+                                        Content="{Binding .}"
+                                        ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
+                                    </ContentControl>
                                 </Grid>
                             </ControlTemplate>
                         </Thumb.Template>

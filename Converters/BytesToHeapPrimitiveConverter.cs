@@ -10,21 +10,24 @@ using System.Windows.Data;
 
 namespace CppMemoryVisualizer.Converters
 {
-    class BytesToValueArrayConverter : IValueConverter
+    class BytesToHeapPrimitiveConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            MemoryOwnerInfo memory = value as MemoryOwnerInfo;
+            HeapMemoryInfo memory = value as HeapMemoryInfo;
+            // size만 안다. 길이를 모른다. 역참조 했을 때의 typesize를 구해서 size / type.size
 
-            uint totalLength = 1;
-            foreach (uint len in memory.TypeInfo.ArrayLengths)
+            if (memory.PureTypeInfo == null)
             {
-                totalLength *= len;
+                return null;
             }
-            uint blockSize = memory.TypeInfo.Size / totalLength;
+
+            uint blockSize = (memory.TypeInfo.PointerLevel == 0 ? memory.PureTypeInfo.Size : 4);
+            uint totalLength = memory.Size / blockSize;
+
             List<string> values = new List<string>((int)totalLength);
 
-            if (memory.TypeInfo.PointerLevel > 0 || memory.TypeInfo.ArrayOrFunctionPointerLevels.Count > 0)
+            if (memory.TypeInfo.PointerLevel > 1)
             {
                 Debug.Assert(blockSize == 4);
 
