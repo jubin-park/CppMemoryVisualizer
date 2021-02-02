@@ -31,6 +31,8 @@ namespace CppMemoryVisualizer.Constants
         public static readonly string DISPLAY_SIZEOF = "call sizeof({0})"; // 0xADDRESS | <name>
         public static readonly string DISPLAY_SYMBOLINFO = "info symbol {0}"; // 0xADDRESS | <name>
         public static readonly string DISPLAY_MEMORY = "x/{0}x {1}"; // count, 0xADDRESS
+        public static readonly string DISPLAY_MEMBER_OFFSET = "p &(({0}*)0)->{1}"; // symbolname, membername
+        public static readonly string DISPLAY_MEMBER_TYPE = "whatis *&(({0}*)0)->{1}"; // symbolname, membername
 
         public static readonly string SELECT_FRAME = "select-frame {0}"; // index
 

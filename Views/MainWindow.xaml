@@ -83,7 +83,7 @@
                                         <TextBlock
                                             TextWrapping="Wrap">
                                             <Run
-                                                Text="{Binding StackMemory.TypeInfo.FullName, Mode=OneWay}"
+                                                Text="{Binding StackMemory.TypeInfo.FullNameOrNull, Mode=OneWay}"
                                                 Foreground="LightSlateGray"
                                                 FontStyle="Italic" />
                                             <Run
@@ -131,7 +131,7 @@
                                     <TextBlock
                                         TextWrapping="Wrap">
                                         <Run
-                                            Text="{Binding TypeInfo.FullName, Mode=OneWay}"
+                                            Text="{Binding TypeInfo.FullNameOrNull, Mode=OneWay}"
                                             Foreground="LightSlateGray"
                                             FontStyle="Italic" />
                                         <Run

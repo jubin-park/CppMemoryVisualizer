@@ -32,19 +32,6 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        protected TypeInfo mPureTypeInfo;
-        public TypeInfo PureTypeInfo
-        {
-            get
-            {
-                return mPureTypeInfo;
-            }
-            set
-            {
-                mPureTypeInfo = value;
-            }
-        }
-
         protected bool mbChanged;
         public bool IsChanged
         {

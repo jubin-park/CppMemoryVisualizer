@@ -160,8 +160,6 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private PureTypeManager mPureTypeManagerOrNull;
-
         private HeapManager mHeapManagerOrNull;
         public HeapManager HeapManagerOrNull
         {
@@ -211,7 +209,7 @@ namespace CppMemoryVisualizer.ViewModels
             CurrentInstruction = EDebugInstructionState.INITIALIZING;
             LinePointer = 0;
             CallStackViewModel = new CallStackViewModel();
-            mPureTypeManagerOrNull = new PureTypeManager();
+            PureTypeManager.Clear();
             HeapManagerOrNull = new HeapManager();
 
             #region set main breakpoint
@@ -451,10 +449,10 @@ namespace CppMemoryVisualizer.ViewModels
             ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO, actionAddHeap);
             HeapManagerOrNull.Update();
 
+            Queue<string> unregisteredPureTypeNames = new Queue<string>();
+
             #region Initialize StackFrames
             {
-                Regex regexLocalAddress = new Regex(@"\s0x([a-z0-9]+)");
-
                 for (int i = 0; i < mCallStackViewModel.CallStack.StackFrameKeys.Count; ++i)
                 {
                     Models.StackFrame frame = mCallStackViewModel.CallStack.GetStackFrame(mCallStackViewModel.CallStack.StackFrameKeys[i]);
@@ -463,6 +461,7 @@ namespace CppMemoryVisualizer.ViewModels
                         continue;
                     }
 
+                    // set stack frame for range compatiability
                     RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, i),
                         null, null);
 
@@ -490,6 +489,7 @@ namespace CppMemoryVisualizer.ViewModels
                         frame.TryAdd(name, false);
                     });
 
+                    // examine local information by names
                     foreach (var name in frame.LocalVariableNames)
                     {
                         var local = frame.GetLocalVariable(name);
@@ -498,6 +498,7 @@ namespace CppMemoryVisualizer.ViewModels
                             GdbInstructionSet.REQUEST_START_DISPLAY_ADDRESS, GdbInstructionSet.REQUEST_END_DISPLAY_ADDRESS);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_ADDRESS, GdbInstructionSet.REQUEST_END_DISPLAY_ADDRESS, (string line) =>
                         {
+                            Regex regexLocalAddress = new Regex(@"\s0x([a-z0-9]+)");
                             Match match = regexLocalAddress.Match(line);
                             if (match.Success)
                             {
@@ -509,6 +510,7 @@ namespace CppMemoryVisualizer.ViewModels
                             }
                         });
 
+                        // must be for primitive type
                         RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, name),
                             GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
@@ -526,140 +528,18 @@ namespace CppMemoryVisualizer.ViewModels
                             local.StackMemory.ByteValues = new byte[wordCount * 4];
                         });
 
+                        // TypeName Only
                         RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPENAME, name),
                             GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
                         {
                             string fullTypeName = line.Substring("type = ".Length);
-                            local.StackMemory.TypeInfo.FullName = fullTypeName;
-                        });
-
-                        string pureTypeName = local.StackMemory.TypeInfo.PureName;
-                        if (!mPureTypeManagerOrNull.HasType(pureTypeName))
-                        {
-                            var newPureType = new TypeInfo();
-
-                            newPureType.PureName = pureTypeName;
-
-                            // Pure Type Size
-                            RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, pureTypeName),
-                                GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
-                            ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
+                            local.StackMemory.TypeInfo.FullNameOrNull = fullTypeName;
+                            if (!PureTypeManager.HasType(local.StackMemory.TypeInfo.PureName))
                             {
-                                int index = line.LastIndexOf(' ');
-                                Debug.Assert(index > 0);
-
-                                uint size = 0;
-                                bool bSuccess = uint.TryParse(line.Substring(index + 1), out size);
-                                Debug.Assert(bSuccess);
-                                newPureType.Size = size;
-                            });
-
-                            int depth = 0;
-                            // Pure Type Info
-                            RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPEINFO, pureTypeName),
-                                GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
-                            ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
-                            {
-                                if (depth == 0)
-                                {
-                                    Regex regexKind = new Regex(@"^type\s=(\sclass|\sstruct|\senum|\sunion){0,1}\s.*\s{$");
-                                    Match matchKind = regexKind.Match(line);
-                                    if (matchKind.Success)
-                                    {
-                                        string t = matchKind.Groups[1].Value;
-                                        if ("class" == t)
-                                        {
-                                            newPureType.Flags |= EMemoryTypeFlags.CLASS;
-                                        }
-                                        else if ("struct" == t)
-                                        {
-                                            newPureType.Flags |= EMemoryTypeFlags.STRUCT;
-                                        }
-                                        else if ("enum" == t)
-                                        {
-                                            newPureType.Flags |= EMemoryTypeFlags.ENUM;
-                                        }
-                                        else if ("union" == t)
-                                        {
-                                            newPureType.Flags |= EMemoryTypeFlags.UNION;
-                                        }
-                                    }
-                                }
-                                else if (depth == 1)
-                                {
-                                    Regex regexOffsetAndSize = new Regex(@"^\/\*\s*(\d+)\s*\|\s*(\d+)\s*\*\/");
-                                    Match matchOffsetAndSize = regexOffsetAndSize.Match(line);
-                                    if (matchOffsetAndSize.Success)
-                                    {
-                                        var memberType = new TypeInfo();
-
-                                        uint offset = 0;
-                                        uint size = 0;
-
-                                        bool bSuccess = uint.TryParse(matchOffsetAndSize.Groups[1].Value, out offset);
-                                        Debug.Assert(bSuccess);
-
-                                        bSuccess = uint.TryParse(matchOffsetAndSize.Groups[2].Value, out size);
-                                        Debug.Assert(bSuccess);
-
-                                        Regex regexMemberName = new Regex(@"[a-zA-Z_$][a-zA-Z_$0-9]*", RegexOptions.RightToLeft);
-                                        Match matchMemberName = regexMemberName.Match(line);
-
-                                        if (matchMemberName.Success)
-                                        {
-                                            memberType.MemberNameOrNull = matchMemberName.Value;
-                                        }
-                                        memberType.Offset = offset;
-                                        memberType.Size = size;
-
-                                        newPureType.Members.Add(memberType);
-                                    }
-                                }
-
-                                if (line.Contains('{'))
-                                {
-                                    ++depth;
-                                }
-                                else if (line.Contains('}'))
-                                {
-                                    --depth;
-                                }
-
-                                if (depth == 1 && line.Contains('}'))
-                                {
-                                    Regex regexMemberName = new Regex(@"}\s(\w+);$");
-                                    Match matchMemberName = regexMemberName.Match(line);
-
-                                    if (matchMemberName.Success)
-                                    {
-                                        var memberType = newPureType.Members[newPureType.Members.Count - 1];
-                                        memberType.MemberNameOrNull = matchMemberName.Groups[1].Value;
-                                    }
-                                }
-                            });
-
-                            // members' typename
-                            for (int n = 0; n < newPureType.Members.Count; ++n)
-                            {
-                                var memberType = newPureType.Members[n];
-                                if (memberType.MemberNameOrNull != null)
-                                {
-                                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPENAME, newPureType.PureName + "::" + memberType.MemberNameOrNull),
-                                        GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
-                                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
-                                    {
-                                        string fullTypeName = line.Substring("type = ".Length);
-                                        memberType.FullName = fullTypeName;
-                                    });
-                                }
+                                unregisteredPureTypeNames.Enqueue(local.StackMemory.TypeInfo.PureName);
                             }
-
-                            mPureTypeManagerOrNull.AddType(pureTypeName, newPureType);
-                        }
-
-                        Debug.Assert(mPureTypeManagerOrNull.HasType(local.StackMemory.TypeInfo.PureName));
-                        local.StackMemory.PureTypeInfo = mPureTypeManagerOrNull.GetType(local.StackMemory.TypeInfo.PureName);
+                        });
                     }
 
                     frame.IsInitialized = true;
@@ -667,7 +547,266 @@ namespace CppMemoryVisualizer.ViewModels
             }
             #endregion
 
-            #region Update Values
+            #region Examine child member types of PureType
+            while (unregisteredPureTypeNames.Count > 0)
+            {
+                string rootPureTypeName = unregisteredPureTypeNames.Dequeue();
+                if (PureTypeManager.HasType(rootPureTypeName))
+                {
+                    continue;
+                }
+
+                var newRootPureType = new TypeInfo();
+                newRootPureType.PureName = rootPureTypeName;
+                PureTypeManager.AddType(rootPureTypeName, newRootPureType);
+
+                // Pure Type Size
+                RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, rootPureTypeName),
+                    GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
+                {
+                    int index = line.LastIndexOf(' ');
+                    Debug.Assert(index > 0);
+
+                    uint size = 0;
+                    bool bSuccess = uint.TryParse(line.Substring(index + 1), out size);
+                    Debug.Assert(bSuccess);
+                    newRootPureType.Size = size;
+                });
+
+                // Get Structure of Pure Type
+                List<string> lines = new List<string>(64);
+                RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPEINFO, rootPureTypeName),
+                    GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
+                {
+                    lines.Add(line);
+                });
+
+                // 최상위 타입
+                {
+                    Regex regexRootType = new Regex(@"(class|struct|enum|union)\s(.*[^\s{])");
+                    Match matchRootType = regexRootType.Match(lines[0]);
+                    if (matchRootType.Success)
+                    {
+                        switch (matchRootType.Groups[1].Value)
+                        {
+                            case "class":
+                                newRootPureType.Flags |= EMemoryTypeFlags.CLASS;
+                                break;
+
+                            case "struct":
+                                newRootPureType.Flags = EMemoryTypeFlags.STRUCT;
+                                break;
+
+                            case "enum":
+                                newRootPureType.Flags = EMemoryTypeFlags.ENUM;
+                                break;
+
+                            case "union":
+                                newRootPureType.Flags |= EMemoryTypeFlags.UNION;
+                                break;
+
+                            default:
+                                Debug.Assert(false, "Invalid Block Type");
+                                break;
+                        }
+                    }
+                }
+
+                Stack<TypeInfo> pureTypeStack = new Stack<TypeInfo>();
+                pureTypeStack.Push(newRootPureType);
+
+                for (int j = 1; j < lines.Count; ++j)
+                {
+                    string line = lines[j];
+                    char lastChar = line[line.Length - 1];
+
+                    Regex regexKind = new Regex(@"\/\*\s*((\d+)\s*\|){0,1}\s*(\d+)\s*\*\/(.*)");
+                    Match matchOffsetAndSize = regexKind.Match(line);
+                    if (matchOffsetAndSize.Success)
+                    {
+                        uint absoluteOffset = 0;
+                        uint size = 0;
+
+                        bool bSuccess = false;
+                        if (matchOffsetAndSize.Groups[2].Value.Length == 0) // union
+                        {
+                            absoluteOffset = pureTypeStack.Peek().Offset;
+                        }
+                        else
+                        {
+                            bSuccess = uint.TryParse(matchOffsetAndSize.Groups[2].Value, out absoluteOffset);
+                            Debug.Assert(bSuccess);
+                        }
+                        bSuccess = uint.TryParse(matchOffsetAndSize.Groups[3].Value, out size);
+                        Debug.Assert(bSuccess);
+
+                        if (lastChar == ';') // 변수
+                        {
+                            Regex regexMemberName = new Regex(@"[a-zA-Z_$][a-zA-Z_$0-9]*", RegexOptions.RightToLeft);
+                            Match matchMemberName = regexMemberName.Match(matchOffsetAndSize.Groups[4].Value);
+
+                            bool isValid = false;
+
+                            Stack<TypeInfo> tempStack = new Stack<TypeInfo>(); // anonymous
+
+                            while (matchMemberName.Success)
+                            {
+                                while (pureTypeStack.Count > 0 && pureTypeStack.Peek().PureName == null)
+                                {
+                                    var pop = pureTypeStack.Pop();
+                                    tempStack.Push(pop);
+                                }
+                                RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMBER_OFFSET, pureTypeStack.Peek().PureName, matchMemberName.Value),
+                                    GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                                while (tempStack.Count > 0)
+                                {
+                                    var pop = tempStack.Pop();
+                                    pureTypeStack.Push(pop);
+                                }
+
+                                ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string innerLine) =>
+                                {
+                                    Regex regexRelativeOffset = new Regex(@"\s0x([a-z0-9]+)");
+                                    Match matchRelativeOffset = regexRelativeOffset.Match(innerLine);
+                                    if (matchRelativeOffset.Success)
+                                    {
+                                        string childRelativeOffsetHex = matchRelativeOffset.Groups[1].Value;
+
+                                        uint childRelativeOffset = 0;
+                                        bSuccess = uint.TryParse(childRelativeOffsetHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out childRelativeOffset);
+                                        Debug.Assert(bSuccess);
+
+                                        if (pureTypeStack.Peek().Flags.HasFlag(EMemoryTypeFlags.UNION))
+                                        {
+                                            isValid = (absoluteOffset == childRelativeOffset);
+                                        }
+                                        else
+                                        {
+                                            isValid = (absoluteOffset == pureTypeStack.Peek().Offset + childRelativeOffset);
+                                        }
+                                    }
+                                });
+
+                                if (isValid)
+                                {
+                                    break;
+                                }
+
+                                matchMemberName = matchMemberName.NextMatch();
+                            }
+
+                            Debug.Assert(isValid);
+
+                            while (pureTypeStack.Count > 0 && pureTypeStack.Peek().PureName == null)
+                            {
+                                var pop = pureTypeStack.Pop();
+                                tempStack.Push(pop);
+                            }
+                            RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMBER_TYPE, pureTypeStack.Peek().PureName, matchMemberName.Value),
+                                GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                            while (tempStack.Count > 0)
+                            {
+                                var pop = tempStack.Pop();
+                                pureTypeStack.Push(pop);
+                            }
+
+                            ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string innerLine) =>
+                            {
+                                var newMember = new TypeInfo()
+                                {
+                                    MemberNameOrNull = matchMemberName.Value,
+                                    FullNameOrNull = innerLine.Substring("type = ".Length),
+                                    Offset = absoluteOffset,
+                                    Size = size
+                                };
+                                pureTypeStack.Peek().Members.Add(newMember);
+
+                                if (!PureTypeManager.HasType(newMember.PureName))
+                                {
+                                    unregisteredPureTypeNames.Enqueue(newMember.PureName);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            if (lastChar == '{')
+                            {
+                                Regex regexChildType = new Regex(@"(class|struct|enum|union)(.*)\s{");
+                                Match matchChildType = regexChildType.Match(line);
+                                if (matchChildType.Success)
+                                {
+                                    TypeInfo childBlockType = new TypeInfo()
+                                    {
+                                        Offset = absoluteOffset,
+                                        Size = size,
+                                    };
+
+                                    switch (matchChildType.Groups[1].Value)
+                                    {
+                                        case "class":
+                                            childBlockType.Flags |= EMemoryTypeFlags.CLASS;
+                                            break;
+
+                                        case "struct":
+                                            childBlockType.Flags = EMemoryTypeFlags.STRUCT;
+                                            break;
+
+                                        case "enum":
+                                            childBlockType.Flags = EMemoryTypeFlags.ENUM;
+                                            break;
+
+                                        case "union":
+                                            childBlockType.Flags |= EMemoryTypeFlags.UNION;
+                                            break;
+
+                                        default:
+                                            Debug.Assert(false, "Invalid Block Type");
+                                            break;
+                                    }
+
+                                    string fullName = matchChildType.Groups[2].Value;
+
+                                    int inheritanceSymbolIndex = fullName.IndexOf(" : ");
+                                    if (inheritanceSymbolIndex >= 0)
+                                    {
+                                        fullName = fullName.Substring(0, inheritanceSymbolIndex);
+                                    }
+                                    if (fullName.Length > 0)
+                                    {
+                                        childBlockType.FullNameOrNull = fullName;
+                                    }
+
+                                    pureTypeStack.Push(childBlockType);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Regex regexNameOfBlock = new Regex(@"}\s(\w+);");
+                        Match matchNameOfBlock = regexNameOfBlock.Match(line);
+                        if (matchNameOfBlock.Success)
+                        {
+                            pureTypeStack.Peek().MemberNameOrNull = matchNameOfBlock.Groups[1].Value;
+                        }
+
+                        if (line.Contains('}')) // 닫는 문자 포함 시 스택에서 제거
+                        {
+                            var pop = pureTypeStack.Pop();
+                            if (pureTypeStack.Count > 0)
+                            {
+                                pureTypeStack.Peek().Members.Add(pop);
+                            }
+                        }
+                        // else => MemberName is null
+                    }
+                }
+            }
+            #endregion
+
+            #region Update Locals of Values
             {
                 StringBuilder memoryStringBuilder = new StringBuilder(8192);
 
@@ -716,16 +855,15 @@ namespace CppMemoryVisualizer.ViewModels
                                 {
                                     uint heapSize = heapOrNull.Size;
 
-                                    heapOrNull.PureTypeInfo = local.StackMemory.PureTypeInfo;
-                                    heapOrNull.TypeInfo.Size = local.StackMemory.PureTypeInfo.Size;
+                                    heapOrNull.TypeInfo.Size = PureTypeManager.GetType(local.StackMemory.TypeInfo.PureName).Size;
                                     string fullName = local.StackMemory.TypeInfo.PureName;
-                                    if (local.StackMemory.TypeInfo.PointerLevel - 1 > 0)
+                                    if (local.StackMemory.TypeInfo.PointerLevel >= 2)
                                     {
                                         heapOrNull.TypeInfo.Size = 4;
                                         fullName += ' ';
                                         fullName += new string('*', (int)local.StackMemory.TypeInfo.PointerLevel - 1);
                                     }
-                                    heapOrNull.TypeInfo.FullName = fullName;
+                                    heapOrNull.TypeInfo.FullNameOrNull = fullName;
 
                                     memoryStringBuilder.Clear();
                                     uint heapWordCount = heapSize / 4 + (heapSize % 4 > 0 ? 1u : 0);

@@ -17,12 +17,12 @@ namespace CppMemoryVisualizer.Converters
             HeapMemoryInfo memory = value as HeapMemoryInfo;
             // size만 안다. 길이를 모른다. 역참조 했을 때의 typesize를 구해서 size / type.size
 
-            if (memory.PureTypeInfo == null)
+            if (memory.TypeInfo.PureName == null)
             {
                 return null;
             }
 
-            uint blockSize = (memory.TypeInfo.PointerLevel == 0 ? memory.PureTypeInfo.Size : 4);
+            uint blockSize = (memory.TypeInfo.PointerLevel == 0 ? PureTypeManager.GetType(memory.TypeInfo.PureName).Size : 4);
             uint totalLength = memory.Size / blockSize;
 
             List<string> values = new List<string>((int)totalLength);

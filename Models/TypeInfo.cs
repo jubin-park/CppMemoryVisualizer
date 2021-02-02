@@ -124,16 +124,16 @@ namespace CppMemoryVisualizer.Models
         }
         #endregion
 
-        private string mFullName;
-        public string FullName
+        private string mFullNameOrNull;
+        public string FullNameOrNull
         {
             get
             {
-                return mFullName;
+                return mFullNameOrNull;
             }
             set
             {
-                mFullName = value;
+                mFullNameOrNull = value;
 
                 Match match = regex.Match(value);
 
@@ -210,7 +210,7 @@ namespace CppMemoryVisualizer.Models
                 name += ' ';
                 name += new string('*', (int)mPointerLevel - 1);
             }
-            type.FullName = name;
+            type.FullNameOrNull = name;
 
             return type;
         }
