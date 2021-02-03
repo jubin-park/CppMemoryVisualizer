@@ -587,7 +587,7 @@ namespace CppMemoryVisualizer.ViewModels
                 {
                     Debug.Assert(lines.Count > 0);
 
-                    Regex regexRootType = new Regex(@"(class|struct|enum|union)(.*)\s{");
+                    Regex regexRootType = new Regex(@"(class|struct|enum|union).*\s{");
                     Match matchRootType = regexRootType.Match(lines[0]);
                     if (matchRootType.Success)
                     {
@@ -742,7 +742,7 @@ namespace CppMemoryVisualizer.ViewModels
                         {
                             if (lastChar == '{')
                             {
-                                Regex regexChildType = new Regex(@"(class|struct|enum|union)(.*)\s{");
+                                Regex regexChildType = new Regex(@"(class|struct|enum|union)\s({|(.*)\s{)");
                                 Match matchChildType = regexChildType.Match(line);
                                 if (matchChildType.Success)
                                 {
@@ -775,7 +775,7 @@ namespace CppMemoryVisualizer.ViewModels
                                             break;
                                     }
 
-                                    string fullName = matchChildType.Groups[2].Value;
+                                    string fullName = matchChildType.Groups[3].Value;
 
                                     int inheritanceSymbolIndex = fullName.IndexOf(" : ");
                                     if (inheritanceSymbolIndex >= 0)
