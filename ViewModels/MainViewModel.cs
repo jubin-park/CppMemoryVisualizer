@@ -585,7 +585,9 @@ namespace CppMemoryVisualizer.ViewModels
 
                 // 최상위 타입
                 {
-                    Regex regexRootType = new Regex(@"(class|struct|enum|union)\s(.*[^\s{])");
+                    Debug.Assert(lines.Count > 0);
+
+                    Regex regexRootType = new Regex(@"(class|struct|enum|union)(.*)\s{");
                     Match matchRootType = regexRootType.Match(lines[0]);
                     if (matchRootType.Success)
                     {
@@ -717,13 +719,20 @@ namespace CppMemoryVisualizer.ViewModels
                                 var newMember = new TypeInfo()
                                 {
                                     MemberNameOrNull = matchMemberName.Value,
-                                    FullNameOrNull = innerLine.Substring("type = ".Length),
                                     Offset = absoluteOffset,
                                     Size = size
                                 };
+                                string fullName = innerLine.Substring("type = ".Length);
+                                if (fullName == "enum {...}")
+                                {
+                                    fullName = "enum";
+                                    newMember.Flags |= EMemoryTypeFlags.ENUM;
+                                }
+                                newMember.FullNameOrNull = fullName;
+                                
                                 pureTypeStack.Peek().Members.Add(newMember);
 
-                                if (!PureTypeManager.HasType(newMember.PureName))
+                                if (!newMember.Flags.HasFlag(EMemoryTypeFlags.ENUM) && !PureTypeManager.HasType(newMember.PureName))
                                 {
                                     unregisteredPureTypeNames.Enqueue(newMember.PureName);
                                 }
