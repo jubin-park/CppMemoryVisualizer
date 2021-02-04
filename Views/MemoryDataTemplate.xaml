@@ -9,6 +9,8 @@
         x:Key="BytesToStackPrimitiveConverter" />
     <cvt:BytesToHeapPrimitiveConverter
         x:Key="BytesToHeapPrimitiveConverter" />
+    <cvt:MemorySegmentsConverter
+        x:Key="MemorySegmentsConverter" />
     <local:MemoryDataTemplateSelector
         x:Key="MemoryDataTemplateSelector" />
  
@@ -110,7 +112,9 @@
     <DataTemplate
         x:Key="StructOrClass">
 
-        <Grid>
+        <Grid
+            Background="GreenYellow"
+            >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition
                     Width="Auto" />
@@ -119,33 +123,32 @@
                 <ColumnDefinition
                     Width="64" />
             </Grid.ColumnDefinitions>
-
+            
             <ItemsControl
+                ItemsSource="{Binding ., Converter={StaticResource MemoryToTypeInfosConverter}}"
                 Grid.Column="0">
 
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border
-                            BorderBrush="#1266a7"
-                            BorderThickness="1">
-                            <ContentControl
-                                Content="{Binding .}"
-                                ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
-                            </ContentControl>
-                        </Border>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock
+                                Text="{Binding .}" />
+                        </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
+
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel
+                            Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
             </ItemsControl>
-        </Grid>
-    </DataTemplate>
-    
-    <DataTemplate
-        x:Key="Unobservable">
-        <Grid
-            Margin="8, 0, 0, 0">
-            <TextBlock
-                Text="Cannot observe"
-                Foreground="Red" />
         </Grid>
     </DataTemplate>
 

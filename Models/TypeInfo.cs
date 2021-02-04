@@ -114,12 +114,16 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        private readonly List<TypeInfo> mMembers = new List<TypeInfo>();
+        private List<TypeInfo> mMembers = new List<TypeInfo>();
         public List<TypeInfo> Members
         {
             get
             {
                 return mMembers;
+            }
+            set
+            {
+                mMembers = value;
             }
         }
         #endregion

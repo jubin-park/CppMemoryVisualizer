@@ -17,16 +17,18 @@ namespace CppMemoryVisualizer.Views
             MemoryOwnerInfo memory = item as MemoryOwnerInfo;
             FrameworkElement el = container as FrameworkElement;
 
+            var pureType = PureTypeManager.GetType(memory.TypeInfo.PureName);
+
             string resourceName;
-            if (memory.TypeInfo.Flags.HasFlag(EMemoryTypeFlags.CLASS | EMemoryTypeFlags.STRUCT))
+            if (memory is HeapMemoryInfo)
             {
-                resourceName = "Unobservable";
+                resourceName = "HeapPrimitive";
             }
             else
             {
-                if (memory is HeapMemoryInfo)
+                if (pureType.Flags.HasFlag(EMemoryTypeFlags.CLASS) || pureType.Flags.HasFlag(EMemoryTypeFlags.STRUCT))
                 {
-                    resourceName = "HeapPrimitive";
+                    resourceName = "StructOrClass";
                 }
                 else
                 {
