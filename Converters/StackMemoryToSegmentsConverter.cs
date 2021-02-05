@@ -2,6 +2,7 @@
 using CppMemoryVisualizer.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -10,11 +11,11 @@ using System.Windows.Data;
 
 namespace CppMemoryVisualizer.Converters
 {
-    class MemorySegmentsConverter : IValueConverter
+    sealed class StackMemoryToSegmentsConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            List<MemorySegmentViewModel> segments;
+            List<StackMemorySegmentViewModel> segments;
             var stack = new Stack<StackKey>();
 
             MemoryOwnerInfo rootMemory = value as MemoryOwnerInfo;
@@ -30,7 +31,10 @@ namespace CppMemoryVisualizer.Converters
                     }
                 }
                 uint sizePerSegment = rootMemory.TypeInfo.Size / totalLength;
-                segments = new List<MemorySegmentViewModel>((int)totalLength);
+
+                TypeInfo elementOfArrayType = rootMemory.TypeInfo.GetElementOfArray();
+
+                segments = new List<StackMemorySegmentViewModel>((int)totalLength);
 
                 if (rootMemory.TypeInfo.PointerLevel == 0 && rootMemory.TypeInfo.ArrayOrFunctionPointerLevels.Count == 0)
                 {
@@ -39,14 +43,14 @@ namespace CppMemoryVisualizer.Converters
 
                 for (uint i = 0; i < totalLength; ++i)
                 {
-                    var vm = new MemorySegmentViewModel()
+                    var vm = new StackMemorySegmentViewModel()
                     {
-                        TypeName = rootMemory.TypeInfo.FullNameOrNull,
+                        TypeName = totalLength > 1 ? elementOfArrayType.FullNameOrNull : rootMemory.TypeInfo.FullNameOrNull,
                         MemberNameOrNull = rootMemory.TypeInfo.MemberNameOrNull,
                         Memory = new ArraySegment<byte>(rootMemory.ByteValues, (int)(i * sizePerSegment), (int)sizePerSegment),
                         Address = rootMemory.Address + i * sizePerSegment,
                         AncestorOrNull = null,
-                        Children = new List<List<MemorySegmentViewModel>>(pureType.Members.Count)
+                        Children = new List<List<StackMemorySegmentViewModel>>(pureType.Members.Count)
                     };
 
                     segments.Add(vm);
@@ -76,17 +80,19 @@ namespace CppMemoryVisualizer.Converters
                         }
                         uint sizePerSegment = memberType.Size / totalLength;
 
-                        var memberArray = new List<MemorySegmentViewModel>((int)totalLength);
+                        TypeInfo elementOfArrayType = memberType.GetElementOfArray();
+
+                        var memberArray = new List<StackMemorySegmentViewModel>((int)totalLength);
                         for (uint i = 0; i < totalLength; ++i)
                         {
-                            var vm = new MemorySegmentViewModel()
+                            var vm = new StackMemorySegmentViewModel()
                             {
-                                TypeName = memberType.FullNameOrNull,
+                                TypeName = totalLength > 1 ? elementOfArrayType.FullNameOrNull : memberType.FullNameOrNull,
                                 MemberNameOrNull = memberType.MemberNameOrNull,
-                                Memory = new ArraySegment<byte>(rootMemory.ByteValues, popKey.ViewModel.Memory.Offset + (int)(i * sizePerSegment), (int)sizePerSegment),
-                                Address = popKey.ViewModel.Address + i * sizePerSegment,
+                                Memory = new ArraySegment<byte>(rootMemory.ByteValues, popKey.ViewModel.Memory.Offset + (int)((memberType.Offset - popKey.Type.Offset) + i * sizePerSegment), (int)sizePerSegment),
+                                Address = popKey.ViewModel.Address + (memberType.Offset - popKey.Type.Offset) + i * sizePerSegment,
                                 AncestorOrNull = popKey.ViewModel,
-                                Children = new List<List<MemorySegmentViewModel>>(memberType.Members.Count)
+                                Children = new List<List<StackMemorySegmentViewModel>>(memberType.Members.Count)
                             };
 
                             stack.Push(new StackKey()
@@ -109,11 +115,11 @@ namespace CppMemoryVisualizer.Converters
         {
             throw new NotImplementedException();
         }
-    }
 
-    sealed class StackKey
-    {
-        public MemorySegmentViewModel ViewModel;
-        public TypeInfo Type;
+        sealed class StackKey
+        {
+            public StackMemorySegmentViewModel ViewModel;
+            public TypeInfo Type;
+        }
     }
 }

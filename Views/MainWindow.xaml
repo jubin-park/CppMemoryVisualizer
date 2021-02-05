@@ -35,22 +35,21 @@
 
     <Window.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary
-                    Source="MemoryDataTemplate.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-
             <cvt:WindowTitleConverter
                 x:Key="WindowTitleConverter" />
             <cvt:StandardCppVersionEnumToBooleanConverter
                 x:Key="StandardCppVersionEnumToBooleanConverter" />
             <cvt:ArraySegmentsToValueConverter
                 x:Key="ArraySegmentsToValueConverter" />
-            <v:MemoryDataTemplateSelector
-                x:Key="MemoryDataTemplateSelector" />
+            <cvt:StackMemoryToSegmentsConverter
+                x:Key="StackMemoryToSegmentsConverter" />
+            <cvt:HeapMemoryToSegmentsConverter
+                x:Key="HeapMemoryToSegmentsConverter" />
+            <cvt:UIntToHexadecimalConverter
+                x:Key="UIntToHexadecimalConverter" />
 
             <DataTemplate
-                DataType="{x:Type vm:MemorySegmentViewModel}">
+                DataType="{x:Type vm:StackMemorySegmentViewModel}">
                 <Border
                     BorderBrush="LightGray"
                     BorderThickness="1">
@@ -92,32 +91,6 @@
                                 </TextBlock.Text>
                             </TextBlock>
 
-                            <!--
-                            <ItemsControl
-                                Grid.Row="0"
-                                ItemsSource="{Binding Memory}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border
-                                            BorderBrush="#1266a7"
-                                            BorderThickness="1">
-                                            <TextBlock
-                                                Text="{Binding .}"
-                                                HorizontalAlignment="Center"
-                                                TextAlignment="Center">
-                                            </TextBlock>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel
-                                            Orientation="Vertical" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
--->
                             <ItemsControl
                                 Grid.Row="1"
                                 ItemsSource="{Binding Children}">
@@ -204,40 +177,13 @@
 
                                     <ItemsControl
                                         Grid.Column="1"
-                                        ItemsSource="{Binding StackMemory, Converter={StaticResource MemorySegmentsConverter}}">
-                                        
-                                        <!--
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate
-                                                x:Key="MemorySegmentArray">
-                                                <Grid>
-                                                    <ItemsControl
-                                                        ItemsSource="{Binding .}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <ContentControl
-                                                                    Content="{Binding .}" />
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <StackPanel
-                                                                    Orientation="Vertical" />
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                    </ItemsControl>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                        -->
-
+                                        ItemsSource="{Binding StackMemory, Converter={StaticResource StackMemoryToSegmentsConverter}}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <StackPanel
                                                     Orientation="Vertical" />
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
-
                                     </ItemsControl>
                                 </Grid>
                             </DataTemplate>
@@ -282,9 +228,16 @@
                                             Text="{Binding Size, Mode=OneWay}"
                                             FontWeight="Bold" />
                                     </TextBlock>
-                                    <ContentControl
-                                        Grid.Column="1" />
-                                    <!--Content="{Binding ., Converter={StaticResource MemorySegmentsConverter}}"-->
+                                    <ItemsControl
+                                        Grid.Column="1"
+                                        ItemsSource="{Binding ., Converter={StaticResource HeapMemoryToSegmentsConverter}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel
+                                                    Orientation="Vertical" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
                                 </Grid>
                             </ControlTemplate>
                         </Thumb.Template>

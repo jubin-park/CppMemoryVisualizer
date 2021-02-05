@@ -305,7 +305,7 @@ namespace CppMemoryVisualizer.ViewModels
                     }
                 }
 #if DEBUG
-                Log += line + Environment.NewLine;
+                //Log += line + Environment.NewLine;
 #endif
             } while (!line.StartsWith(start));
 
@@ -324,7 +324,7 @@ namespace CppMemoryVisualizer.ViewModels
                     }
                 }
 #if DEBUG
-                Log += line + Environment.NewLine;
+                //Log += line + Environment.NewLine;
 #endif
                 if (line.StartsWith(end))
                 {

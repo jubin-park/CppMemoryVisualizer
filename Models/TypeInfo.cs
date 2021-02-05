@@ -139,64 +139,67 @@ namespace CppMemoryVisualizer.Models
             {
                 mFullNameOrNull = value;
 
-                Match match = regex.Match(value);
-
-                if (match.Success)
+                if (value != null)
                 {
-                    PureName = match.Groups[1].Value;
-                    string pointerChars = match.Groups[3].Value;
-                    string arrayOrFunctionPointerChars = match.Groups[4].Value;
-                    string dimensions = match.Groups[5].Value;
-                    string reference = match.Groups[6].Value;
+                    Match match = regex.Match(value);
 
-                    if (PureName.StartsWith("std::"))
+                    if (match.Success)
                     {
-                        mFlags |= EMemoryTypeFlags.STL;
-                    }
+                        PureName = match.Groups[1].Value;
+                        string pointerChars = match.Groups[3].Value;
+                        string arrayOrFunctionPointerChars = match.Groups[4].Value;
+                        string dimensions = match.Groups[5].Value;
+                        string reference = match.Groups[6].Value;
 
-                    if (pointerChars.Length > 0)
-                    {
-                        mFlags |= EMemoryTypeFlags.POINTER;
-                        mPointerLevel = (uint)pointerChars.Length;
-                    }
-
-                    if (arrayOrFunctionPointerChars.Length > 0)
-                    {
-                        mFlags |= EMemoryTypeFlags.ARRAY_OR_FUNCTION_POINTER;
-
-                        Regex regex = new Regex(@"\((\*+)\)");
-                        Match matchPointer = regex.Match(arrayOrFunctionPointerChars);
-
-                        while (matchPointer.Success)
+                        if (PureName.StartsWith("std::"))
                         {
-                            uint size = (uint)matchPointer.Groups[1].Length;
-                            mArrayOrFunctionPointerLevels.Add(size);
-
-                            matchPointer = matchPointer.NextMatch();
+                            mFlags |= EMemoryTypeFlags.STL;
                         }
-                    }
 
-                    if (dimensions.Length > 0)
-                    {
-                        mFlags |= EMemoryTypeFlags.ARRAY;
-
-                        Regex regex = new Regex(@"\[(\d+)\]");
-                        Match matchDimension = regex.Match(dimensions);
-
-                        while (matchDimension.Success)
+                        if (pointerChars.Length > 0)
                         {
-                            uint size = 0;
-                            bool bSuccess = uint.TryParse(matchDimension.Groups[1].Value, out size);
-                            Debug.Assert(bSuccess);
-                            mArrayLengths.Add(size);
-
-                            matchDimension = matchDimension.NextMatch();
+                            mFlags |= EMemoryTypeFlags.POINTER;
+                            mPointerLevel = (uint)pointerChars.Length;
                         }
-                    }
 
-                    if (reference.Length > 0)
-                    {
-                        mFlags |= EMemoryTypeFlags.REFERENCE;
+                        if (arrayOrFunctionPointerChars.Length > 0)
+                        {
+                            mFlags |= EMemoryTypeFlags.ARRAY_OR_FUNCTION_POINTER;
+
+                            Regex regex = new Regex(@"\((\*+)\)");
+                            Match matchPointer = regex.Match(arrayOrFunctionPointerChars);
+
+                            while (matchPointer.Success)
+                            {
+                                uint size = (uint)matchPointer.Groups[1].Length;
+                                mArrayOrFunctionPointerLevels.Add(size);
+
+                                matchPointer = matchPointer.NextMatch();
+                            }
+                        }
+
+                        if (dimensions.Length > 0)
+                        {
+                            mFlags |= EMemoryTypeFlags.ARRAY;
+
+                            Regex regex = new Regex(@"\[(\d+)\]");
+                            Match matchDimension = regex.Match(dimensions);
+
+                            while (matchDimension.Success)
+                            {
+                                uint size = 0;
+                                bool bSuccess = uint.TryParse(matchDimension.Groups[1].Value, out size);
+                                Debug.Assert(bSuccess);
+                                mArrayLengths.Add(size);
+
+                                matchDimension = matchDimension.NextMatch();
+                            }
+                        }
+
+                        if (reference.Length > 0)
+                        {
+                            mFlags |= EMemoryTypeFlags.REFERENCE;
+                        }
                     }
                 }
             }
@@ -213,6 +216,21 @@ namespace CppMemoryVisualizer.Models
             {
                 name += ' ';
                 name += new string('*', (int)mPointerLevel - 1);
+            }
+            type.FullNameOrNull = name;
+
+            return type;
+        }
+
+        public TypeInfo GetElementOfArray()
+        {
+            TypeInfo type = new TypeInfo();
+
+            string name = mPureName;
+            if (mPointerLevel > 0)
+            {
+                name += ' ';
+                name += new string('*', (int)mPointerLevel);
             }
             type.FullNameOrNull = name;
 
