@@ -10,7 +10,6 @@ using System.Windows.Data;
 namespace CppMemoryVisualizer.Converters
 {
     // https://stackoverflow.com/questions/3652688/mutually-exclusive-checkable-menu-items/11497189#11497189
-
     public sealed class StandardCppVersionEnumToBooleanConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

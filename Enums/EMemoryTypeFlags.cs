@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Enums
 {
@@ -18,7 +14,6 @@ namespace CppMemoryVisualizer.Enums
         UNION = 1 << 5,
         STRUCT = 1 << 6,
         CLASS = 1 << 7,
-        // https://stackoverflow.com/questions/48938003/windbg-c-how-to-print-vector-contents
         STL = 1 << 8,
     }
 }

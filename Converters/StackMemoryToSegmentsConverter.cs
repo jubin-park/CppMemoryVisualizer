@@ -15,7 +15,7 @@ namespace CppMemoryVisualizer.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            List<StackMemorySegmentViewModel> segments;
+            List<MemorySegmentViewModel> segments;
             var stack = new Stack<StackKey>();
 
             MemoryOwnerInfo rootMemory = value as MemoryOwnerInfo;
@@ -34,23 +34,23 @@ namespace CppMemoryVisualizer.Converters
 
                 TypeInfo elementOfArrayType = rootMemory.TypeInfo.GetElementOfArray();
 
-                segments = new List<StackMemorySegmentViewModel>((int)totalLength);
-
+                segments = new List<MemorySegmentViewModel>((int)totalLength);
+                /*
                 if (rootMemory.TypeInfo.PointerLevel == 0 && rootMemory.TypeInfo.ArrayOrFunctionPointerLevels.Count == 0)
                 {
                     rootMemory.TypeInfo.Members = pureType.Members;
-                }
+                }*/
 
                 for (uint i = 0; i < totalLength; ++i)
                 {
-                    var vm = new StackMemorySegmentViewModel()
+                    var vm = new MemorySegmentViewModel()
                     {
                         TypeName = totalLength > 1 ? elementOfArrayType.FullNameOrNull : rootMemory.TypeInfo.FullNameOrNull,
                         MemberNameOrNull = rootMemory.TypeInfo.MemberNameOrNull,
                         Memory = new ArraySegment<byte>(rootMemory.ByteValues, (int)(i * sizePerSegment), (int)sizePerSegment),
                         Address = rootMemory.Address + i * sizePerSegment,
                         AncestorOrNull = null,
-                        Children = new List<List<StackMemorySegmentViewModel>>(pureType.Members.Count)
+                        Children = new List<List<MemorySegmentViewModel>>(pureType.Members.Count)
                     };
 
                     segments.Add(vm);
@@ -82,17 +82,17 @@ namespace CppMemoryVisualizer.Converters
 
                         TypeInfo elementOfArrayType = memberType.GetElementOfArray();
 
-                        var memberArray = new List<StackMemorySegmentViewModel>((int)totalLength);
+                        var memberArray = new List<MemorySegmentViewModel>((int)totalLength);
                         for (uint i = 0; i < totalLength; ++i)
                         {
-                            var vm = new StackMemorySegmentViewModel()
+                            var vm = new MemorySegmentViewModel()
                             {
                                 TypeName = totalLength > 1 ? elementOfArrayType.FullNameOrNull : memberType.FullNameOrNull,
                                 MemberNameOrNull = memberType.MemberNameOrNull,
                                 Memory = new ArraySegment<byte>(rootMemory.ByteValues, popKey.ViewModel.Memory.Offset + (int)((memberType.Offset - popKey.Type.Offset) + i * sizePerSegment), (int)sizePerSegment),
                                 Address = popKey.ViewModel.Address + (memberType.Offset - popKey.Type.Offset) + i * sizePerSegment,
                                 AncestorOrNull = popKey.ViewModel,
-                                Children = new List<List<StackMemorySegmentViewModel>>(memberType.Members.Count)
+                                Children = new List<List<MemorySegmentViewModel>>(memberType.Members.Count)
                             };
 
                             stack.Push(new StackKey()
@@ -102,7 +102,6 @@ namespace CppMemoryVisualizer.Converters
                             });
                             memberArray.Add(vm);
                         }
-
                         popKey.ViewModel.Children.Add(memberArray);
                     }
                 }
@@ -118,7 +117,7 @@ namespace CppMemoryVisualizer.Converters
 
         sealed class StackKey
         {
-            public StackMemorySegmentViewModel ViewModel;
+            public MemorySegmentViewModel ViewModel;
             public TypeInfo Type;
         }
     }

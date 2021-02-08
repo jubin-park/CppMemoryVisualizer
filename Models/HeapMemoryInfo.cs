@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 
 namespace CppMemoryVisualizer.Models
 {
@@ -41,7 +36,7 @@ namespace CppMemoryVisualizer.Models
             set
             {
                 mX = value;
-                OnPropertyChanged("X");
+                onPropertyChanged("X");
             }
         }
 
@@ -58,7 +53,7 @@ namespace CppMemoryVisualizer.Models
             set
             {
                 mY = value;
-                OnPropertyChanged("Y");
+                onPropertyChanged("Y");
             }
         }
 
@@ -71,7 +66,7 @@ namespace CppMemoryVisualizer.Models
             mByteValues = new byte[wordCount * 4];
         }
 
-        public void OnPropertyChanged(string propertyName)
+        private void onPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

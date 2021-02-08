@@ -61,7 +61,6 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Converters\ArraySegmentsToValueConverter.cs" />
-    <Compile Include="Converters\BytesToHeapPrimitiveConverter.cs" />
     <Compile Include="Converters\HeapMemoryToSegmentsConverter.cs" />
     <Compile Include="Converters\StackMemoryToSegmentsConverter.cs" />
     <Compile Include="Enums\EStandardCppVersion.cs" />
@@ -77,7 +76,7 @@
     <Compile Include="Models\PureTypeManager.cs" />
     <Compile Include="Models\StackFrame.cs" />
     <Compile Include="ViewModels\CallStackViewModel.cs" />
-    <Compile Include="ViewModels\StackMemorySegmentViewModel.cs" />
+    <Compile Include="ViewModels\MemorySegmentViewModel.cs" />
     <Compile Include="Converters\UIntToHexadecimalConverter.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

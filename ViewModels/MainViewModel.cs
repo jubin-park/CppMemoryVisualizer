@@ -2,7 +2,6 @@
 using CppMemoryVisualizer.Constants;
 using CppMemoryVisualizer.Enums;
 using CppMemoryVisualizer.Models;
-using CppMemoryVisualizer.Views;
 using System;
 using System.Globalization;
 using System.Collections.Generic;
@@ -12,12 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
-using System.Collections.ObjectModel;
 
 namespace CppMemoryVisualizer.ViewModels
 {
@@ -40,7 +34,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mProcessGdbOrNull = value;
-                OnPropertyChanged("ProcessGdbOrNull");
+                onPropertyChanged("ProcessGdbOrNull");
             }
         }
 
@@ -57,7 +51,7 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 mLastInstruction = mCurrentInstruction;
                 mCurrentInstruction = value;
-                OnPropertyChanged("CurrentInstruction");
+                onPropertyChanged("CurrentInstruction");
             }
         }
 
@@ -71,7 +65,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mStandardCppVersion = value;
-                OnPropertyChanged("StandardCppVersion");
+                onPropertyChanged("StandardCppVersion");
             }
         }
 
@@ -85,7 +79,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mLog = value;
-                OnPropertyChanged("Log");
+                onPropertyChanged("Log");
             }
         }
 
@@ -99,7 +93,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mSourcePathOrNull = value;
-                OnPropertyChanged("SourcePathOrNull");
+                onPropertyChanged("SourcePathOrNull");
             }
         }
 
@@ -113,7 +107,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mSourceCode = value;
-                OnPropertyChanged("SourceCode");
+                onPropertyChanged("SourceCode");
             }
         }
 
@@ -127,7 +121,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mBreakPointList = value;
-                OnPropertyChanged("BreakPointList");
+                onPropertyChanged("BreakPointList");
             }
         }
 
@@ -141,7 +135,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mLinePointer = value;
-                OnPropertyChanged("LinePointer");
+                onPropertyChanged("LinePointer");
                 onLinePointerChanged();
             }
         }
@@ -156,7 +150,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mCallStackViewModel = value;
-                OnPropertyChanged("CallStackViewModel");
+                onPropertyChanged("CallStackViewModel");
             }
         }
 
@@ -170,7 +164,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mHeapManagerOrNull = value;
-                OnPropertyChanged("HeapManagerOrNull");
+                onPropertyChanged("HeapManagerOrNull");
             }
         }
 
@@ -614,6 +608,11 @@ namespace CppMemoryVisualizer.ViewModels
                                 break;
                         }
                     }
+                    else
+                    {
+                        string fullTypeName = lines[0].Substring("type = ".Length);
+                        newRootPureType.FullNameOrNull = fullTypeName;
+                    }
                 }
 
                 Stack<TypeInfo> pureTypeStack = new Stack<TypeInfo>();
@@ -714,29 +713,48 @@ namespace CppMemoryVisualizer.ViewModels
                                 pureTypeStack.Push(pop);
                             }
 
+                            string fullName = null;
                             ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string innerLine) =>
                             {
-                                var newMember = new TypeInfo()
-                                {
-                                    MemberNameOrNull = matchMemberName.Value,
-                                    Offset = absoluteOffset,
-                                    Size = size
-                                };
-                                string fullName = innerLine.Substring("type = ".Length);
-                                if (fullName == "enum {...}")
-                                {
-                                    fullName = "enum";
-                                    newMember.Flags |= EMemoryTypeFlags.ENUM;
-                                }
-                                newMember.FullNameOrNull = fullName;
-                                
-                                pureTypeStack.Peek().Members.Add(newMember);
-
-                                if (!newMember.Flags.HasFlag(EMemoryTypeFlags.ENUM) && !PureTypeManager.HasType(newMember.PureName))
-                                {
-                                    unregisteredPureTypeNames.Enqueue(newMember.PureName);
-                                }
+                                fullName = innerLine.Substring("type = ".Length);
                             });
+                            Debug.Assert(fullName != null);
+
+                            { // 값 타입만 원시 타입으로 변환
+                                List<string> infos = new List<string>();
+                                RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPEINFO, fullName),
+                                    GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
+                                ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string innerLine) =>
+                                {
+                                    infos.Add(innerLine);
+                                });
+                                
+                                if (infos.Count == 1)
+                                {
+                                    fullName = infos[0].Substring("type = ".Length);
+                                }
+                            }
+
+                            var newMember = new TypeInfo()
+                            {
+                                MemberNameOrNull = matchMemberName.Value,
+                                Offset = absoluteOffset,
+                                Size = size
+                            };
+
+                            if (fullName == "enum {...}")
+                            {
+                                fullName = "enum";
+                                newMember.Flags |= EMemoryTypeFlags.ENUM;
+                            }
+                            newMember.FullNameOrNull = fullName;
+
+                            pureTypeStack.Peek().Members.Add(newMember);
+
+                            if (!newMember.Flags.HasFlag(EMemoryTypeFlags.ENUM) && !PureTypeManager.HasType(newMember.PureName))
+                            {
+                                unregisteredPureTypeNames.Enqueue(newMember.PureName);
+                            }
                         }
                         else
                         {
@@ -844,47 +862,84 @@ namespace CppMemoryVisualizer.ViewModels
 
                         local.StackMemory.SetValue(memoryStringBuilder);
 
-                        if (local.StackMemory.TypeInfo.PointerLevel > 0)
+                        var stackTypes = new Stack<StackKey>();
                         {
                             uint totalLength = 1;
                             foreach (uint len in local.StackMemory.TypeInfo.ArrayLengths)
                             {
                                 totalLength *= len;
                             }
+                            uint sizePerSegment = local.StackMemory.TypeInfo.Size / totalLength;
+
+                            if (local.StackMemory.TypeInfo.PointerLevel == 0 && local.StackMemory.TypeInfo.ArrayOrFunctionPointerLevels.Count == 0)
+                            {
+                                local.StackMemory.TypeInfo.Members = PureTypeManager.GetType(local.StackMemory.TypeInfo.PureName).Members;
+                            }
 
                             for (uint j = 0; j < totalLength; ++j)
                             {
-                                uint address = local.StackMemory.ByteValues[j * 4] +
-                                    ((uint)local.StackMemory.ByteValues[j * 4 + 1] << 8) +
-                                    ((uint)local.StackMemory.ByteValues[j * 4 + 2] << 16) +
-                                    ((uint)local.StackMemory.ByteValues[j * 4 + 3] << 24);
-
-                                var heapOrNull = HeapManagerOrNull.GetHeapOrNull(address);
-                                if (heapOrNull != null)
+                                stackTypes.Push(new StackKey()
                                 {
-                                    uint heapSize = heapOrNull.Size;
+                                    Type = local.StackMemory.TypeInfo.GetElementOfArray(),
+                                    StartOffset = j * sizePerSegment
+                                });
+                            }
+                        }
 
-                                    heapOrNull.TypeInfo.Size = PureTypeManager.GetType(local.StackMemory.TypeInfo.PureName).Size;
-                                    string fullName = local.StackMemory.TypeInfo.PureName;
-                                    if (local.StackMemory.TypeInfo.PointerLevel >= 2)
+                        {
+                            while (stackTypes.Count > 0)
+                            {
+                                StackKey pop = stackTypes.Pop();
+
+                                uint totalLength = 1;
+                                foreach (uint len in pop.Type.ArrayLengths)
+                                {
+                                    totalLength *= len;
+                                }
+                                uint sizePerSegment = pop.Type.Size / totalLength;
+
+                                if (pop.Type.PointerLevel == 0 && pop.Type.ArrayOrFunctionPointerLevels.Count == 0)
+                                {
+                                    for (uint j = 0; j < totalLength; ++j)
                                     {
-                                        heapOrNull.TypeInfo.Size = 4;
-                                        fullName += ' ';
-                                        fullName += new string('*', (int)local.StackMemory.TypeInfo.PointerLevel - 1);
+                                        foreach (TypeInfo member in pop.Type.Members)
+                                        {
+                                            stackTypes.Push(new StackKey
+                                            {
+                                                Type = member,
+                                                StartOffset = pop.StartOffset + j * totalLength
+                                            });
+                                        }
                                     }
-                                    heapOrNull.TypeInfo.FullNameOrNull = fullName;
-
-                                    memoryStringBuilder.Clear();
-                                    uint heapWordCount = heapSize / 4 + (heapSize % 4 > 0 ? 1u : 0);
-                                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, heapWordCount, string.Format("0x{0:x8}", address)),
-                                        GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
-                                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
+                                }
+                                else if (pop.Type.Size == 4)
+                                {
+                                    for (uint j = 0; j < totalLength; ++j)
                                     {
-                                        int index = line.IndexOf(':');
-                                        Debug.Assert(index != 6);
-                                        memoryStringBuilder.Append(line.Substring(index + 1));
-                                    });
-                                    heapOrNull.SetValue(memoryStringBuilder);
+                                        uint offset = pop.StartOffset + pop.Type.Offset + j * 4;
+                                        uint address = local.StackMemory.ByteValues[offset] +
+                                            ((uint)local.StackMemory.ByteValues[offset + 1] << 8) +
+                                            ((uint)local.StackMemory.ByteValues[offset + 2] << 16) +
+                                            ((uint)local.StackMemory.ByteValues[offset + 3] << 24);
+
+                                        HeapMemoryInfo heapOrNull = HeapManagerOrNull.GetHeapOrNull(address);
+                                        if (heapOrNull != null)
+                                        {
+                                            heapOrNull.TypeInfo = pop.Type.GetDereference();
+
+                                            memoryStringBuilder.Clear();
+                                            uint heapWordCount = heapOrNull.Size / 4 + (heapOrNull.Size % 4 > 0 ? 1u : 0);
+                                            RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, heapWordCount, string.Format("0x{0:x8}", address)),
+                                                GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
+                                            ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
+                                            {
+                                                int index = line.IndexOf(':');
+                                                Debug.Assert(index != 6);
+                                                memoryStringBuilder.Append(line.Substring(index + 1));
+                                            });
+                                            heapOrNull.SetValue(memoryStringBuilder);
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -917,8 +972,8 @@ namespace CppMemoryVisualizer.ViewModels
             bool bSuccess = ulong.TryParse(line.Substring(0, 16), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out heapKey);
             Debug.Assert(bSuccess);
 
-            bool bUsed = (line[16] == '1');
-            if (bUsed)
+            bool isUsed = (line[16] == '1');
+            if (isUsed)
             {
                 HeapManagerOrNull.Add(heapKey);
             }
@@ -927,7 +982,7 @@ namespace CppMemoryVisualizer.ViewModels
         public event PropertyChangedEventHandler PropertyChanged;
         public event PropertyChangedEventHandler LinePointerChanged;
 
-        public void OnPropertyChanged(string propertyName)
+        private void onPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -935,6 +990,12 @@ namespace CppMemoryVisualizer.ViewModels
         public void onLinePointerChanged()
         {
             LinePointerChanged?.Invoke(this, new PropertyChangedEventArgs("LinePointer"));
+        }
+
+        sealed class StackKey
+        {
+            public TypeInfo Type;
+            public uint StartOffset;
         }
     }
 }

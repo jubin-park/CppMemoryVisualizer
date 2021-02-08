@@ -1,11 +1,9 @@
 ﻿<Window
     x:Class="CppMemoryVisualizer.Views.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:Sys="clr-namespace:System;assembly=mscorlib"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:local="clr-namespace:CppMemoryVisualizer"
     xmlns:vm="clr-namespace:CppMemoryVisualizer.ViewModels"
     xmlns:v="clr-namespace:CppMemoryVisualizer.Views"
     xmlns:m="clr-namespace:CppMemoryVisualizer.Models"
@@ -48,16 +46,21 @@
             <cvt:UIntToHexadecimalConverter
                 x:Key="UIntToHexadecimalConverter" />
 
+            <!-- MemorySegmentViewModel -->
             <DataTemplate
-                DataType="{x:Type vm:StackMemorySegmentViewModel}">
+                DataType="{x:Type vm:MemorySegmentViewModel}">
                 <Border
                     BorderBrush="LightGray"
                     BorderThickness="1">
-                    <Grid>
+                    <Grid
+                        MinWidth="320"
+                        Margin="0, 0, 8, 0">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="128" />
+                            <ColumnDefinition
+                                Width="128" />
                             <ColumnDefinition />
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition
+                                Width="Auto" />
                         </Grid.ColumnDefinitions>
 
                         <TextBlock
@@ -121,7 +124,7 @@
                                 </ItemsControl.ItemsPanel>
                             </ItemsControl>
                         </Grid>
-                        
+
                         <TextBlock
                             Grid.Column="2"
                             Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
@@ -129,7 +132,8 @@
                     </Grid>
                 </Border>
             </DataTemplate>
-            
+
+            <!-- StackFrame -->
             <DataTemplate
                 DataType="{x:Type m:StackFrame}">
                 <Grid
@@ -155,7 +159,8 @@
                                 <Grid
                                     Margin="0, 0, 0, 8">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="128"/>
+                                        <ColumnDefinition
+                                            Width="128" />
                                         <ColumnDefinition
                                             Width="3*" />
                                     </Grid.ColumnDefinitions>
@@ -185,6 +190,7 @@
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                     </ItemsControl>
+
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -200,6 +206,7 @@
                 </Grid>
             </DataTemplate>
 
+            <!-- HeapMemory -->
             <DataTemplate
                 DataType="{x:Type m:HeapMemoryInfo}">
                 <Grid>
@@ -211,25 +218,29 @@
                                 <Grid
                                     Cursor="Hand"
                                     Background="LightGoldenrodYellow">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition />
-                                        <ColumnDefinition
-                                            Width="3*" />
-                                    </Grid.ColumnDefinitions>
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+
                                     <TextBlock
+                                        Grid.Row="0"
                                         TextWrapping="Wrap">
                                         <Run
-                                            Text="{Binding TypeInfo.FullNameOrNull, Mode=OneWay}"
-                                            Foreground="LightSlateGray"
-                                            FontStyle="Italic" />
+                                            Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                                            FontWeight="Bold" />
                                         <Run
-                                            Text="Size:" />
+                                            Text="@ Heap ( Size:" />
                                         <Run
                                             Text="{Binding Size, Mode=OneWay}"
                                             FontWeight="Bold" />
+                                        <Run
+                                            Text=")" />
                                     </TextBlock>
+
                                     <ItemsControl
-                                        Grid.Column="1"
+                                        Grid.Row="1"
                                         ItemsSource="{Binding ., Converter={StaticResource HeapMemoryToSegmentsConverter}}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
@@ -238,6 +249,7 @@
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                     </ItemsControl>
+
                                 </Grid>
                             </ControlTemplate>
                         </Thumb.Template>

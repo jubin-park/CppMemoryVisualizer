@@ -1,11 +1,7 @@
 ﻿using CppMemoryVisualizer.Enums;
 using CppMemoryVisualizer.Models;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Data;
 
 namespace CppMemoryVisualizer.Converters
@@ -19,7 +15,10 @@ namespace CppMemoryVisualizer.Converters
                 return null;
             }
 
-            var type = new TypeInfo() { FullNameOrNull = (string)values[0] };
+            var type = new TypeInfo()
+            {
+                FullNameOrNull = (string)values[0]
+            };
 
             var segment = (ArraySegment<byte>)values[1];
             byte[] bytes = new byte[segment.Count];

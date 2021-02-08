@@ -1,12 +1,4 @@
-﻿using CppMemoryVisualizer.Enums;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CppMemoryVisualizer.Models
+﻿namespace CppMemoryVisualizer.Models
 {
     class MemoryInfo
     {
@@ -23,12 +15,16 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        protected readonly TypeInfo mTypeInfo = new TypeInfo();
+        protected TypeInfo mTypeInfo = new TypeInfo();
         public TypeInfo TypeInfo
         {
             get
             {
                 return mTypeInfo;
+            }
+            set
+            {
+                mTypeInfo = value;
             }
         }
 

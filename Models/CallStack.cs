@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
@@ -34,7 +29,7 @@ namespace CppMemoryVisualizer.Models
             set
             {
                 mStackFrames = value;
-                OnPropertyChanged("StackFrames");
+                onPropertyChanged("StackFrames");
             }
         }
 
@@ -93,7 +88,7 @@ namespace CppMemoryVisualizer.Models
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void OnPropertyChanged(string propertyName)
+        private void onPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
