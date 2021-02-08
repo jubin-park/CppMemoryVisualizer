@@ -348,10 +348,12 @@
             <Grid.RowDefinitions>
                 <RowDefinition
                     Height="4*" />
+<!--
                 <RowDefinition
                     Height="1*" />
                 <RowDefinition
                     Height="24" />
+-->
             </Grid.RowDefinitions>
 
             <Grid>
@@ -419,6 +421,7 @@
             </Grid>
 
             <TextBox
+                Visibility="Hidden"
                 x:Name="xTextBoxLog"
                 Grid.Row="1"
                 TextWrapping="Wrap"
@@ -428,12 +431,11 @@
                 IsReadOnly="True"
                 TextChanged="xTextBoxLog_TextChanged" />
 
-            <Grid
-                Grid.Row="2">
-                <TextBox
-                    x:Name="xTextBoxInput"
-                    KeyDown="xTextBoxInput_KeyDown" />
-            </Grid>
+            <TextBox
+                Visibility="Hidden"
+                Grid.Row="2"
+                x:Name="xTextBoxInput"
+                KeyDown="xTextBoxInput_KeyDown" />
         </Grid>
     </DockPanel>
 
