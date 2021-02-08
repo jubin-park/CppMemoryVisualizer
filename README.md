@@ -1,8 +1,6 @@
 # CppMemoryVisualizer
 
-<p align="center">
-  <img src="https://github.com/jubin-park/CppMemoryVisualizer/blob/main/snapshot.png?raw=true" alt="CppMemoryVisualizer image"/>
-</p>
+![](/snapshot.png)
 
 GNU Debugger(GDB)를 이용한 C++ 메모리 시각화 프로그램입니다. 디버깅과 중단점 설정이 가능하며, 스택과 힙 메모리를 표로 시각화된 모습을 볼 수 있습니다.
 
