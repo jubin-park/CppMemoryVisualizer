@@ -1,27 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Reflection;
-using Microsoft.Win32;
 using CppMemoryVisualizer.ViewModels;
 using CppMemoryVisualizer.Constants;
-using ICSharpCode.AvalonEdit;
-using ICSharpCode.AvalonEdit.Rendering;
+using System.Windows.Controls.Primitives;
+using CppMemoryVisualizer.Models;
 
 namespace CppMemoryVisualizer.Views
 {
@@ -37,7 +23,7 @@ namespace CppMemoryVisualizer.Views
 
         private void OnWindowClosing(object sender, CancelEventArgs e)
         {
-            mMainViewModel.ShutdownCdb();
+            mMainViewModel.ShutdownGdb();
         }
 
         private void xTextBoxLog_TextChanged(object sender, TextChangedEventArgs e)
@@ -51,10 +37,74 @@ namespace CppMemoryVisualizer.Views
             if (e.Key == Key.Return && xTextBoxInput.Text.Length > 0)
             {
                 mMainViewModel.RequestInstruction(xTextBoxInput.Text,
-                    CdbInstructionSet.REQUEST_START_CONSOLE, CdbInstructionSet.REQUEST_END_CONSOLE);
-                mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_CONSOLE, CdbInstructionSet.REQUEST_END_CONSOLE, null);
+                    GdbInstructionSet.REQUEST_START_CONSOLE, GdbInstructionSet.REQUEST_END_CONSOLE);
+                readResultLine(GdbInstructionSet.REQUEST_START_CONSOLE, GdbInstructionSet.REQUEST_END_CONSOLE, null);
 
                 xTextBoxInput.Text = string.Empty;
+            }
+        }
+
+        private void xThumbHeap_DragDelta(object sender, DragDeltaEventArgs e)
+        {
+            var thumb = (Thumb)sender;
+            var heap = (HeapMemoryInfo)thumb.DataContext;
+
+            heap.X += e.HorizontalChange;
+            heap.Y += e.VerticalChange;
+        }
+
+        private void readResultLine(string start, string end, Action<string> lambdaOrNull)
+        {
+            Debug.Assert(start != null);
+            Debug.Assert(end != null);
+
+            string line;
+
+            do
+            {
+                line = mMainViewModel.ProcessGdbOrNull.StandardOutput.ReadLine();
+                {
+                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
+                    if (lastIndex != -1)
+                    {
+                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
+                    }
+                    if (line.Length == 0)
+                    {
+                        continue;
+                    }
+                }
+#if DEBUG
+                mMainViewModel.Log += line + Environment.NewLine;
+#endif
+            } while (!line.StartsWith(start));
+
+            while (true)
+            {
+                line = mMainViewModel.ProcessGdbOrNull.StandardOutput.ReadLine();
+                {
+                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
+                    if (lastIndex != -1)
+                    {
+                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
+                    }
+                    if (line.Length == 0)
+                    {
+                        continue;
+                    }
+                }
+#if DEBUG
+                mMainViewModel.Log += line + Environment.NewLine;
+#endif
+                if (line.StartsWith(end))
+                {
+                    break;
+                }
+
+                if (lambdaOrNull != null)
+                {
+                    lambdaOrNull.Invoke(line);
+                }
             }
         }
     }

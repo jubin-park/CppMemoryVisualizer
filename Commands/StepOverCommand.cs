@@ -36,30 +36,21 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
+            return mMainViewModel.ProcessGdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
         }
 
         public void Execute(object parameter)
         {
             mMainViewModel.CurrentInstruction = EDebugInstructionState.STEP_OVER;
 
-            mMainViewModel.RequestInstruction(CdbInstructionSet.STEP_OVER,
-                CdbInstructionSet.REQUEST_START_STEP_OVER_COMMAND, CdbInstructionSet.REQUEST_END_STEP_OVER_COMMAND);
-            mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_STEP_OVER_COMMAND, CdbInstructionSet.REQUEST_END_STEP_OVER_COMMAND,
+            mMainViewModel.RequestInstruction(GdbInstructionSet.STEP_OVER,
+                GdbInstructionSet.REQUEST_START_STEP_OVER_COMMAND, GdbInstructionSet.REQUEST_END_STEP_OVER_COMMAND);
+            mMainViewModel.ReadResultLine(GdbInstructionSet.REQUEST_START_STEP_OVER_COMMAND, GdbInstructionSet.REQUEST_END_STEP_OVER_COMMAND,
                 mMainViewModel.ActionLinePointer);
 
-            var thread = new Thread(() =>
-            {
-                lock (mMainViewModel.LockObject)
-                {
-                    mMainViewModel.Update();
-                    mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
-                }
-            });
+            mMainViewModel.UpdateGdb();
 
-            thread.IsBackground = true;
-            thread.Start();
-            thread.Join();
+            mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }
     }
 }

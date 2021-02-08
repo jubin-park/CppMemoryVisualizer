@@ -1,14 +1,6 @@
 ﻿using CppMemoryVisualizer.Constants;
-using CppMemoryVisualizer.Enums;
 using CppMemoryVisualizer.ViewModels;
 using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace CppMemoryVisualizer.Commands
@@ -36,30 +28,20 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
+            return mMainViewModel.ProcessGdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
         }
 
         public void Execute(object parameter)
         {
             mMainViewModel.CurrentInstruction = EDebugInstructionState.GO;
 
-            mMainViewModel.RequestInstruction(CdbInstructionSet.GO,
-                CdbInstructionSet.REQUEST_START_GO_COMMAND, CdbInstructionSet.REQUEST_END_GO_COMMAND);
-            mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_GO_COMMAND, CdbInstructionSet.REQUEST_END_GO_COMMAND,
+            mMainViewModel.RequestInstruction(GdbInstructionSet.GO,
+                GdbInstructionSet.REQUEST_START_GO_COMMAND, GdbInstructionSet.REQUEST_END_GO_COMMAND);
+            mMainViewModel.ReadResultLine(GdbInstructionSet.REQUEST_START_GO_COMMAND, GdbInstructionSet.REQUEST_END_GO_COMMAND,
                 mMainViewModel.ActionLinePointer);
 
-            var thread = new Thread(() =>
-            {
-                lock (mMainViewModel.LockObject)
-                {
-                    mMainViewModel.Update();
-                    mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
-                }
-            });
-
-            thread.IsBackground = true;
-            thread.Start();
-            thread.Join();
+            mMainViewModel.UpdateGdb();
+            mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }
     }
 }

@@ -3,13 +3,11 @@ using CppMemoryVisualizer.Models;
 using Microsoft.Win32;
 using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Diagnostics;
 using System.Windows;
+using System.Text.RegularExpressions;
 
 namespace CppMemoryVisualizer.Commands
 {
@@ -27,7 +25,7 @@ namespace CppMemoryVisualizer.Commands
             }
         }
 
-        private static readonly string[] STANDARD_CPP_OPTIONS = { string.Empty, " /std:c++14", " /std:c++17" };
+        private static readonly string[] STANDARD_CPP_OPTIONS = { "-std=c++11", " -std=c++14", " -std=c++17" };
 
         private readonly MainViewModel mMainViewModel;
 
@@ -44,7 +42,7 @@ namespace CppMemoryVisualizer.Commands
         public void Execute(object parameter)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "C/C++ 소스 파일 (*.c; *.cpp)|*.c;*.cpp";
+            openFileDialog.Filter = "C++ 소스 파일 (*.cpp)|*.cpp";
             openFileDialog.FilterIndex = 2;
             openFileDialog.RestoreDirectory = true;
 
@@ -67,22 +65,42 @@ namespace CppMemoryVisualizer.Commands
                 string fileNameOnly = Path.GetFileNameWithoutExtension(openFileDialog.FileName);
                 mMainViewModel.SourcePathOrNull = openFileDialog.FileName;
 
-                mMainViewModel.ShutdownCdb();
+                mMainViewModel.ShutdownGdb();
+
+                bool hasMallocHeader = false;
 
                 uint lineCount = 1;
                 {
                     string line;
                     TextReader reader = new StreamReader(openFileDialog.FileName);
+
+                    Regex rx = new Regex(@"^\s*#include\s*<(stdlib.h|cstdlib|malloc.h)>");
+
                     while ((line = reader.ReadLine()) != null)
                     {
+                        if (!hasMallocHeader)
+                        {
+                            Match match = rx.Match(line);
+                            if (match.Success)
+                            {
+                                hasMallocHeader = true;
+                            }
+                        }
                         lineCount++;
                     }
                     reader.Close();
                 }
+
+                if (!hasMallocHeader)
+                {
+                    ++lineCount;
+                    File.WriteAllText(openFileDialog.FileName, "#include <malloc.h> /* auto-generated */" + Environment.NewLine + File.ReadAllText(openFileDialog.FileName));
+                    //MessageBox.Show("힙 메모리 분석을 위해 헤더 <malloc.h> 를 자동으로 추가합니다.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Information);
+                }
                 mMainViewModel.BreakPointList = new BreakPointList(lineCount + 1);
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
-
-                // compile
+                
+                // execute gcc compiler
                 ProcessStartInfo processInfo = new ProcessStartInfo();
                 processInfo.FileName = "cmd.exe";
                 processInfo.WorkingDirectory = dirPath;
@@ -92,30 +110,9 @@ namespace CppMemoryVisualizer.Commands
 
                 Process process = Process.Start(processInfo);
 
-                // Execute MSVC x86 compiler
-                {
-                    Debug.Write("Loading vcvars32.bat ... ");
-                    App app = Application.Current as App;
-                    string compilerPath = Path.Combine(app.VsPath, "VC\\Auxiliary\\Build\\vcvars32.bat");
-
-                    if (!File.Exists(compilerPath))
-                    {
-                        MessageBox.Show($"{compilerPath} 파일을 찾을 수 없습니다. Visual Studio Installer 에서 'C++를 사용한 데스크톱 개발' 패키지를 설치하십시오.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
-                        Debug.WriteLine("FAILED");
-                    }
-                    else
-                    {
-                        process.StandardInput.WriteLine("\"" + compilerPath + "\"");
-                        Debug.WriteLine("SUCCESS");
-                    }                    
-                }
-
                 process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "exe"));
-                process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "ilk"));
-                process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "obj"));
-                process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "pdb"));
-                process.StandardInput.WriteLine(string.Format("cl{0} /EHsc /Zi /DEBUG \"{1}\"", STANDARD_CPP_OPTIONS[(uint)mMainViewModel.StandardCppVersion], fileName));
-                process.StandardInput.WriteLine(string.Format("dir \"{0}.*\"", fileNameOnly));
+                process.StandardInput.WriteLine(string.Format("gcc {0} -o {1} -g -lstdc++{2}", fileName, fileNameOnly, STANDARD_CPP_OPTIONS[(uint)mMainViewModel.StandardCppVersion]));
+                process.StandardInput.WriteLine(string.Format("dir \"{0}.exe\"", fileNameOnly));
                 process.StandardInput.Close();
 
                 process.WaitForExit();

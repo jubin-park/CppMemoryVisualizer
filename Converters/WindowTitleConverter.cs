@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace CppMemoryVisualizer.Views
+namespace CppMemoryVisualizer.Converters
 {
     sealed class WindowTitleConverter : IMultiValueConverter
     {

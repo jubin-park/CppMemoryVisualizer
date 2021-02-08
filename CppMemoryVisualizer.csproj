@@ -29,7 +29,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -60,10 +60,15 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Converters\ArraySegmentsToValueConverter.cs" />
+    <Compile Include="Converters\HeapMemoryToSegmentsConverter.cs" />
+    <Compile Include="Converters\StackMemoryToSegmentsConverter.cs" />
     <Compile Include="Enums\EStandardCppVersion.cs" />
     <Compile Include="Enums\EMemoryTypeFlags.cs" />
     <Compile Include="Models\BreakPointList.cs" />
     <Compile Include="Models\CallStack.cs" />
+    <Compile Include="Models\HeapManager.cs" />
+    <Compile Include="Models\HeapMemoryInfo.cs" />
     <Compile Include="Models\MemoryOwnerInfo.cs" />
     <Compile Include="Models\TypeInfo.cs" />
     <Compile Include="Models\MemoryInfo.cs" />
@@ -71,16 +76,13 @@
     <Compile Include="Models\PureTypeManager.cs" />
     <Compile Include="Models\StackFrame.cs" />
     <Compile Include="ViewModels\CallStackViewModel.cs" />
-    <Compile Include="Views\BytesToPointerConverter.cs" />
-    <Compile Include="Views\BytesToValueArrayConverter.cs" />
-    <Compile Include="Views\BytesToValueConverter.cs" />
-    <Compile Include="Views\MemoryDataTemplateSelector.cs" />
-    <Compile Include="Views\UIntToHexadecimalConverter.cs" />
+    <Compile Include="ViewModels\MemorySegmentViewModel.cs" />
+    <Compile Include="Converters\UIntToHexadecimalConverter.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\StandardCppVersionEnumToBooleanConverter.cs" />
-    <Compile Include="Views\WindowTitleConverter.cs" />
+    <Compile Include="Converters\StandardCppVersionEnumToBooleanConverter.cs" />
+    <Compile Include="Converters\WindowTitleConverter.cs" />
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -93,7 +95,7 @@
     <Compile Include="Commands\GoCommand.cs" />
     <Compile Include="Commands\StepInCommand.cs" />
     <Compile Include="Commands\StepOverCommand.cs" />
-    <Compile Include="Constants\CdbInstructionSet.cs" />
+    <Compile Include="Constants\GdbInstructionSet.cs" />
     <Compile Include="Views\BreakPointMargin.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
   </ItemGroup>
@@ -126,10 +128,6 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="Views\MainWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\MemoryDataTemplate.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

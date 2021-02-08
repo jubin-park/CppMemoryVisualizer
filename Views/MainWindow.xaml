@@ -1,16 +1,14 @@
 ﻿<Window
     x:Class="CppMemoryVisualizer.Views.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:Sys="clr-namespace:System;assembly=mscorlib"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:local="clr-namespace:CppMemoryVisualizer"
     xmlns:vm="clr-namespace:CppMemoryVisualizer.ViewModels"
     xmlns:v="clr-namespace:CppMemoryVisualizer.Views"
     xmlns:m="clr-namespace:CppMemoryVisualizer.Models"
+    xmlns:cvt="clr-namespace:CppMemoryVisualizer.Converters"
     xmlns:enum="clr-namespace:CppMemoryVisualizer.Enums"
-    xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
     mc:Ignorable="d"
     Height="600"
     Width="800"
@@ -34,110 +32,237 @@
     </Window.InputBindings>
 
     <Window.Resources>
-
         <ResourceDictionary>
-
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary
-                    Source="MemoryDataTemplate.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-
-            <v:WindowTitleConverter
+            <cvt:WindowTitleConverter
                 x:Key="WindowTitleConverter" />
-            <v:StandardCppVersionEnumToBooleanConverter
+            <cvt:StandardCppVersionEnumToBooleanConverter
                 x:Key="StandardCppVersionEnumToBooleanConverter" />
-            <v:MemoryDataTemplateSelector
-                x:Key="MemoryDataTemplateSelector" />
+            <cvt:ArraySegmentsToValueConverter
+                x:Key="ArraySegmentsToValueConverter" />
+            <cvt:StackMemoryToSegmentsConverter
+                x:Key="StackMemoryToSegmentsConverter" />
+            <cvt:HeapMemoryToSegmentsConverter
+                x:Key="HeapMemoryToSegmentsConverter" />
+            <cvt:UIntToHexadecimalConverter
+                x:Key="UIntToHexadecimalConverter" />
 
+            <!-- MemorySegmentViewModel -->
+            <DataTemplate
+                DataType="{x:Type vm:MemorySegmentViewModel}">
+                <Border
+                    BorderBrush="LightGray"
+                    BorderThickness="1">
+                    <Grid
+                        MinWidth="320"
+                        Margin="0, 0, 8, 0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition
+                                Width="128" />
+                            <ColumnDefinition />
+                            <ColumnDefinition
+                                Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock
+                            Grid.Column="0"
+                            TextWrapping="Wrap">
+                            <Run
+                                Text="{Binding TypeName, Mode=OneWay}"
+                                Foreground="LightSlateGray"
+                                FontStyle="Italic" />
+                            <Run
+                                Text="{Binding MemberNameOrNull, Mode=OneWay}"
+                                FontWeight="Bold" />
+                        </TextBlock>
+
+                        <Grid
+                            Grid.Column="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <TextBlock
+                                Grid.Row="0">
+                                <TextBlock.Text>
+                                    <MultiBinding
+                                        Converter="{StaticResource ArraySegmentsToValueConverter}">
+                                        <Binding
+                                            Path="TypeName" />
+                                        <Binding
+                                            Path="Memory" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+
+                            <ItemsControl
+                                Grid.Row="1"
+                                ItemsSource="{Binding Children}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <ItemsControl
+                                            ItemsSource="{Binding .}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <ContentControl
+                                                        Content="{Binding .}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel
+                                                        Orientation="Vertical" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                        </ItemsControl>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel
+                                            Orientation="Vertical" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </Grid>
+
+                        <TextBlock
+                            Grid.Column="2"
+                            Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                            Foreground="LightSlateGray" />
+                    </Grid>
+                </Border>
+            </DataTemplate>
+
+            <!-- StackFrame -->
             <DataTemplate
                 DataType="{x:Type m:StackFrame}">
-
                 <Grid
                     Margin="0, 0, 0, 12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition
-                            Width="64" />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
 
                     <TextBlock
-                        Grid.Column="0"
+                        Background="AliceBlue"
+                        Grid.Row="0"
                         Text="{Binding Name}"
                         TextWrapping="Wrap"
                         FontWeight="Bold" />
 
                     <ItemsControl
-                        Grid.Column="1"
+                        Grid.Row="1"
                         ItemsSource="{Binding LocalVariables}">
+
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border
-                                    BorderBrush="#1266a7"
-                                    BorderThickness="1"
-                                    Margin="0, -1, 0, 0">
+                                <Grid
+                                    Margin="0, 0, 0, 8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition
+                                            Width="128" />
+                                        <ColumnDefinition
+                                            Width="3*" />
+                                    </Grid.ColumnDefinitions>
+
                                     <Grid
-                                        Margin="0, 0, 0, 8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition
-                                                Width="160" />
-                                            <ColumnDefinition
-                                                Width="3*" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <Grid
-                                            Grid.Column="0">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition />
-                                                <RowDefinition />
-                                                <RowDefinition />
-                                            </Grid.RowDefinitions>
-
-                                            <TextBlock
-                                                Grid.Row="0"
-                                                Text="{Binding StackMemory.Address, Converter={StaticResource UIntToHexadecimalConverter}}"
-                                                TextAlignment="Right"
-                                                TextWrapping="Wrap"
-                                                Foreground="LightSlateGray" />
-
-                                            <TextBlock
-                                                Grid.Row="1"
-                                                Text="{Binding StackMemory.TypeInfo.FullName}"
-                                                TextAlignment="Right"
-                                                TextWrapping="Wrap"
+                                        Grid.Column="0"
+                                        Margin="8, 0, 0, 0">
+                                        <TextBlock
+                                            TextWrapping="Wrap">
+                                            <Run
+                                                Text="{Binding StackMemory.TypeInfo.FullNameOrNull, Mode=OneWay}"
                                                 Foreground="LightSlateGray"
                                                 FontStyle="Italic" />
-
-                                            <TextBlock
-                                                Grid.Row="2"
-                                                Text="{Binding Name}"
-                                                TextAlignment="Right"
-                                                TextWrapping="Wrap"
+                                            <Run
+                                                Text="{Binding Name, Mode=OneWay}"
                                                 FontWeight="Bold" />
-                                        </Grid>
-
-                                        <ContentControl
-                                            Grid.Column="1"
-                                            Content="{Binding StackMemory}"
-                                            ContentTemplateSelector="{StaticResource MemoryDataTemplateSelector}">
-                                        </ContentControl>
-
+                                        </TextBlock>
                                     </Grid>
-                                </Border>
 
+                                    <ItemsControl
+                                        Grid.Column="1"
+                                        ItemsSource="{Binding StackMemory, Converter={StaticResource StackMemoryToSegmentsConverter}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel
+                                                    Orientation="Vertical" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+
+                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
+
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel
-                                    Orientation="Vertical">
-                                </StackPanel>
+                                    Orientation="Vertical" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
+
                     </ItemsControl>
-
                 </Grid>
+            </DataTemplate>
 
+            <!-- HeapMemory -->
+            <DataTemplate
+                DataType="{x:Type m:HeapMemoryInfo}">
+                <Grid>
+                    <Thumb
+                        x:Name="xThumbHeap"
+                        DragDelta="xThumbHeap_DragDelta">
+                        <Thumb.Template>
+                            <ControlTemplate>
+                                <Grid
+                                    Cursor="Hand"
+                                    Background="LightGoldenrodYellow">
 
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition />
+                                        <RowDefinition />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock
+                                        Grid.Row="0"
+                                        TextWrapping="Wrap">
+                                        <Run
+                                            Text="*("
+                                            Foreground="Red"
+                                            FontWeight="Bold" />
+                                        <Run
+                                            Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                                            FontWeight="Bold" />
+                                        <Run
+                                            Text=")"
+                                            Foreground="Red"
+                                            FontWeight="Bold" />
+                                        <Run
+                                            Text="@ Heap ( size:" />
+                                        <Run
+                                            Text="{Binding Size, Mode=OneWay}"
+                                            FontWeight="Bold" />
+                                        <Run
+                                            Text=")" />
+                                    </TextBlock>
+
+                                    <ItemsControl
+                                        Grid.Row="1"
+                                        ItemsSource="{Binding ., Converter={StaticResource HeapMemoryToSegmentsConverter}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel
+                                                    Orientation="Vertical" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+
+                                </Grid>
+                            </ControlTemplate>
+                        </Thumb.Template>
+                    </Thumb>
+                </Grid>
             </DataTemplate>
 
         </ResourceDictionary>
@@ -150,7 +275,7 @@
                 Path="SourcePathOrNull"
                 Mode="OneWay" />
             <Binding
-                Path="ProcessCdbOrNull"
+                Path="ProcessGdbOrNull"
                 Mode="OneWay" />
             <Binding
                 Path="CurrentInstruction"
@@ -254,13 +379,15 @@
                     Background="Gray"
                     ShowsPreview="true"
                     HorizontalAlignment="Stretch" />
+
                 <ScrollViewer
-                    Grid.Column="2"
                     VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollBarVisibility="Visible">
+                    HorizontalScrollBarVisibility="Auto"
+                    CanContentScroll="True"
+                    Grid.Column="2">
                     <Grid>
                         <ItemsControl
-                            ItemsSource="{Binding CallStackViewModel.CallStack.Stack}">
+                            ItemsSource="{Binding CallStackViewModel.CallStack.StackFrames}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel
@@ -268,9 +395,27 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
+
+                        <ItemsControl
+                            ItemsSource="{Binding HeapManagerOrNull.Heaps}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style>
+                                    <Setter
+                                        Property="Canvas.Left"
+                                        Value="{Binding X}" />
+                                    <Setter
+                                        Property="Canvas.Top"
+                                        Value="{Binding Y}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                        </ItemsControl>
                     </Grid>
                 </ScrollViewer>
-
             </Grid>
 
             <TextBox

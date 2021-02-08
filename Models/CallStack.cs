@@ -1,40 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.Models
 {
     sealed class CallStack : INotifyPropertyChanged
     {
-        private readonly List<ulong> mKeys = new List<ulong>();
-        private Dictionary<ulong, StackFrame> mStackFrames = new Dictionary<ulong, StackFrame>();
-
-        // https://stackoverflow.com/questions/21976979/mvvm-model-with-collections-use-or-not-observablecollection-in-model
-        private List<StackFrame> mStack;
-        public List<StackFrame> Stack
+        private readonly List<ulong> mStackFrameKeys = new List<ulong>();
+        public List<ulong> StackFrameKeys
         {
             get
             {
-                return mStack;
+                return mStackFrameKeys;
+            }
+        }
+
+        private Dictionary<ulong, StackFrame> mStackFrameCaches = new Dictionary<ulong, StackFrame>();
+
+        // https://stackoverflow.com/questions/21976979/mvvm-model-with-collections-use-or-not-observablecollection-in-model
+        private ObservableCollection<StackFrame> mStackFrames = new ObservableCollection<StackFrame>();
+        public ObservableCollection<StackFrame> StackFrames
+        {
+            get
+            {
+                return mStackFrames;
             }
             set
             {
-                mStack = value;
-                onPropertyChanged("Stack");
+                mStackFrames = value;
+                onPropertyChanged("StackFrames");
             }
         }
 
         public void Clear()
         {
-            mKeys.Clear();
-            int capacity = (mStack == null ? 8 : mStack.Count);
-            Stack = new List<StackFrame>(capacity);
+            mStackFrameKeys.Clear();
+            StackFrames.Clear();
         }
 
         public void Push(uint stackAddress, uint functionAddress, string functionName)
@@ -44,29 +46,28 @@ namespace CppMemoryVisualizer.Models
             Debug.Assert(functionName != null);
 
             ulong key = (ulong)stackAddress << 32 | functionAddress;
-            mKeys.Add(key);
+            mStackFrameKeys.Add(key);
 
             StackFrame frame = null;
-            if (!mStackFrames.ContainsKey(key))
+            if (!mStackFrameCaches.ContainsKey(key))
             {
                 frame = new StackFrame(stackAddress, functionAddress, functionName);
-                mStackFrames.Add(key, frame);
+                mStackFrameCaches.Add(key, frame);
             }
             else
             {
-                Debug.Assert(mStackFrames.TryGetValue(key, out frame));
+                bool bSuccess = mStackFrameCaches.TryGetValue(key, out frame);
+                Debug.Assert(bSuccess);
             }
-            frame.Index = (uint)mStack.Count;
-            frame.Y = frame.Index * 50;
 
-            mStack.Add(frame);
+            mStackFrames.Add(frame);
         }
 
         public ulong Top()
         {
-            Debug.Assert(mKeys.Count > 0);
+            Debug.Assert(mStackFrameKeys.Count > 0);
 
-            return mKeys[0];
+            return mStackFrameKeys[0];
         }
 
         public StackFrame GetStackFrame(ulong key)
@@ -74,14 +75,15 @@ namespace CppMemoryVisualizer.Models
             Debug.Assert(key > 0);
 
             StackFrame stackFrame = null;
-            Debug.Assert(mStackFrames.TryGetValue(key, out stackFrame));
+            bool bSuccess = mStackFrameCaches.TryGetValue(key, out stackFrame);
+            Debug.Assert(bSuccess);
 
             return stackFrame;
         }
 
         public bool IsEmpty()
         {
-            return mKeys.Count == 0;
+            return mStackFrameKeys.Count == 0;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

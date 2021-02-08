@@ -1,11 +1,5 @@
 ﻿using CppMemoryVisualizer.Models;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CppMemoryVisualizer.ViewModels
 {
@@ -21,6 +15,7 @@ namespace CppMemoryVisualizer.ViewModels
             set
             {
                 mCallStack = value;
+                onPropertyChanged("CallStack");
             }
         }
 

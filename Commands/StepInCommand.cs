@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Input;
+using System.Text.RegularExpressions;
 
 namespace CppMemoryVisualizer.Commands
 {
@@ -35,50 +36,57 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.ProcessCdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
+            return mMainViewModel.ProcessGdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
         }
 
         public void Execute(object parameter)
         {
             mMainViewModel.CurrentInstruction = EDebugInstructionState.STEP_IN;
 
-            mMainViewModel.RequestInstruction(CdbInstructionSet.STEP_IN,
-                CdbInstructionSet.REQUEST_START_STEP_IN_COMMAND, CdbInstructionSet.REQUEST_END_STEP_IN_COMMAND);
-            mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_STEP_IN_COMMAND, CdbInstructionSet.REQUEST_END_STEP_IN_COMMAND,
-                mMainViewModel.ActionLinePointer);
+            bool isRangeIn = true;
 
-            var thread = new Thread(() =>
+            mMainViewModel.RequestInstruction(GdbInstructionSet.STEP_IN,
+                GdbInstructionSet.REQUEST_START_STEP_IN_COMMAND, GdbInstructionSet.REQUEST_END_STEP_IN_COMMAND);
+            mMainViewModel.ReadResultLine(GdbInstructionSet.REQUEST_START_STEP_IN_COMMAND, GdbInstructionSet.REQUEST_END_STEP_IN_COMMAND, (string line) =>
             {
-                lock (mMainViewModel.LockObject)
                 {
-                    bool loopGoUp = true;
-                    while (loopGoUp)
+                    Regex rx = new Regex(@"at (.*):\d+$");
+                    Match match = rx.Match(line);
+
+                    if (match.Success && match.Groups[1].Value != Path.GetFileName(mMainViewModel.SourcePathOrNull))
                     {
-                        mMainViewModel.RequestInstruction(CdbInstructionSet.DISPLAY_STACK_BACKTRACE + " 1",
-                            CdbInstructionSet.REQUEST_START_GET_CALL_STACK, CdbInstructionSet.REQUEST_END_GET_CALL_STACK);
-                        mMainViewModel.ReadResultLine(CdbInstructionSet.REQUEST_START_GET_CALL_STACK, CdbInstructionSet.REQUEST_END_GET_CALL_STACK, (string line) =>
-                        {
-                            if (line.Contains(mMainViewModel.SourcePathOrNull))
-                            {
-                                loopGoUp = false;
-                            }
-                        });
-
-                        if (loopGoUp)
-                        {
-                            mMainViewModel.RequestInstruction(CdbInstructionSet.GO_UP + " 1",
-                                null, null);
-                        }
+                        isRangeIn = false;
+                        return;
                     }
+                }
+                {
+                    Regex rx = new Regex(@"^(\d+)\t(.*)");
+                    Match match = rx.Match(line);
 
-                    mMainViewModel.Update();
-                    mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
+                    if (match.Success)
+                    {
+                        uint lineNumber = 0;
+                        bool bSuccess = uint.TryParse(match.Groups[1].Value, out lineNumber);
+                        Debug.Assert(bSuccess);
+                        Debug.Assert(lineNumber > 0);
+                        mMainViewModel.LinePointer = lineNumber;
+                    }
                 }
             });
 
-            thread.IsBackground = true;
-            thread.Start();
-            thread.Join();
+            if (!isRangeIn)
+            {
+                mMainViewModel.RequestInstruction(GdbInstructionSet.FINISH,
+                    GdbInstructionSet.REQUEST_START_FINISH_COMMAND, null);
+                mMainViewModel.RequestInstruction(GdbInstructionSet.STEP_OVER,
+                    null, GdbInstructionSet.REQUEST_END_FINISH_COMMAND);
+                mMainViewModel.ReadResultLine(GdbInstructionSet.REQUEST_START_FINISH_COMMAND, GdbInstructionSet.REQUEST_END_FINISH_COMMAND,
+                    mMainViewModel.ActionLinePointer);
+            }
+
+            mMainViewModel.UpdateGdb();
+
+            mMainViewModel.CurrentInstruction = EDebugInstructionState.STANDBY;
         }
     }
 }
