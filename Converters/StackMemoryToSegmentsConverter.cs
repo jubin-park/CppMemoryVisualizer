@@ -19,27 +19,16 @@ namespace CppMemoryVisualizer.Converters
             var stack = new Stack<StackKey>();
 
             MemoryOwnerInfo rootMemory = value as MemoryOwnerInfo;
+
             {
                 TypeInfo pureType = PureTypeManager.GetType(rootMemory.TypeInfo.PureName);
 
-                uint totalLength = 1;
-                if (rootMemory.TypeInfo.ArrayOrFunctionPointerLevels.Count == 0)
-                {
-                    foreach (uint len in rootMemory.TypeInfo.ArrayLengths)
-                    {
-                        totalLength *= len;
-                    }
-                }
+                uint totalLength = rootMemory.TypeInfo.GetTotalLength();
                 uint sizePerSegment = rootMemory.TypeInfo.Size / totalLength;
 
                 TypeInfo elementOfArrayType = rootMemory.TypeInfo.GetElementOfArray();
 
                 segments = new List<MemorySegmentViewModel>((int)totalLength);
-                /*
-                if (rootMemory.TypeInfo.PointerLevel == 0 && rootMemory.TypeInfo.ArrayOrFunctionPointerLevels.Count == 0)
-                {
-                    rootMemory.TypeInfo.Members = pureType.Members;
-                }*/
 
                 for (uint i = 0; i < totalLength; ++i)
                 {
@@ -65,45 +54,40 @@ namespace CppMemoryVisualizer.Converters
             while (stack.Count > 0)
             {
                 StackKey popKey = stack.Pop();
-                
-                if (popKey.Type.PointerLevel == 0 && popKey.Type.ArrayOrFunctionPointerLevels.Count == 0)
+
+                if (popKey.Type.PointerLevel > 0 || popKey.Type.ArrayOrFunctionPointerLevels.Count > 0)
                 {
-                    foreach (TypeInfo memberType in popKey.Type.Members)
+                    continue;
+                }
+
+                foreach (TypeInfo memberType in popKey.Type.Members)
+                {
+                    uint totalLength = memberType.GetTotalLength();
+                    uint sizePerSegment = memberType.Size / totalLength;
+
+                    TypeInfo elementOfArrayType = memberType.GetElementOfArray();
+
+                    var memberArray = new List<MemorySegmentViewModel>((int)totalLength);
+                    for (uint i = 0; i < totalLength; ++i)
                     {
-                        uint totalLength = 1;
-                        if (memberType.ArrayOrFunctionPointerLevels.Count == 0)
+                        var vm = new MemorySegmentViewModel()
                         {
-                            foreach (uint len in memberType.ArrayLengths)
-                            {
-                                totalLength *= len;
-                            }
-                        }
-                        uint sizePerSegment = memberType.Size / totalLength;
+                            TypeName = totalLength > 1 ? elementOfArrayType.FullNameOrNull : memberType.FullNameOrNull,
+                            MemberNameOrNull = memberType.MemberNameOrNull,
+                            Memory = new ArraySegment<byte>(rootMemory.ByteValues, popKey.ViewModel.Memory.Offset + (int)((memberType.Offset - popKey.Type.Offset) + i * sizePerSegment), (int)sizePerSegment),
+                            Address = popKey.ViewModel.Address + (memberType.Offset - popKey.Type.Offset) + i * sizePerSegment,
+                            AncestorOrNull = popKey.ViewModel,
+                            Children = new List<List<MemorySegmentViewModel>>(memberType.Members.Count)
+                        };
 
-                        TypeInfo elementOfArrayType = memberType.GetElementOfArray();
-
-                        var memberArray = new List<MemorySegmentViewModel>((int)totalLength);
-                        for (uint i = 0; i < totalLength; ++i)
+                        stack.Push(new StackKey()
                         {
-                            var vm = new MemorySegmentViewModel()
-                            {
-                                TypeName = totalLength > 1 ? elementOfArrayType.FullNameOrNull : memberType.FullNameOrNull,
-                                MemberNameOrNull = memberType.MemberNameOrNull,
-                                Memory = new ArraySegment<byte>(rootMemory.ByteValues, popKey.ViewModel.Memory.Offset + (int)((memberType.Offset - popKey.Type.Offset) + i * sizePerSegment), (int)sizePerSegment),
-                                Address = popKey.ViewModel.Address + (memberType.Offset - popKey.Type.Offset) + i * sizePerSegment,
-                                AncestorOrNull = popKey.ViewModel,
-                                Children = new List<List<MemorySegmentViewModel>>(memberType.Members.Count)
-                            };
-
-                            stack.Push(new StackKey()
-                            {
-                                ViewModel = vm,
-                                Type = memberType
-                            });
-                            memberArray.Add(vm);
-                        }
-                        popKey.ViewModel.Children.Add(memberArray);
+                            ViewModel = vm,
+                            Type = memberType
+                        });
+                        memberArray.Add(vm);
                     }
+                    popKey.ViewModel.Children.Add(memberArray);
                 }
             }
 

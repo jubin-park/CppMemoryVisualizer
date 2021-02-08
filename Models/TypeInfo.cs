@@ -163,6 +163,21 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
+        public uint GetTotalLength()
+        {
+            uint totalLength = 1;
+
+            if (mArrayOrFunctionPointerLevels.Count == 0)
+            {
+                foreach (uint len in mArrayLengths)
+                {
+                    totalLength *= len;
+                }
+            }
+
+            return totalLength;
+        }
+
         #region struct or class
         private uint mOffset;
         public uint Offset
@@ -241,11 +256,7 @@ namespace CppMemoryVisualizer.Models
             elementType.mMemberNameOrNull = mMemberNameOrNull;
             elementType.mMembers = mMembers;
 
-            uint length = 1;
-            foreach (uint len in mArrayLengths)
-            {
-                length *= len;
-            }
+            uint length = GetTotalLength();
             elementType.mSize = mSize / length;            
 
             string name = mPureName;

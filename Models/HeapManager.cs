@@ -69,8 +69,6 @@ namespace CppMemoryVisualizer.Models
                     Heaps.Add(heap);
                 }
             }
-
-            CollectionViewSource.GetDefaultView(mHeaps).Refresh();
         }
 
         public HeapMemoryInfo GetHeapOrNull(uint heapAddress)

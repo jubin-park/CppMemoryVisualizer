@@ -228,10 +228,18 @@
                                         Grid.Row="0"
                                         TextWrapping="Wrap">
                                         <Run
+                                            Text="*("
+                                            Foreground="Red"
+                                            FontWeight="Bold" />
+                                        <Run
                                             Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
                                             FontWeight="Bold" />
                                         <Run
-                                            Text="@ Heap ( Size:" />
+                                            Text=")"
+                                            Foreground="Red"
+                                            FontWeight="Bold" />
+                                        <Run
+                                            Text="@ Heap ( size:" />
                                         <Run
                                             Text="{Binding Size, Mode=OneWay}"
                                             FontWeight="Bold" />

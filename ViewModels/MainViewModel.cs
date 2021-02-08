@@ -437,11 +437,36 @@ namespace CppMemoryVisualizer.ViewModels
                 return;
             }
 
-            HeapManagerOrNull.Clear();
-            RequestInstruction(GdbInstructionSet.DISPLAY_HEAPINFO,
-                GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO);
-            ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO, actionAddHeap);
-            HeapManagerOrNull.Update();
+            #region Update Heap memories
+            {
+                HeapManagerOrNull.Clear();
+                RequestInstruction(GdbInstructionSet.DISPLAY_HEAPINFO,
+                    GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO);
+                ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO, actionAddHeap);
+                HeapManagerOrNull.Update();
+
+                var memoryStringBuilder = new StringBuilder();
+                
+                foreach (var heap in mHeapManagerOrNull.Heaps)
+                {
+                    heap.TypeInfo = null;
+
+                    uint heapWordCount = heap.Size / 4 + (heap.Size % 4 > 0 ? 1u : 0);
+
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, heapWordCount, string.Format("0x{0:x8}", heap.Address)),
+                        GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
+                    {
+                        int index = line.IndexOf(':');
+                        Debug.Assert(index != 6);
+                        memoryStringBuilder.Append(line.Substring(index + 1));
+                    });
+                    heap.SetValue(memoryStringBuilder);
+
+                    memoryStringBuilder.Clear();
+                }
+            }
+            #endregion
 
             Queue<string> unregisteredPureTypeNames = new Queue<string>();
 
@@ -864,11 +889,7 @@ namespace CppMemoryVisualizer.ViewModels
 
                         var stackTypes = new Stack<StackKey>();
                         {
-                            uint totalLength = 1;
-                            foreach (uint len in local.StackMemory.TypeInfo.ArrayLengths)
-                            {
-                                totalLength *= len;
-                            }
+                            uint totalLength = local.StackMemory.TypeInfo.GetTotalLength();
                             uint sizePerSegment = local.StackMemory.TypeInfo.Size / totalLength;
 
                             if (local.StackMemory.TypeInfo.PointerLevel == 0 && local.StackMemory.TypeInfo.ArrayOrFunctionPointerLevels.Count == 0)
@@ -891,11 +912,7 @@ namespace CppMemoryVisualizer.ViewModels
                             {
                                 StackKey pop = stackTypes.Pop();
 
-                                uint totalLength = 1;
-                                foreach (uint len in pop.Type.ArrayLengths)
-                                {
-                                    totalLength *= len;
-                                }
+                                uint totalLength = pop.Type.GetTotalLength();
                                 uint sizePerSegment = pop.Type.Size / totalLength;
 
                                 if (pop.Type.PointerLevel == 0 && pop.Type.ArrayOrFunctionPointerLevels.Count == 0)
@@ -912,7 +929,7 @@ namespace CppMemoryVisualizer.ViewModels
                                         }
                                     }
                                 }
-                                else if (pop.Type.Size == 4)
+                                else if (pop.Type.PointerLevel > 0)
                                 {
                                     for (uint j = 0; j < totalLength; ++j)
                                     {
@@ -926,20 +943,76 @@ namespace CppMemoryVisualizer.ViewModels
                                         if (heapOrNull != null)
                                         {
                                             heapOrNull.TypeInfo = pop.Type.GetDereference();
-
-                                            memoryStringBuilder.Clear();
-                                            uint heapWordCount = heapOrNull.Size / 4 + (heapOrNull.Size % 4 > 0 ? 1u : 0);
-                                            RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, heapWordCount, string.Format("0x{0:x8}", address)),
-                                                GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
-                                            ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
-                                            {
-                                                int index = line.IndexOf(':');
-                                                Debug.Assert(index != 6);
-                                                memoryStringBuilder.Append(line.Substring(index + 1));
-                                            });
-                                            heapOrNull.SetValue(memoryStringBuilder);
                                         }
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            #endregion
+
+            #region Determine heap type from another's
+            {
+                var stackTypes = new Stack<StackKey>();
+                foreach (var heap in mHeapManagerOrNull.Heaps)
+                {
+                    if (heap.TypeInfo == null)
+                    {
+                        continue;
+
+                    }
+
+                    {
+                        uint sizePerSegment = heap.TypeInfo.Size;
+                        uint totalLength = heap.Size / sizePerSegment;
+
+                        for (uint i = 0; i < totalLength; ++i)
+                        {
+                            stackTypes.Push(new StackKey()
+                            {
+                                Type = heap.TypeInfo.GetElementOfArray(),
+                                StartOffset = i * sizePerSegment
+                            });
+                        }
+                    }
+
+                    while (stackTypes.Count > 0)
+                    {
+                        StackKey pop = stackTypes.Pop();
+
+                        uint totalLength = pop.Type.GetTotalLength();
+                        uint sizePerSegment = pop.Type.Size / totalLength;
+
+                        if (pop.Type.PointerLevel == 0 && pop.Type.ArrayOrFunctionPointerLevels.Count == 0)
+                        {
+                            for (uint i = 0; i < totalLength; ++i)
+                            {
+                                foreach (TypeInfo member in pop.Type.Members)
+                                {
+                                    stackTypes.Push(new StackKey
+                                    {
+                                        Type = member,
+                                        StartOffset = pop.StartOffset + i * totalLength
+                                    });
+                                }
+                            }
+                        }
+                        else if (pop.Type.PointerLevel > 0)
+                        {
+                            for (uint i = 0; i < totalLength; ++i)
+                            {
+                                uint offset = pop.StartOffset + pop.Type.Offset + i * 4;
+                                uint address = heap.ByteValues[offset] +
+                                    ((uint)heap.ByteValues[offset + 1] << 8) +
+                                    ((uint)heap.ByteValues[offset + 2] << 16) +
+                                    ((uint)heap.ByteValues[offset + 3] << 24);
+
+                                HeapMemoryInfo anotherHeapOrNull = HeapManagerOrNull.GetHeapOrNull(address);
+                                if (anotherHeapOrNull != null)
+                                {
+                                    anotherHeapOrNull.TypeInfo = pop.Type.GetDereference();
                                 }
                             }
                         }
