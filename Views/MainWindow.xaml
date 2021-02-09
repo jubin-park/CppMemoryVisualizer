@@ -10,8 +10,8 @@
     xmlns:cvt="clr-namespace:CppMemoryVisualizer.Converters"
     xmlns:enum="clr-namespace:CppMemoryVisualizer.Enums"
     mc:Ignorable="d"
-    Height="600"
-    Width="800"
+    Width="1280"
+    Height="720"
     WindowStartupLocation="CenterScreen"
     Closing="OnWindowClosing">
 
@@ -45,6 +45,8 @@
                 x:Key="HeapMemoryToSegmentsConverter" />
             <cvt:UIntToHexadecimalConverter
                 x:Key="UIntToHexadecimalConverter" />
+            <cvt:GdbConsoleVisiblityConverter
+                x:Key="GdbConsoleVisiblityConverter" />
 
             <!-- MemorySegmentViewModel -->
             <DataTemplate
@@ -53,27 +55,36 @@
                     BorderBrush="LightGray"
                     BorderThickness="1">
                     <Grid
-                        MinWidth="320"
-                        Margin="0, 0, 8, 0">
+                        MinWidth="200">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition
-                                Width="128" />
+                                Width="120" />
                             <ColumnDefinition />
-                            <ColumnDefinition
-                                Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock
+                        <Grid
                             Grid.Column="0"
-                            TextWrapping="Wrap">
-                            <Run
-                                Text="{Binding TypeName, Mode=OneWay}"
-                                Foreground="LightSlateGray"
-                                FontStyle="Italic" />
-                            <Run
-                                Text="{Binding MemberNameOrNull, Mode=OneWay}"
-                                FontWeight="Bold" />
-                        </TextBlock>
+                            VerticalAlignment="Top">
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <TextBlock
+                                Grid.Row="0"
+                                Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                                Foreground="LightSlateGray" />
+                            <TextBlock
+                                Grid.Row="1"
+                                TextWrapping="Wrap">
+                                <Run
+                                    Text="{Binding TypeName, Mode=OneWay}"
+                                    Foreground="OrangeRed"
+                                    FontStyle="Italic" />
+                                <Run
+                                    Text="{Binding MemberNameOrNull, Mode=OneWay}"
+                                    FontWeight="Bold" />
+                            </TextBlock>
+                        </Grid>
 
                         <Grid
                             Grid.Column="1">
@@ -82,7 +93,8 @@
                                 <RowDefinition />
                             </Grid.RowDefinitions>
                             <TextBlock
-                                Grid.Row="0">
+                                Grid.Row="0"
+                                Foreground="DarkBlue">
                                 <TextBlock.Text>
                                     <MultiBinding
                                         Converter="{StaticResource ArraySegmentsToValueConverter}">
@@ -124,11 +136,6 @@
                                 </ItemsControl.ItemsPanel>
                             </ItemsControl>
                         </Grid>
-
-                        <TextBlock
-                            Grid.Column="2"
-                            Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
-                            Foreground="LightSlateGray" />
                     </Grid>
                 </Border>
             </DataTemplate>
@@ -160,9 +167,8 @@
                                     Margin="0, 0, 0, 8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition
-                                            Width="128" />
-                                        <ColumnDefinition
-                                            Width="3*" />
+                                            Width="120" />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
 
                                     <Grid
@@ -172,7 +178,7 @@
                                             TextWrapping="Wrap">
                                             <Run
                                                 Text="{Binding StackMemory.TypeInfo.FullNameOrNull, Mode=OneWay}"
-                                                Foreground="LightSlateGray"
+                                                Foreground="OrangeRed"
                                                 FontStyle="Italic" />
                                             <Run
                                                 Text="{Binding Name, Mode=OneWay}"
@@ -201,7 +207,6 @@
                                     Orientation="Vertical" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
-
                     </ItemsControl>
                 </Grid>
             </DataTemplate>
@@ -209,59 +214,46 @@
             <!-- HeapMemory -->
             <DataTemplate
                 DataType="{x:Type m:HeapMemoryInfo}">
-                <Grid>
-                    <Thumb
-                        x:Name="xThumbHeap"
-                        DragDelta="xThumbHeap_DragDelta">
-                        <Thumb.Template>
-                            <ControlTemplate>
-                                <Grid
-                                    Cursor="Hand"
-                                    Background="LightGoldenrodYellow">
+                <Grid
+                    Margin="0, 0, 0, 8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
 
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition />
-                                        <RowDefinition />
-                                    </Grid.RowDefinitions>
+                    <TextBlock
+                        Grid.Row="0"
+                        TextWrapping="Wrap"
+                        Background="LightGoldenrodYellow">
+                        <Run
+                            Text="*("
+                            Foreground="Red"
+                            FontWeight="Bold" />
+                        <Run
+                            Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                            FontWeight="Bold" />
+                        <Run
+                            Text=")"
+                            Foreground="Red"
+                            FontWeight="Bold" />
+                        <Run
+                            Text="size:" />
+                        <Run
+                            Text="{Binding Size, Mode=OneWay}"
+                            FontWeight="Bold" />
+                    </TextBlock>
 
-                                    <TextBlock
-                                        Grid.Row="0"
-                                        TextWrapping="Wrap">
-                                        <Run
-                                            Text="*("
-                                            Foreground="Red"
-                                            FontWeight="Bold" />
-                                        <Run
-                                            Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
-                                            FontWeight="Bold" />
-                                        <Run
-                                            Text=")"
-                                            Foreground="Red"
-                                            FontWeight="Bold" />
-                                        <Run
-                                            Text="@ Heap ( size:" />
-                                        <Run
-                                            Text="{Binding Size, Mode=OneWay}"
-                                            FontWeight="Bold" />
-                                        <Run
-                                            Text=")" />
-                                    </TextBlock>
-
-                                    <ItemsControl
-                                        Grid.Row="1"
-                                        ItemsSource="{Binding ., Converter={StaticResource HeapMemoryToSegmentsConverter}}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel
-                                                    Orientation="Vertical" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                    </ItemsControl>
-
-                                </Grid>
-                            </ControlTemplate>
-                        </Thumb.Template>
-                    </Thumb>
+                    <ItemsControl
+                        Grid.Row="1"
+                        Margin="8, 0, 0, 0"
+                        ItemsSource="{Binding ., Converter={StaticResource HeapMemoryToSegmentsConverter}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel
+                                    Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
                 </Grid>
             </DataTemplate>
 
@@ -346,27 +338,29 @@
 
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition />
                 <RowDefinition
-                    Height="4*" />
-<!--
+                    Height="Auto" />
                 <RowDefinition
-                    Height="1*" />
-                <RowDefinition
-                    Height="24" />
--->
+                    Height="Auto" />
             </Grid.RowDefinitions>
 
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition
+                        Width="3*" />
+                    <ColumnDefinition
+                        Width="2" />
+                    <ColumnDefinition
                         Width="4*" />
                     <ColumnDefinition
-                        Width="Auto" />
+                        Width="2" />
                     <ColumnDefinition
-                        Width="5*" />
+                        Width="3*" />
                 </Grid.ColumnDefinitions>
 
                 <v:BindableAvalonEditor
+                    Grid.Column="0"
                     x:Name="xTextEditor"
                     SyntaxHighlighting="C#"
                     ShowLineNumbersCustom="True"
@@ -375,20 +369,36 @@
                     FontFamily="Consolas"
                     Text="{Binding SourceCode}"
                     LinePointer="{Binding LinePointer}" />
+
                 <GridSplitter
                     Grid.Column="1"
-                    Width="5"
                     Background="Gray"
                     ShowsPreview="true"
                     HorizontalAlignment="Stretch" />
 
-                <ScrollViewer
-                    VerticalScrollBarVisibility="Auto"
-                    HorizontalScrollBarVisibility="Auto"
-                    CanContentScroll="True"
+                <Grid
                     Grid.Column="2">
-                    <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition
+                            Height="Auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Border
+                        Grid.Row="0"
+                        Background="LightGray">
+                        <TextBlock
+                            Text="&lt;Call Stack&gt;"
+                            HorizontalAlignment="Center"
+                            FontWeight="Bold" />
+
+                    </Border>
+                    <ScrollViewer
+                        Grid.Row="1"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Auto"
+                        CanContentScroll="True">
                         <ItemsControl
+                            Grid.Column="0"
                             ItemsSource="{Binding CallStackViewModel.CallStack.StackFrames}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -397,33 +407,54 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
 
+                <GridSplitter
+                    Grid.Column="3"
+                    Background="Gray"
+                    ShowsPreview="true"
+                    HorizontalAlignment="Stretch" />
+
+                <Grid
+                    Grid.Column="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition
+                            Height="Auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Border
+                        Grid.Row="0"
+                        Background="LightGray">
+                        <TextBlock
+                            Text="&lt;Heap&gt;"
+                            HorizontalAlignment="Center"
+                            FontWeight="Bold" />
+                    </Border>
+                    <ScrollViewer
+                        Grid.Row="1"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Auto"
+                        CanContentScroll="True">
                         <ItemsControl
+                            Grid.Column="1"
                             ItemsSource="{Binding HeapManagerOrNull.Heaps}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <Canvas />
+                                    <StackPanel
+                                        Orientation="Vertical" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemContainerStyle>
-                                <Style>
-                                    <Setter
-                                        Property="Canvas.Left"
-                                        Value="{Binding X}" />
-                                    <Setter
-                                        Property="Canvas.Top"
-                                        Value="{Binding Y}" />
-                                </Style>
-                            </ItemsControl.ItemContainerStyle>
                         </ItemsControl>
-                    </Grid>
-                </ScrollViewer>
+                    </ScrollViewer>
+                </Grid>
             </Grid>
 
             <TextBox
-                Visibility="Hidden"
-                x:Name="xTextBoxLog"
                 Grid.Row="1"
+                Height="300"
+                x:Name="xTextBoxLog"
+                Visibility="{Binding ., Converter={StaticResource GdbConsoleVisiblityConverter}}"
                 TextWrapping="Wrap"
                 AcceptsReturn="True"
                 VerticalScrollBarVisibility="Visible"
@@ -432,8 +463,8 @@
                 TextChanged="xTextBoxLog_TextChanged" />
 
             <TextBox
-                Visibility="Hidden"
                 Grid.Row="2"
+                Visibility="{Binding ., Converter={StaticResource GdbConsoleVisiblityConverter}}"
                 x:Name="xTextBoxInput"
                 KeyDown="xTextBoxInput_KeyDown" />
         </Grid>

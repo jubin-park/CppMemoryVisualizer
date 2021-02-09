@@ -201,7 +201,6 @@ namespace CppMemoryVisualizer.ViewModels
             mProcessGdbOrNull.Start();
 
             CurrentInstruction = EDebugInstructionState.INITIALIZING;
-            LinePointer = 0;
             CallStackViewModel = new CallStackViewModel();
             PureTypeManager.Clear();
             HeapManagerOrNull = new HeapManager();
@@ -254,6 +253,7 @@ namespace CppMemoryVisualizer.ViewModels
         {
             if (mProcessGdbOrNull != null)
             {
+                LinePointer = 0;
                 CurrentInstruction = EDebugInstructionState.DEAD;
                 RequestInstruction(GdbInstructionSet.QUIT,
                     null, null);
@@ -298,8 +298,8 @@ namespace CppMemoryVisualizer.ViewModels
                         continue;
                     }
                 }
-#if DEBUG
-                //Log += line + Environment.NewLine;
+#if GDBLOG
+                Log += line + Environment.NewLine;
 #endif
             } while (!line.StartsWith(start));
 
@@ -317,8 +317,8 @@ namespace CppMemoryVisualizer.ViewModels
                         continue;
                     }
                 }
-#if DEBUG
-                //Log += line + Environment.NewLine;
+#if GDBLOG
+                Log += line + Environment.NewLine;
 #endif
                 if (line.StartsWith(end))
                 {

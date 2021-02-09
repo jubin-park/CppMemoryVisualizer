@@ -38,73 +38,9 @@ namespace CppMemoryVisualizer.Views
             {
                 mMainViewModel.RequestInstruction(xTextBoxInput.Text,
                     GdbInstructionSet.REQUEST_START_CONSOLE, GdbInstructionSet.REQUEST_END_CONSOLE);
-                readResultLine(GdbInstructionSet.REQUEST_START_CONSOLE, GdbInstructionSet.REQUEST_END_CONSOLE, null);
+                mMainViewModel.ReadResultLine(GdbInstructionSet.REQUEST_START_CONSOLE, GdbInstructionSet.REQUEST_END_CONSOLE, null);
 
                 xTextBoxInput.Text = string.Empty;
-            }
-        }
-
-        private void xThumbHeap_DragDelta(object sender, DragDeltaEventArgs e)
-        {
-            var thumb = (Thumb)sender;
-            var heap = (HeapMemoryInfo)thumb.DataContext;
-
-            heap.X += e.HorizontalChange;
-            heap.Y += e.VerticalChange;
-        }
-
-        private void readResultLine(string start, string end, Action<string> lambdaOrNull)
-        {
-            Debug.Assert(start != null);
-            Debug.Assert(end != null);
-
-            string line;
-
-            do
-            {
-                line = mMainViewModel.ProcessGdbOrNull.StandardOutput.ReadLine();
-                {
-                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
-                    if (lastIndex != -1)
-                    {
-                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
-                    }
-                    if (line.Length == 0)
-                    {
-                        continue;
-                    }
-                }
-#if DEBUG
-                mMainViewModel.Log += line + Environment.NewLine;
-#endif
-            } while (!line.StartsWith(start));
-
-            while (true)
-            {
-                line = mMainViewModel.ProcessGdbOrNull.StandardOutput.ReadLine();
-                {
-                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
-                    if (lastIndex != -1)
-                    {
-                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
-                    }
-                    if (line.Length == 0)
-                    {
-                        continue;
-                    }
-                }
-#if DEBUG
-                mMainViewModel.Log += line + Environment.NewLine;
-#endif
-                if (line.StartsWith(end))
-                {
-                    break;
-                }
-
-                if (lambdaOrNull != null)
-                {
-                    lambdaOrNull.Invoke(line);
-                }
             }
         }
     }
