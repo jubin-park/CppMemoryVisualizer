@@ -321,17 +321,17 @@
                 <MenuItem
                     x:Name="MenuItem_Item1"
                     IsCheckable="True"
-                    Header="C++11"
+                    Header="gcc -lstdc++11"
                     IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP11}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
                 <MenuItem
                     x:Name="MenuItem_Item2"
                     IsCheckable="True"
-                    Header="C++14"
+                    Header="gcc -lstdc++14"
                     IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP14}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
                 <MenuItem
                     x:Name="MenuItem_Item3"
                     IsCheckable="True"
-                    Header="C++17"
+                    Header="gcc -lstdc++17"
                     IsChecked="{Binding StandardCppVersion, ConverterParameter={x:Static enum:EStandardCppVersion.CPP17}, Converter={StaticResource StandardCppVersionEnumToBooleanConverter}, Mode=TwoWay}" />
             </MenuItem>
         </Menu>
