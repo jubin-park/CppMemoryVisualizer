@@ -6,7 +6,7 @@ using System.Windows.Data;
 
 namespace CppMemoryVisualizer.Converters
 {
-    class ArraySegmentsToValueConverter : IMultiValueConverter
+    class ArraySegmentToValueConverter : IMultiValueConverter
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {

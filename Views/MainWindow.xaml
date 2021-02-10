@@ -37,8 +37,8 @@
                 x:Key="WindowTitleConverter" />
             <cvt:StandardCppVersionEnumToBooleanConverter
                 x:Key="StandardCppVersionEnumToBooleanConverter" />
-            <cvt:ArraySegmentsToValueConverter
-                x:Key="ArraySegmentsToValueConverter" />
+            <cvt:ArraySegmentToValueConverter
+                x:Key="ArraySegmentToValueConverter" />
             <cvt:UIntToHexadecimalConverter
                 x:Key="UIntToHexadecimalConverter" />
             <cvt:GdbConsoleVisiblityConverter
@@ -107,6 +107,7 @@
                                 ItemsSource="{Binding Children}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
+                                                    Converter="{StaticResource ArraySegmentToValueConverter}">
                                         <ItemsControl
                                             ItemsSource="{Binding .}">
                                             <ItemsControl.ItemTemplate>
