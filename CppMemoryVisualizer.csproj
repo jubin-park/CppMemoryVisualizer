@@ -74,7 +74,6 @@
     <Compile Include="Models\LocalVariable.cs" />
     <Compile Include="Models\PureTypeManager.cs" />
     <Compile Include="Models\StackFrame.cs" />
-    <Compile Include="ViewModels\CallStackViewModel.cs" />
     <Compile Include="ViewModels\MemorySegmentViewModel.cs" />
     <Compile Include="Converters\UIntToHexadecimalConverter.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">

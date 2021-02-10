@@ -140,17 +140,17 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private CallStackViewModel mCallStackViewModel;
-        public CallStackViewModel CallStackViewModel
+        private CallStack mCallStack;
+        public CallStack CallStack
         {
             get
             {
-                return mCallStackViewModel;
+                return mCallStack;
             }
             set
             {
-                mCallStackViewModel = value;
-                onPropertyChanged("CallStackViewModel");
+                mCallStack = value;
+                onPropertyChanged("CallStack");
             }
         }
 
@@ -201,7 +201,7 @@ namespace CppMemoryVisualizer.ViewModels
             mProcessGdbOrNull.Start();
 
             CurrentInstruction = EDebugInstructionState.INITIALIZING;
-            CallStackViewModel = new CallStackViewModel();
+            CallStack = new CallStack();
             PureTypeManager.Clear();
             HeapManagerOrNull = new HeapManager();
 
@@ -336,7 +336,7 @@ namespace CppMemoryVisualizer.ViewModels
         {
             #region Get StackTrace
             {
-                mCallStackViewModel.CallStack.Clear();
+                CallStack.Clear();
 
                 uint frameCount = 0;
                 RequestInstruction(GdbInstructionSet.DISPLAY_STACK_BACKTRACE,
@@ -424,12 +424,12 @@ namespace CppMemoryVisualizer.ViewModels
                     Debug.Assert(functionName != null);
 
                     Debug.WriteLine("Stack addr: {0}, Function addr: {1}, name: {2}", stackAddress, functionAddress, functionName);
-                    mCallStackViewModel.CallStack.Push(stackAddress, functionAddress, functionName);
+                    CallStack.Push(stackAddress, functionAddress, functionName);
                 }
             }
             #endregion
 
-            if (mCallStackViewModel.CallStack.IsEmpty())
+            if (CallStack.IsEmpty())
             {
                 LinePointer = 0;
                 ShutdownGdb();
@@ -472,9 +472,9 @@ namespace CppMemoryVisualizer.ViewModels
 
             #region Initialize StackFrames
             {
-                for (int i = 0; i < mCallStackViewModel.CallStack.StackFrameKeys.Count; ++i)
+                for (int i = 0; i < CallStack.StackFrameKeys.Count; ++i)
                 {
-                    Models.StackFrame frame = mCallStackViewModel.CallStack.GetStackFrame(mCallStackViewModel.CallStack.StackFrameKeys[i]);
+                    Models.StackFrame frame = CallStack.GetStackFrame(CallStack.StackFrameKeys[i]);
                     if (frame.IsInitialized)
                     {
                         continue;
@@ -862,12 +862,12 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 StringBuilder memoryStringBuilder = new StringBuilder(8192);
 
-                for (int i = 0; i < mCallStackViewModel.CallStack.StackFrames.Count; ++i)
+                for (int i = 0; i < CallStack.StackFrames.Count; ++i)
                 {
                     RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, i),
                         null, null);
 
-                    Models.StackFrame frame = mCallStackViewModel.CallStack.StackFrames[i];
+                    Models.StackFrame frame = CallStack.StackFrames[i];
 
                     foreach (var local in frame.LocalVariables)
                     {

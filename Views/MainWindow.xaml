@@ -395,7 +395,7 @@
                         CanContentScroll="True">
                         <ItemsControl
                             Grid.Column="0"
-                            ItemsSource="{Binding CallStackViewModel.CallStack.StackFrames}">
+                            ItemsSource="{Binding CallStack.StackFrames}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel
