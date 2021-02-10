@@ -62,8 +62,6 @@
     </ApplicationDefinition>
     <Compile Include="Converters\ArraySegmentsToValueConverter.cs" />
     <Compile Include="Converters\GdbConsoleVisiblityConverter.cs" />
-    <Compile Include="Converters\HeapMemoryToSegmentsConverter.cs" />
-    <Compile Include="Converters\StackMemoryToSegmentsConverter.cs" />
     <Compile Include="Enums\EStandardCppVersion.cs" />
     <Compile Include="Enums\EMemoryTypeFlags.cs" />
     <Compile Include="Models\BreakPointList.cs" />

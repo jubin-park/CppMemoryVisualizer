@@ -948,6 +948,8 @@ namespace CppMemoryVisualizer.ViewModels
                                 }
                             }
                         }
+
+                        local.UpdateMemorySegments();
                     }
                 }
             }
@@ -1017,6 +1019,8 @@ namespace CppMemoryVisualizer.ViewModels
                             }
                         }
                     }
+
+                    heap.UpdateMemorySegements();
                 }
             }
             #endregion

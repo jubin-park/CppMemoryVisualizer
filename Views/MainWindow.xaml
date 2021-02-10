@@ -39,10 +39,6 @@
                 x:Key="StandardCppVersionEnumToBooleanConverter" />
             <cvt:ArraySegmentsToValueConverter
                 x:Key="ArraySegmentsToValueConverter" />
-            <cvt:StackMemoryToSegmentsConverter
-                x:Key="StackMemoryToSegmentsConverter" />
-            <cvt:HeapMemoryToSegmentsConverter
-                x:Key="HeapMemoryToSegmentsConverter" />
             <cvt:UIntToHexadecimalConverter
                 x:Key="UIntToHexadecimalConverter" />
             <cvt:GdbConsoleVisiblityConverter
@@ -188,7 +184,7 @@
 
                                     <ItemsControl
                                         Grid.Column="1"
-                                        ItemsSource="{Binding StackMemory, Converter={StaticResource StackMemoryToSegmentsConverter}}">
+                                        ItemsSource="{Binding MemorySegments}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <StackPanel
@@ -246,7 +242,7 @@
                     <ItemsControl
                         Grid.Row="1"
                         Margin="8, 0, 0, 0"
-                        ItemsSource="{Binding ., Converter={StaticResource HeapMemoryToSegmentsConverter}}">
+                        ItemsSource="{Binding MemorySegments}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel
