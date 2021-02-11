@@ -16,8 +16,6 @@ namespace CppMemoryVisualizer.Commands
             MainViewModel = mainViewModel;
         }
 
-        public event EventHandler CanExecuteChanged;
-
         public bool CanExecute(object parameter)
         {
             return true;
@@ -56,7 +54,7 @@ namespace CppMemoryVisualizer.Commands
                 }
                 if (pop.Memory.Count == 4 && pop.TypeName.Contains('*'))
                 {
-                    uint pointer = pop.Memory.Array[pop.Memory.Offset] |
+                    uint pointer = (uint)pop.Memory.Array[pop.Memory.Offset] |
                         (uint)pop.Memory.Array[pop.Memory.Offset + 1] << 8 |
                         (uint)pop.Memory.Array[pop.Memory.Offset + 2] << 16 |
                         (uint)pop.Memory.Array[pop.Memory.Offset + 3] << 24;
@@ -100,10 +98,10 @@ namespace CppMemoryVisualizer.Commands
                 }
                 if (pop.Memory.Count == 4 && pop.TypeName.Contains('*'))
                 {
-                    uint pointer = (uint)pop.Memory.Array[pop.Memory.Offset] << 24 |
-                        (uint)pop.Memory.Array[pop.Memory.Offset + 1] << 16 |
-                        (uint)pop.Memory.Array[pop.Memory.Offset + 2] << 8 |
-                        pop.Memory.Array[pop.Memory.Offset + 3];
+                    uint pointer = (uint)pop.Memory.Array[pop.Memory.Offset] |
+                        (uint)pop.Memory.Array[pop.Memory.Offset + 1] << 8 |
+                        (uint)pop.Memory.Array[pop.Memory.Offset + 2] << 16 |
+                        (uint)pop.Memory.Array[pop.Memory.Offset + 3] << 24;
                     if (pointer == targetAddress)
                     {
                         pop.CapturedValue = MainViewModel.HeapManagerOrNull.GetHeapOrNull(pointer) != null ? Enums.EMemoryArea.HEAP : Enums.EMemoryArea.CALL_STACK;
@@ -118,6 +116,18 @@ namespace CppMemoryVisualizer.Commands
                         stack.Push(member);
                     }
                 }
+            }
+        }
+
+        public event EventHandler CanExecuteChanged
+        {
+            add
+            {
+                CommandManager.RequerySuggested += value;
+            }
+            remove
+            {
+                CommandManager.RequerySuggested -= value;
             }
         }
     }

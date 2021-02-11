@@ -19,7 +19,7 @@ namespace CppMemoryVisualizer.Commands
 
             if (vm.TypeName.Contains('*') && vm.Memory.Count == 4)
             {
-                uint targetAddress = vm.Memory.Array[vm.Memory.Offset] |
+                uint targetAddress = (uint)vm.Memory.Array[vm.Memory.Offset] |
                     (uint)vm.Memory.Array[vm.Memory.Offset + 1] << 8 |
                     (uint)vm.Memory.Array[vm.Memory.Offset + 2] << 16 |
                     (uint)vm.Memory.Array[vm.Memory.Offset + 3] << 24;
