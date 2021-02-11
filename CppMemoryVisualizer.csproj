@@ -60,8 +60,15 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Converters\ArraySegmentsToValueConverter.cs" />
+    <Compile Include="Commands\MemorySegmentAddressClickCommand.cs" />
+    <Compile Include="Commands\MemorySegmentClickCommand.cs" />
+    <Compile Include="Commands\MemorySegmentPointerValueClickCommand.cs" />
+    <Compile Include="Converters\ArraySegmentToValueConverter.cs" />
     <Compile Include="Converters\GdbConsoleVisiblityConverter.cs" />
+    <Compile Include="Converters\MemoryAreaToValueForegroundBrushConverter.cs" />
+    <Compile Include="Converters\MemoryAreaToBackgroundBrushConverter.cs" />
+    <Compile Include="Converters\MemoryAreaToAddressForegroundBrushConverter.cs" />
+    <Compile Include="Enums\EMemoryArea.cs" />
     <Compile Include="Enums\EStandardCppVersion.cs" />
     <Compile Include="Enums\EMemoryTypeFlags.cs" />
     <Compile Include="Models\BreakPointList.cs" />

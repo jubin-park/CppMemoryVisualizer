@@ -1,6 +1,7 @@
 ﻿using CppMemoryVisualizer.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace CppMemoryVisualizer.Models
@@ -79,7 +80,7 @@ namespace CppMemoryVisualizer.Models
                         Memory = new ArraySegment<byte>(ByteValues, (int)(i * sizePerSegment), (int)sizePerSegment),
                         Address = Address + i * sizePerSegment,
                         AncestorOrNull = null,
-                        Children = new List<List<MemorySegmentViewModel>>(pureType.Members.Count)
+                        Children = new ObservableCollection<List<MemorySegmentViewModel>>()
                     };
 
                     segments.Add(vm);
@@ -117,7 +118,7 @@ namespace CppMemoryVisualizer.Models
                             Memory = new ArraySegment<byte>(ByteValues, popKey.ViewModel.Memory.Offset + (int)((memberType.Offset - popKey.Type.Offset) + i * sizePerSegment), (int)sizePerSegment),
                             Address = popKey.ViewModel.Address + (memberType.Offset - popKey.Type.Offset) + i * sizePerSegment,
                             AncestorOrNull = popKey.ViewModel,
-                            Children = new List<List<MemorySegmentViewModel>>(memberType.Members.Count)
+                            Children = new ObservableCollection<List<MemorySegmentViewModel>>()
                         };
 
                         stackKeys.Push(new StackKey()

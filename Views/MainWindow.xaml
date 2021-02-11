@@ -43,77 +43,113 @@
                 x:Key="UIntToHexadecimalConverter" />
             <cvt:GdbConsoleVisiblityConverter
                 x:Key="GdbConsoleVisiblityConverter" />
+            <cvt:MemoryAreaToBackgroundBrushConverter
+                x:Key="MemoryAreaToBackgroundBrushConverter" />
+            <cvt:MemoryAreaToAddressForegroundBrushConverter
+                x:Key="MemoryAreaToAddressForegroundBrushConverter" />
+            <cvt:MemoryAreaToValueForegroundBrushConverter
+                x:Key="MemoryAreaToValueForegroundBrushConverter" />
 
             <!-- MemorySegmentViewModel -->
             <DataTemplate
                 DataType="{x:Type vm:MemorySegmentViewModel}">
-                <Border
-                    BorderBrush="LightGray"
-                    BorderThickness="1">
-                    <Grid
-                        MinWidth="200">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition
-                                Width="120" />
-                            <ColumnDefinition />
-                        </Grid.ColumnDefinitions>
+                <Thumb>
+                    <Thumb.Template>
+                        <ControlTemplate>
+                            <Border
+                                BorderBrush="LightGray"
+                                BorderThickness="1">
+                                <Grid
+                                    MinWidth="200">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition
+                                            Width="120" />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
 
-                        <Grid
-                            Grid.Column="0"
-                            VerticalAlignment="Top">
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <TextBlock
-                                Grid.Row="0"
-                                Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
-                                Foreground="LightSlateGray" />
-                            <TextBlock
-                                Grid.Row="1"
-                                TextWrapping="Wrap">
-                                <Run
-                                    Text="{Binding TypeName, Mode=OneWay}"
-                                    Foreground="OrangeRed"
-                                    FontStyle="Italic" />
-                                <Run
-                                    Text="{Binding MemberNameOrNull, Mode=OneWay}"
-                                    FontWeight="Bold" />
-                            </TextBlock>
-                        </Grid>
+                                    <Grid
+                                        Grid.Column="0"
+                                        VerticalAlignment="Top">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Width="Auto"
+                                            Text="{Binding Address, Converter={StaticResource UIntToHexadecimalConverter}}"
+                                            Foreground="{Binding CapturedAddress, Converter={StaticResource MemoryAreaToAddressForegroundBrushConverter}}"
+                                            Background="{Binding CapturedAddress, Converter={StaticResource MemoryAreaToBackgroundBrushConverter}}"
+                                            Cursor="Hand">
+                                            <TextBlock.InputBindings>
+                                                <MouseBinding
+                                                    MouseAction="LeftClick"
+                                                    Command="{Binding MemorySegmentAddressClickCommand}"
+                                                    CommandParameter="{Binding Address}" />
+                                            </TextBlock.InputBindings>
+                                        </TextBlock>
+                                        <TextBlock
+                                            Grid.Row="1"
+                                            TextWrapping="Wrap">
+                                            <Run
+                                                Text="{Binding TypeName, Mode=OneWay}"
+                                                Foreground="OrangeRed"
+                                                FontStyle="Italic" />
+                                            <Run
+                                                Text="{Binding MemberNameOrNull, Mode=OneWay}"
+                                                FontWeight="Bold" />
+                                        </TextBlock>
+                                    </Grid>
 
-                        <Grid
-                            Grid.Column="1">
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <TextBlock
-                                Grid.Row="0"
-                                Foreground="DarkBlue">
-                                <TextBlock.Text>
-                                    <MultiBinding
-                                        Converter="{StaticResource ArraySegmentsToValueConverter}">
-                                        <Binding
-                                            Path="TypeName" />
-                                        <Binding
-                                            Path="Memory" />
-                                    </MultiBinding>
-                                </TextBlock.Text>
-                            </TextBlock>
-
-                            <ItemsControl
-                                Grid.Row="1"
-                                ItemsSource="{Binding Children}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
+                                    <Grid
+                                        Grid.Column="1">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition />
+                                            <RowDefinition />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock
+                                            Grid.Row="0"
+                                            Width="Auto"
+                                            Foreground="{Binding CapturedValue, Converter={StaticResource MemoryAreaToValueForegroundBrushConverter}}"
+                                            Background="{Binding CapturedValue, Converter={StaticResource MemoryAreaToBackgroundBrushConverter}}"
+                                            Cursor="Hand">
+                                            <TextBlock.Text>
+                                                <MultiBinding
                                                     Converter="{StaticResource ArraySegmentToValueConverter}">
+                                                    <Binding
+                                                        Path="TypeName" />
+                                                    <Binding
+                                                        Path="Memory" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                            <TextBlock.InputBindings>
+                                                <MouseBinding
+                                                    MouseAction="LeftClick"
+                                                    Command="{Binding MemorySegmentPointerValueClickCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            </TextBlock.InputBindings>
+                                        </TextBlock>
+
                                         <ItemsControl
-                                            ItemsSource="{Binding .}">
+                                            Grid.Row="1"
+                                            ItemsSource="{Binding Children}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <ContentControl
-                                                        Content="{Binding .}" />
+                                                    <ItemsControl
+                                                        ItemsSource="{Binding .}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <ContentControl
+                                                                    Content="{Binding .}" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel
+                                                                    Orientation="Vertical" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                    </ItemsControl>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                             <ItemsControl.ItemsPanel>
@@ -123,18 +159,12 @@
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
                                         </ItemsControl>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel
-                                            Orientation="Vertical" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </Grid>
-                    </Grid>
-                </Border>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </Thumb.Template>
+                </Thumb>
             </DataTemplate>
 
             <!-- StackFrame -->

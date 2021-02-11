@@ -39,16 +39,19 @@ namespace CppMemoryVisualizer.Converters
                 switch (type.PureName)
                 {
                     case "char":
+                        // intentional fallthrough
                     case "int8_t":
                         str = string.Format("'{0}' ({1})", (char)bytes[0], (sbyte)bytes[0]);
                         break;
 
                     case "unsigned char":
+                    // intentional fallthrough
                     case "uint8_t":
                         str = string.Format("'{0}' ({1})", (char)bytes[0], bytes[0]);
                         break;
 
                     case "short":
+                    // intentional fallthrough
                     case "int16_t":
                         {
                             short val = BitConverter.ToInt16(bytes, 0);
@@ -57,6 +60,7 @@ namespace CppMemoryVisualizer.Converters
                         break;
 
                     case "unsigned short":
+                    // intentional fallthrough
                     case "uint16_t":
                         {
                             ushort val = BitConverter.ToUInt16(bytes, 0);
@@ -65,6 +69,7 @@ namespace CppMemoryVisualizer.Converters
                         break;
 
                     case "int":
+                    // intentional fallthrough
                     case "int32_t":
                         {
                             int val = BitConverter.ToInt32(bytes, 0);
@@ -73,7 +78,9 @@ namespace CppMemoryVisualizer.Converters
                         break;
 
                     case "unsigned int":
+                    // intentional fallthrough
                     case "uint32_t":
+                    // intentional fallthrough
                     case "size_t":
                         {
                             uint val = BitConverter.ToUInt32(bytes, 0);

@@ -23,6 +23,8 @@ namespace CppMemoryVisualizer.ViewModels
         public ICommand StepOverCommand { get; }
         public ICommand StepInCommand { get; }
         public ICommand AddOrRemoveBreakPointCommand { get; }
+        public ICommand MemorySegmentAddressClickCommand { get; }
+        public ICommand MemorySegmentPointerValueClickCommand { get; }
 
         private Process mProcessGdbOrNull;
         public Process ProcessGdbOrNull
@@ -176,6 +178,10 @@ namespace CppMemoryVisualizer.ViewModels
             StepOverCommand = new StepOverCommand(this);
             StepInCommand = new StepInCommand(this);
             AddOrRemoveBreakPointCommand = new AddOrRemoveBreakPointCommand(this);
+            MemorySegmentAddressClickCommand = new MemorySegmentAddressClickCommand(this);
+            MemorySegmentViewModel.AddressClickCommand = (MemorySegmentAddressClickCommand)MemorySegmentAddressClickCommand;
+            MemorySegmentPointerValueClickCommand = new MemorySegmentPointerValueClickCommand(this);
+            MemorySegmentViewModel.PointerValueClickCommand = (MemorySegmentPointerValueClickCommand)MemorySegmentPointerValueClickCommand;
         }
 
         public void ExecuteGdb()
