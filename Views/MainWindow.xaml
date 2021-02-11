@@ -413,11 +413,31 @@
                     <Border
                         Grid.Row="0"
                         Background="LightGray">
-                        <TextBlock
-                            Text="&lt;Call Stack&gt;"
-                            HorizontalAlignment="Center"
-                            FontWeight="Bold" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
 
+                            <TextBlock
+                                Grid.Column="0"
+                                Text="&lt;Call Stack&gt;"
+                                FontWeight="Bold" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Right">
+                                <Run
+                                    Text="{Binding CapturedStackMemoryAddressCount}"
+                                    FontWeight="Bold"/>
+                                <Run
+                                    Text="addresses," />
+                                <Run
+                                    Text="{Binding CapturedStackMemoryPointerValueCount}"
+                                    FontWeight="Bold"/>
+                                <Run
+                                    Text="values are captured" />
+                            </TextBlock>
+                        </Grid>
                     </Border>
                     <ScrollViewer
                         Grid.Row="1"
@@ -453,10 +473,31 @@
                     <Border
                         Grid.Row="0"
                         Background="LightGray">
-                        <TextBlock
-                            Text="&lt;Heap&gt;"
-                            HorizontalAlignment="Center"
-                            FontWeight="Bold" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock
+                                Grid.Column="0"
+                                Text="&lt;Heap&gt;"
+                                FontWeight="Bold" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Right">
+                                <Run
+                                    Text="{Binding CapturedHeapMemoryAddressCount}"
+                                    FontWeight="Bold" />
+                                <Run
+                                    Text="addresses," />
+                                <Run
+                                    Text="{Binding CapturedHeapMemoryPointerValueCount}"
+                                    FontWeight="Bold" />
+                                <Run
+                                    Text="values are captured" />
+                            </TextBlock>
+                        </Grid>
                     </Border>
                     <ScrollViewer
                         Grid.Row="1"

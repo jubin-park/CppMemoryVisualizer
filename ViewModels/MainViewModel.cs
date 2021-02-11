@@ -170,6 +170,59 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
+        private uint[] mCapturedCounts = new uint[4];
+        public uint CapturedStackMemoryAddressCount
+        {
+            get
+            {
+                return mCapturedCounts[0];
+            }
+            set
+            {
+                mCapturedCounts[0] = value;
+                onPropertyChanged("CapturedStackMemoryAddressCount");
+            }
+        }
+
+        public uint CapturedStackMemoryPointerValueCount
+        {
+            get
+            {
+                return mCapturedCounts[1];
+            }
+            set
+            {
+                mCapturedCounts[1] = value;
+                onPropertyChanged("CapturedStackMemoryPointerValueCount");
+            }
+        }
+
+        public uint CapturedHeapMemoryAddressCount
+        {
+            get
+            {
+                return mCapturedCounts[2];
+            }
+            set
+            {
+                mCapturedCounts[2] = value;
+                onPropertyChanged("CapturedHeapMemoryAddressCount");
+            }
+        }
+
+        public uint CapturedHeapMemoryPointerValueCount
+        {
+            get
+            {
+                return mCapturedCounts[3];
+            }
+            set
+            {
+                mCapturedCounts[3] = value;
+                onPropertyChanged("CapturedHeapMemoryPointerValueCount");
+            }
+        }
+
         public MainViewModel()
         {
             LoadSourceFileCommand = new LoadSourceFileCommand(this);
@@ -1030,6 +1083,16 @@ namespace CppMemoryVisualizer.ViewModels
                 }
             }
             #endregion
+
+            ClearCapturedCounts();
+        }
+
+        public void ClearCapturedCounts()
+        {
+            CapturedHeapMemoryAddressCount = 0;
+            CapturedHeapMemoryPointerValueCount = 0;
+            CapturedStackMemoryAddressCount = 0;
+            CapturedStackMemoryPointerValueCount = 0;
         }
 
         public void ActionLinePointer(string line)

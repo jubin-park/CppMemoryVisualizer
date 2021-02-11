@@ -28,6 +28,8 @@ namespace CppMemoryVisualizer.Commands
             Debug.Assert(parameter is uint);
             uint targetAddress = (uint)parameter;
 
+            MainViewModel.ClearCapturedCounts();
+
             var stack = new Stack<MemorySegmentViewModel>();
 
             // CallStack
@@ -50,6 +52,7 @@ namespace CppMemoryVisualizer.Commands
                 if (pop.Address == targetAddress)
                 {
                     pop.CapturedAddress = Enums.EMemoryArea.CALL_STACK;
+                    ++MainViewModel.CapturedStackMemoryAddressCount;
                 }
                 if (pop.Memory.Count == 4 && pop.TypeName.Contains('*'))
                 {
@@ -60,6 +63,7 @@ namespace CppMemoryVisualizer.Commands
                     if (pointer == targetAddress)
                     {
                         pop.CapturedValue = MainViewModel.HeapManagerOrNull.GetHeapOrNull(pointer) != null ? Enums.EMemoryArea.HEAP : Enums.EMemoryArea.CALL_STACK;
+                        ++MainViewModel.CapturedStackMemoryPointerValueCount;
                     }
                 }
 
@@ -92,6 +96,7 @@ namespace CppMemoryVisualizer.Commands
                 if (pop.Address == targetAddress)
                 {
                     pop.CapturedAddress = Enums.EMemoryArea.HEAP;
+                    ++MainViewModel.CapturedHeapMemoryAddressCount;
                 }
                 if (pop.Memory.Count == 4 && pop.TypeName.Contains('*'))
                 {
@@ -102,6 +107,7 @@ namespace CppMemoryVisualizer.Commands
                     if (pointer == targetAddress)
                     {
                         pop.CapturedValue = MainViewModel.HeapManagerOrNull.GetHeapOrNull(pointer) != null ? Enums.EMemoryArea.HEAP : Enums.EMemoryArea.CALL_STACK;
+                        ++MainViewModel.CapturedHeapMemoryPointerValueCount;
                     }
                 }
 
