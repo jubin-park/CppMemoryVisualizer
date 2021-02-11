@@ -87,6 +87,10 @@
                                                     Command="{Binding MemorySegmentAddressClickCommand}"
                                                     CommandParameter="{Binding Address}" />
                                             </TextBlock.InputBindings>
+                                            <TextBlock.ToolTip>
+                                                <TextBlock
+                                                    Text="Address" />
+                                            </TextBlock.ToolTip>
                                         </TextBlock>
                                         <TextBlock
                                             Grid.Row="1"
@@ -128,6 +132,10 @@
                                                     Command="{Binding MemorySegmentPointerValueClickCommand}"
                                                     CommandParameter="{Binding .}" />
                                             </TextBlock.InputBindings>
+                                            <TextBlock.ToolTip>
+                                                <TextBlock
+                                                    Text="Value" />
+                                            </TextBlock.ToolTip>
                                         </TextBlock>
 
                                         <ItemsControl
@@ -428,12 +436,12 @@
                                 HorizontalAlignment="Right">
                                 <Run
                                     Text="{Binding CapturedStackMemoryAddressCount}"
-                                    FontWeight="Bold"/>
+                                    FontWeight="Bold" />
                                 <Run
                                     Text="addresses," />
                                 <Run
                                     Text="{Binding CapturedStackMemoryPointerValueCount}"
-                                    FontWeight="Bold"/>
+                                    FontWeight="Bold" />
                                 <Run
                                     Text="values are captured" />
                             </TextBlock>
@@ -478,7 +486,7 @@
                                 <ColumnDefinition />
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
-                            
+
                             <TextBlock
                                 Grid.Column="0"
                                 Text="&lt;Heap&gt;"
