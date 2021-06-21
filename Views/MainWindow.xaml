@@ -13,7 +13,7 @@
     Width="1280"
     Height="720"
     WindowStartupLocation="CenterScreen"
-    Closing="OnWindowClosing">
+    Closing="xWindow_Closing">
 
     <Window.DataContext>
         <vm:MainViewModel />
@@ -451,7 +451,8 @@
                         Grid.Row="1"
                         VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Auto"
-                        CanContentScroll="True">
+                        CanContentScroll="True"
+                        PreviewMouseWheel="xCallStackScrollViewer_PreviewMouseWheel">
                         <ItemsControl
                             Grid.Column="0"
                             ItemsSource="{Binding CallStackOrNull.StackFrames}">
@@ -461,6 +462,12 @@
                                         Orientation="Vertical" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
+                            <ItemsControl.LayoutTransform>
+                                <ScaleTransform
+                                    ScaleX="{Binding StackMemoryViewerZoom}"
+                                    ScaleY="{Binding StackMemoryViewerZoom}"
+                                    />
+                            </ItemsControl.LayoutTransform>
                         </ItemsControl>
                     </ScrollViewer>
                 </Grid>
@@ -511,7 +518,8 @@
                         Grid.Row="1"
                         VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Auto"
-                        CanContentScroll="True">
+                        CanContentScroll="True"
+                        PreviewMouseWheel="xHeapScrollViewer_PreviewMouseWheel">
                         <ItemsControl
                             Grid.Column="1"
                             ItemsSource="{Binding HeapManagerOrNull.Heaps}">
@@ -521,6 +529,11 @@
                                         Orientation="Vertical" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
+                            <ItemsControl.LayoutTransform>
+                                <ScaleTransform
+                                    ScaleX="{Binding HeapMemoryViewerZoom}"
+                                    ScaleY="{Binding HeapMemoryViewerZoom}" />
+                            </ItemsControl.LayoutTransform>
                         </ItemsControl>
                     </ScrollViewer>
                 </Grid>

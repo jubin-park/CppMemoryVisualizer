@@ -224,6 +224,34 @@ namespace CppMemoryVisualizer.ViewModels
                 onPropertyChanged("CapturedHeapMemoryPointerValueCount");
             }
         }
+
+        private double mStackMemoryViewerZoom = 1.0;
+        public double StackMemoryViewerZoom
+        {
+            get
+            {
+                return mStackMemoryViewerZoom;
+            }
+            set
+            {
+                mStackMemoryViewerZoom = value;
+                onPropertyChanged("StackMemoryViewerZoom");
+            }
+        }
+
+        private double mHeapMemoryViewerZoom = 1.0;
+        public double HeapMemoryViewerZoom
+        {
+            get
+            {
+                return mHeapMemoryViewerZoom;
+            }
+            set
+            {
+                mHeapMemoryViewerZoom = value;
+                onPropertyChanged("HeapMemoryViewerZoom");
+            }
+        }
         #endregion
 
         public MainViewModel()
