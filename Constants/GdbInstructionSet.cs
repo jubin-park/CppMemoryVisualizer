@@ -38,19 +38,18 @@
         public static readonly string SET_PAGINATION_OFF = "set pagination off";
         public static readonly string DEFINE_COMMANDS =
 $@"define {CREATE_HEAPINFO}
-set $heapinfo = (int*)malloc(sizeof(int)*3)
-printf ""$heapinfo is created: 0x%08x\n"", $heapinfo
+    set $heapinfo = (int*)malloc(sizeof(int)*3)
+    printf ""$heapinfo is created: 0x%08x\n"", $heapinfo
 end
 define {DISPLAY_HEAPINFO}
-set *$heapinfo = 0
-while(1)
-set $ret=(int)'msvcrt!_heapwalk'($heapinfo)
-if($ret!=-2)
-loop_break
-end
-printf ""%08x%08x%d\n"", (int*)$heapinfo[0], $heapinfo[1], $heapinfo[2]
-end
-end
+    set *$heapinfo = 0
+    while(1)
+        set $ret=(int)'msvcrt!_heapwalk'($heapinfo)
+        if($ret!=-2)
+            loop_break
+        end
+        printf ""%08x%08x%d\n"", (int*)$heapinfo[0], $heapinfo[1], $heapinfo[2]
+    end
 end"; // _pentry, _size, _useflag
 
         public static readonly string OUTPUT_HEADER = "(gdb) ";

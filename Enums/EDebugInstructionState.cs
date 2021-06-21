@@ -5,6 +5,7 @@
         STANDBY,
         INITIALIZING,
         DEAD,
+        ERROR,
 
         START_DEBUGGING,
 

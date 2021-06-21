@@ -31,7 +31,7 @@ namespace CppMemoryVisualizer.Commands
             var stack = new Stack<MemorySegmentViewModel>();
 
             // CallStack
-            foreach (var frame in MainViewModel.CallStack.StackFrames)
+            foreach (var frame in MainViewModel.CallStackOrNull.StackFrames)
             {
                 foreach (var local in frame.LocalVariables)
                 {

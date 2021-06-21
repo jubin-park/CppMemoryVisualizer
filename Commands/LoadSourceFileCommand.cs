@@ -55,7 +55,7 @@ namespace CppMemoryVisualizer.Commands
                     return;
                 }
 
-                if (mMainViewModel.BreakPointList != null && mMainViewModel.BreakPointList.Count > 0
+                if (mMainViewModel.BreakPointListOrNull != null && mMainViewModel.BreakPointListOrNull.Count > 0
                     && MessageBoxResult.Yes != MessageBox.Show("새 파일을 불러올 경우 설정한 중단점이 모두 사라집니다. 계속 진행하시겠습니까?", App.WINDOW_TITLE, MessageBoxButton.YesNo, MessageBoxImage.Exclamation))
                 {
                     return;
@@ -97,9 +97,18 @@ namespace CppMemoryVisualizer.Commands
                     File.WriteAllText(openFileDialog.FileName, "#include <malloc.h> /* auto-generated */" + Environment.NewLine + File.ReadAllText(openFileDialog.FileName));
                     //MessageBox.Show("힙 메모리 분석을 위해 헤더 <malloc.h> 를 자동으로 추가합니다.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Information);
                 }
-                mMainViewModel.BreakPointList = new BreakPointList(lineCount + 1);
+                mMainViewModel.BreakPointListOrNull = new BreakPointList(lineCount + 1);
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
-                
+
+                if (null != mMainViewModel.CallStackOrNull)
+                {
+                    mMainViewModel.CallStackOrNull.Clear();
+                }
+                if (null != mMainViewModel.HeapManagerOrNull)
+                {
+                    mMainViewModel.HeapManagerOrNull.Heaps.Clear();
+                }
+
                 // execute gcc compiler
                 ProcessStartInfo processInfo = new ProcessStartInfo();
                 processInfo.FileName = "cmd.exe";

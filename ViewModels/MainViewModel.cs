@@ -17,6 +17,7 @@ namespace CppMemoryVisualizer.ViewModels
 {
     sealed class MainViewModel : INotifyPropertyChanged
     {
+        #region ICommands
         public ICommand LoadSourceFileCommand { get; }
         public ICommand DebugCommand { get; }
         public ICommand GoCommand { get; }
@@ -25,7 +26,9 @@ namespace CppMemoryVisualizer.ViewModels
         public ICommand AddOrRemoveBreakPointCommand { get; }
         public ICommand MemorySegmentAddressClickCommand { get; }
         public ICommand MemorySegmentPointerValueClickCommand { get; }
+        #endregion
 
+        #region Properties
         private Process mProcessGdbOrNull;
         public Process ProcessGdbOrNull
         {
@@ -41,7 +44,6 @@ namespace CppMemoryVisualizer.ViewModels
         }
 
         private EDebugInstructionState mLastInstruction = EDebugInstructionState.DEAD;
-
         private EDebugInstructionState mCurrentInstruction = EDebugInstructionState.DEAD;
         public EDebugInstructionState CurrentInstruction
         {
@@ -71,7 +73,7 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private string mLog;
+        private string mLog = string.Empty;
         public string Log
         {
             get
@@ -113,17 +115,17 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private BreakPointList mBreakPointList;
-        public BreakPointList BreakPointList
+        private BreakPointList mBreakPointListOrNull;
+        public BreakPointList BreakPointListOrNull
         {
             get
             {
-                return mBreakPointList;
+                return mBreakPointListOrNull;
             }
             set
             {
-                mBreakPointList = value;
-                onPropertyChanged("BreakPointList");
+                mBreakPointListOrNull = value;
+                onPropertyChanged("BreakPointListOrNull");
             }
         }
 
@@ -142,17 +144,17 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private CallStack mCallStack;
-        public CallStack CallStack
+        private CallStack mCallStackOrNull;
+        public CallStack CallStackOrNull
         {
             get
             {
-                return mCallStack;
+                return mCallStackOrNull;
             }
             set
             {
-                mCallStack = value;
-                onPropertyChanged("CallStack");
+                mCallStackOrNull = value;
+                onPropertyChanged("CallStackOrNull");
             }
         }
 
@@ -222,6 +224,7 @@ namespace CppMemoryVisualizer.ViewModels
                 onPropertyChanged("CapturedHeapMemoryPointerValueCount");
             }
         }
+        #endregion
 
         public MainViewModel()
         {
@@ -239,58 +242,56 @@ namespace CppMemoryVisualizer.ViewModels
 
         public void ExecuteGdb()
         {
+            Debug.Assert(null != mSourcePathOrNull);
+            Debug.Assert(mSourcePathOrNull.Length > 0);
+
             string dirPath = Path.GetDirectoryName(mSourcePathOrNull);
-            string fileNameOnly = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
 
-            ProcessGdbOrNull = new Process();
-
-            ProcessStartInfo processInfo = new ProcessStartInfo();
-            processInfo.FileName = "gdb";
-            processInfo.WorkingDirectory = dirPath;
-            processInfo.Arguments = $"{fileNameOnly}.exe -q";
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            processInfo.RedirectStandardInput = true;
-            processInfo.RedirectStandardOutput = true;
-            processInfo.RedirectStandardError = false;
-            ProcessGdbOrNull.StartInfo = processInfo;
+            ShutdownGdb();
+            ProcessGdbOrNull = new Process() { 
+                StartInfo = new ProcessStartInfo()
+                {
+                    FileName = "gdb",
+                    WorkingDirectory = dirPath,
+                    Arguments = $"{fileNameWithoutExtension}.exe -q --interpreter=mi",
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = false
+                }
+            };
+            ProcessGdbOrNull.Start();
 
             Log = string.Empty;
-
-            mProcessGdbOrNull.Start();
-
             CurrentInstruction = EDebugInstructionState.INITIALIZING;
-            CallStack = new CallStack();
-            PureTypeManager.Clear();
+            CallStackOrNull = new CallStack();
             HeapManagerOrNull = new HeapManager();
+            PureTypeManager.Clear();
+            // keep BreakPointListOrNull because file is same
 
             #region set main breakpoint
             {
-                RequestInstruction(GdbInstructionSet.DEFINE_COMMANDS,
-                    null, null);
-                RequestInstruction(GdbInstructionSet.SET_PAGINATION_OFF,
-                    null, null);
-                RequestInstruction(GdbInstructionSet.SET_UNWINDONSIGNAL_ON,
-                    null, null);
-                RequestInstruction(GdbInstructionSet.SET_BREAK_POINT_MAIN,
-                    null, null);
+                RequestInstruction(GdbInstructionSet.DEFINE_COMMANDS, null, null);
+                RequestInstruction(GdbInstructionSet.SET_PAGINATION_OFF, null, null);
+                RequestInstruction(GdbInstructionSet.SET_UNWINDONSIGNAL_ON, null, null);
+                RequestInstruction(GdbInstructionSet.SET_BREAK_POINT_MAIN, null, null);
                 RequestInstruction(GdbInstructionSet.RUN,
                     GdbInstructionSet.REQUEST_START_GO_COMMAND, GdbInstructionSet.REQUEST_END_GO_COMMAND);
                 ReadResultLine(GdbInstructionSet.REQUEST_START_GO_COMMAND, GdbInstructionSet.REQUEST_END_GO_COMMAND, ActionLinePointer);
-                RequestInstruction(GdbInstructionSet.CLEAR_ALL_BREAK_POINTS,
-                    null, null);
-                RequestInstruction(GdbInstructionSet.CREATE_HEAPINFO,
-                    null, null);
+                RequestInstruction(GdbInstructionSet.CLEAR_ALL_BREAK_POINTS, null, null);
+                RequestInstruction(GdbInstructionSet.CREATE_HEAPINFO, null, null);
 
-                if (BreakPointList.Count > 0)
+                // re-mark breakpoints
+                if (BreakPointListOrNull.Count > 0)
                 {
                     string fileName = Path.GetFileName(SourcePathOrNull);
-                    for (int line = 1; line < BreakPointList.Indices.Count; ++line)
+                    for (int line = 1; line < BreakPointListOrNull.Indices.Count; ++line)
                     {
-                        if (BreakPointList.Indices[line])
+                        if (BreakPointListOrNull.Indices[line])
                         {
-                            RequestInstruction(string.Format(GdbInstructionSet.ADD_BREAK_POINT, fileName, line),
-                                null, null);
+                            RequestInstruction(string.Format(GdbInstructionSet.ADD_BREAK_POINT, fileName, line), null, null);
                         }
                     }
                 }
@@ -310,191 +311,132 @@ namespace CppMemoryVisualizer.ViewModels
 
         public void ShutdownGdb()
         {
-            if (mProcessGdbOrNull != null)
+            if (null != ProcessGdbOrNull && !ProcessGdbOrNull.HasExited)
             {
-                LinePointer = 0;
                 CurrentInstruction = EDebugInstructionState.DEAD;
-                RequestInstruction(GdbInstructionSet.QUIT,
-                    null, null);
+                RequestInstruction(GdbInstructionSet.QUIT, null, null);
+
+                ProcessGdbOrNull.Close();
                 ProcessGdbOrNull = null;
             }
-        }
-
-        public void RequestInstruction(string instructionOrNull, string startOrNull, string endOrNull)
-        {
-            if (startOrNull != null)
-            {
-                mProcessGdbOrNull.StandardInput.WriteLine(string.Format(GdbInstructionSet.PRINTF, startOrNull));
-            }
-            if (instructionOrNull != null)
-            {
-                mProcessGdbOrNull.StandardInput.WriteLine(instructionOrNull);
-            }
-            if (endOrNull != null)
-            {
-                mProcessGdbOrNull.StandardInput.WriteLine(string.Format(GdbInstructionSet.PRINTF, endOrNull));
-            }
-        }
-
-        public void ReadResultLine(string start, string end, Action<string> lambdaOrNull)
-        {
-            Debug.Assert(start != null);
-            Debug.Assert(end != null);
-
-            string line;
-
-            do
-            {
-                line = mProcessGdbOrNull.StandardOutput.ReadLine();
-                {
-                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
-                    if (lastIndex != -1)
-                    {
-                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
-                    }
-                    if (line.Length == 0)
-                    {
-                        continue;
-                    }
-                }
-#if GDBLOG
-                Log += line + Environment.NewLine;
-#endif
-            } while (!line.StartsWith(start));
-
-            while (true)
-            {
-                line = mProcessGdbOrNull.StandardOutput.ReadLine();
-                {
-                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
-                    if (lastIndex != -1)
-                    {
-                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
-                    }
-                    if (line.Length == 0)
-                    {
-                        continue;
-                    }
-                }
-#if GDBLOG
-                Log += line + Environment.NewLine;
-#endif
-                if (line.StartsWith(end))
-                {
-                    break;
-                }
-
-                if (lambdaOrNull != null)
-                {
-                    lambdaOrNull.Invoke(line);
-                }
-            } 
         }
 
         public void UpdateGdb()
         {
             #region Get StackTrace
             {
-                CallStack.Clear();
+                CallStackOrNull.Clear();
+
+                Debug.Assert(null != mSourcePathOrNull);
 
                 uint frameCount = 0;
+                bool isMainExisted = false;
                 RequestInstruction(GdbInstructionSet.DISPLAY_STACK_BACKTRACE,
                     GdbInstructionSet.REQUEST_START_DISPLAY_CALL_STACK, GdbInstructionSet.REQUEST_END_DISPLAY_CALL_STACK);
                 ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_CALL_STACK, GdbInstructionSet.REQUEST_END_DISPLAY_CALL_STACK, (string line) =>
                 {
                     ++frameCount;
+                    if (line.Contains("main (")) // "#0  main () at Untitled1.cpp:9"
+                    {
+                        isMainExisted = true;
+                    }
                 });
 
-                Regex regexFrameAddress = new Regex(@"^Stack frame at 0x([a-z0-9]+):$");
-                Regex regexFunctionWithOffsetAddress = new Regex(@"^\seip\s=\s0x([a-z0-9]+)\sin\s");
+                if (!isMainExisted || 0 == frameCount)
+                {
+                    LinePointer = 0;
+                    ShutdownGdb();
 
-                Regex regexFunctionSignature = new Regex(@"^((.*)\s\+\s(\d+)|(.*))\sin\ssection\s");
+                    return;
+                }
 
                 for (uint i = 0; i < frameCount; ++i)
                 {
-                    string stackAddressHex = null;
-                    string functionWithOffsetAddressHex = null;
+                    string stackFrameAddressHex = null;
+                    string functionAddressHex = null;
+
                     RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_INFO_FRAME, i),
                         GdbInstructionSet.REQUEST_START_DISPLAY_INFO_FRAME, GdbInstructionSet.REQUEST_END_DISPLAY_INFO_FRAME);
                     ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_INFO_FRAME, GdbInstructionSet.REQUEST_END_DISPLAY_INFO_FRAME, (string line) =>
                     {
+                        if (null == stackFrameAddressHex)
                         {
-                            Match match = regexFrameAddress.Match(line);
+                            // "Stack frame at 0x63fee0:"
+                            Match match = RegexSet.REGEX_FRAME_ADDRESS.Match(line);
                             if (match.Success)
                             {
-                                stackAddressHex = match.Groups[1].Value;
-                                return;
+                                stackFrameAddressHex = match.Groups[1].Value;
                             }
                         }
-
+                        else if (null == functionAddressHex)
                         {
-                            Match match = regexFunctionWithOffsetAddress.Match(line);
+                            // " eip = 0x4015e7 in main (Untitled1.cpp:9); saved eip = 0x401396"
+                            Match match = RegexSet.REGEX_FUNCTION_ADDRESS.Match(line);
                             if (match.Success)
                             {
-                                functionWithOffsetAddressHex = match.Groups[1].Value;
+                                functionAddressHex = match.Groups[1].Value;
                             }
                         }
                     });
+                    
+                    uint stackFrameAddress = 0;
+                    {
+                        Debug.Assert(null != stackFrameAddressHex);
+                        bool bSuccess = uint.TryParse(stackFrameAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out stackFrameAddress);
+                        Debug.Assert(bSuccess);
+                    }
 
-                    Debug.Assert(stackAddressHex != null);
-                    Debug.Assert(functionWithOffsetAddressHex != null);
-
-                    uint stackAddress = 0;
-                    bool bSuccess = uint.TryParse(stackAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out stackAddress);
-                    Debug.Assert(bSuccess);
-
-                    uint functionAddress = 0; // may have offset
-                    bSuccess = uint.TryParse(functionWithOffsetAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out functionAddress);
-                    Debug.Assert(bSuccess);
+                    uint functionAddress = 0;
+                    {
+                        Debug.Assert(null != functionAddressHex);
+                        bool bSuccess = uint.TryParse(functionAddressHex, NumberStyles.HexNumber, CultureInfo.CurrentCulture, out functionAddress);
+                        Debug.Assert(bSuccess);
+                    }
 
                     string functionName = null;
-                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SYMBOLINFO, "0x" + functionWithOffsetAddressHex),
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SYMBOLINFO, "0x" + functionAddressHex),
                         GdbInstructionSet.REQUEST_START_DISPLAY_SYMBOLINFO, GdbInstructionSet.REQUEST_END_DISPLAY_SYMBOLINFO);
                     ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SYMBOLINFO, GdbInstructionSet.REQUEST_END_DISPLAY_SYMBOLINFO, (string line) =>
                     {
-                        Match match = regexFunctionSignature.Match(line);
-                        if (match.Success)
+                        if (null == functionName)
                         {
-                            // no offset
-                            string signature = match.Groups[4].Value;
-                            uint offset = 0;
+                            // "main + 23 in section .text of C:\\Temp\\Untitled1.exe"
+                            Match match = RegexSet.REGEX_FUNCTION_SIGNATURE.Match(line);
+                            if (match.Success)
+                            {
+                                // try no offset first
+                                string signature = match.Groups[4].Value;
 
-                            // has offset
-                            if (signature.Length == 0)
-                            {
-                                signature = match.Groups[2].Value;
-                                bSuccess = uint.TryParse(match.Groups[3].Value, out offset);
-                                Debug.Assert(bSuccess);
-                                functionAddress -= offset;
-                            }
+                                // when function has offset
+                                if (signature.Length == 0)
+                                {
+                                    uint offset = 0;
+                                    signature = match.Groups[2].Value;
+                                    bool bSuccess = uint.TryParse(match.Groups[3].Value, out offset);
+                                    Debug.Assert(bSuccess);
+                                    functionAddress -= offset;
+                                }
 
-                            int nameLen = signature.IndexOf('(');
-                            if (nameLen > 0)
-                            {
-                                functionName = signature.Substring(0, nameLen);
-                            }
-                            else
-                            {
-                                functionName = signature;
+                                // if function has arguments
+                                int nameLen = signature.IndexOf('(');
+                                if (nameLen > 0)
+                                {
+                                    functionName = signature.Substring(0, nameLen);
+                                }
+                                else
+                                {
+                                    functionName = signature;
+                                }
                             }
                         }
                     });
-
                     Debug.Assert(functionName != null);
 
-                    Debug.WriteLine("Stack addr: {0}, Function addr: {1}, name: {2}", stackAddress, functionAddress, functionName);
-                    CallStack.Push(stackAddress, functionAddress, functionName);
+                    Debug.WriteLine("Stack addr: {0}, Function addr: {1}, name: {2}", stackFrameAddress, functionAddress, functionName);
+                    CallStackOrNull.Push(stackFrameAddress, functionAddress, functionName);
                 }
             }
             #endregion
-
-            if (CallStack.IsEmpty())
-            {
-                LinePointer = 0;
-                ShutdownGdb();
-
-                return;
-            }
 
             #region Update Heap memories
             {
@@ -504,20 +446,20 @@ namespace CppMemoryVisualizer.ViewModels
                 ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_HEAPINFO, GdbInstructionSet.REQUEST_END_DISPLAY_HEAPINFO, actionAddHeap);
                 HeapManagerOrNull.Update();
 
-                var memoryStringBuilder = new StringBuilder();
+                StringBuilder memoryStringBuilder = new StringBuilder(1024);
                 
                 foreach (var heap in mHeapManagerOrNull.Heaps)
                 {
                     heap.TypeInfo = null;
 
                     uint heapWordCount = heap.Size / 4 + (heap.Size % 4 > 0 ? 1u : 0);
-
                     RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_MEMORY, heapWordCount, string.Format("0x{0:x8}", heap.Address)),
                         GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY);
                     ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_MEMORY, GdbInstructionSet.REQUEST_END_DISPLAY_MEMORY, (string line) =>
                     {
+                        // "0x10892f0:\t0x4e494d45\t0x35204d45\t0x4e454330\t0x494c2054"
                         int index = line.IndexOf(':');
-                        Debug.Assert(index != 6);
+                        Debug.Assert(index > 0);
                         memoryStringBuilder.Append(line.Substring(index + 1));
                     });
                     heap.SetValue(memoryStringBuilder);
@@ -531,53 +473,48 @@ namespace CppMemoryVisualizer.ViewModels
 
             #region Initialize StackFrames
             {
-                for (int i = 0; i < CallStack.StackFrameKeys.Count; ++i)
+                for (int i = 0; i < CallStackOrNull.StackFrameKeys.Count; ++i)
                 {
-                    Models.StackFrame frame = CallStack.GetStackFrame(CallStack.StackFrameKeys[i]);
-                    if (frame.IsInitialized)
-                    {
-                        continue;
-                    }
-
                     // set stack frame for range compatiability
-                    RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, i),
-                        null, null);
+                    RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, i), null, null);
 
-                    // add argument names
+                    Models.StackFrame frame = CallStackOrNull.GetStackFrame(CallStackOrNull.StackFrameKeys[i]);
+                    frame.Clear();
+
+                    // add arguments
                     RequestInstruction(GdbInstructionSet.DISPLAY_ARGUMENTS,
                         GdbInstructionSet.REQUEST_START_DISPLAY_ARGUMENTS, GdbInstructionSet.REQUEST_END_DISPLAY_ARGUMENTS);
                     ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_ARGUMENTS, GdbInstructionSet.REQUEST_END_DISPLAY_ARGUMENTS, (string line) =>
                     {
+                        // "obj = @0x62feb7: {<No data fields>}"
                         int index = line.IndexOf(" = ");
                         Debug.Assert(index > 0);
 
-                        string name = line.Substring(0, index);
-                        frame.TryAdd(name, true);
+                        frame.AddArgumentLocalVariable(line.Substring(0, index));
                     });
 
-                    // add local names
+                    // add locals
                     RequestInstruction(GdbInstructionSet.DISPLAY_LOCAL_VARIABLES,
                         GdbInstructionSet.REQUEST_START_DISPLAY_LOCAL_VARIABLES, GdbInstructionSet.REQUEST_END_DISPLAY_LOCAL_VARIABLES);
                     ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_LOCAL_VARIABLES, GdbInstructionSet.REQUEST_END_DISPLAY_LOCAL_VARIABLES, (string line) =>
                     {
+                        // "p1 = 0xffff"
                         int index = line.IndexOf(" = ");
                         Debug.Assert(index > 0);
 
-                        string name = line.Substring(0, index);
-                        frame.TryAdd(name, false);
+                        frame.AddLocalVariable(line.Substring(0, index));
                     });
 
-                    // examine local information by names
-                    foreach (var name in frame.LocalVariableNames)
+                    // examine locals
+                    foreach (var local in frame.LocalVariables)
                     {
-                        var local = frame.GetLocalVariable(name);
-
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_ADDRESS, name),
+                        // get address of local
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_ADDRESS, local.Name),
                             GdbInstructionSet.REQUEST_START_DISPLAY_ADDRESS, GdbInstructionSet.REQUEST_END_DISPLAY_ADDRESS);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_ADDRESS, GdbInstructionSet.REQUEST_END_DISPLAY_ADDRESS, (string line) =>
                         {
-                            Regex regexLocalAddress = new Regex(@"\s0x([a-z0-9]+)");
-                            Match match = regexLocalAddress.Match(line);
+                            // "$1 = (std::string *) 0x63fea4"
+                            Match match = RegexSet.REGEX_LOCAL_ADDRESS.Match(line);
                             if (match.Success)
                             {
                                 string addressHex = match.Groups[1].Value;
@@ -589,10 +526,11 @@ namespace CppMemoryVisualizer.ViewModels
                         });
 
                         // must be for primitive type
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, name),
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, local.Name),
                             GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
                         {
+                            // "$2 = 24"
                             int index = line.LastIndexOf(' ');
                             Debug.Assert(index > 0);
 
@@ -602,25 +540,23 @@ namespace CppMemoryVisualizer.ViewModels
                             local.StackMemory.TypeInfo.Size = size;
                             
                             uint wordCount = size / 4 + (uint)(size % 4 > 0 ? 1 : 0);
-                            Debug.Assert(local.StackMemory.ByteValues == null);
+                            Debug.Assert(null == local.StackMemory.ByteValues);
                             local.StackMemory.ByteValues = new byte[wordCount * 4];
                         });
 
                         // TypeName Only
-                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPENAME, name),
+                        RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPENAME, local.Name),
                             GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
                         {
-                            string fullTypeName = line.Substring("type = ".Length);
-                            local.StackMemory.TypeInfo.FullNameOrNull = fullTypeName;
+                            // "type = std::string"
+                            local.StackMemory.TypeInfo.FullNameOrNull = line.Substring("type = ".Length);
                             if (!PureTypeManager.HasType(local.StackMemory.TypeInfo.PureName))
                             {
                                 unregisteredPureTypeNames.Enqueue(local.StackMemory.TypeInfo.PureName);
                             }
                         });
                     }
-
-                    frame.IsInitialized = true;
                 }
             }
             #endregion
@@ -921,12 +857,12 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 StringBuilder memoryStringBuilder = new StringBuilder(8192);
 
-                for (int i = 0; i < CallStack.StackFrames.Count; ++i)
+                for (int i = 0; i < CallStackOrNull.StackFrames.Count; ++i)
                 {
                     RequestInstruction(string.Format(GdbInstructionSet.SELECT_FRAME, i),
                         null, null);
 
-                    Models.StackFrame frame = CallStack.StackFrames[i];
+                    Models.StackFrame frame = CallStackOrNull.StackFrames[i];
 
                     foreach (var local in frame.LocalVariables)
                     {
@@ -1095,8 +1031,81 @@ namespace CppMemoryVisualizer.ViewModels
             CapturedStackMemoryPointerValueCount = 0;
         }
 
+        public void RequestInstruction(string instructionOrNull, string startOrNull, string endOrNull)
+        {
+            if (startOrNull != null)
+            {
+                mProcessGdbOrNull.StandardInput.WriteLine(string.Format(GdbInstructionSet.PRINTF, startOrNull));
+            }
+            if (instructionOrNull != null)
+            {
+                mProcessGdbOrNull.StandardInput.WriteLine(instructionOrNull);
+            }
+            if (endOrNull != null)
+            {
+                mProcessGdbOrNull.StandardInput.WriteLine(string.Format(GdbInstructionSet.PRINTF, endOrNull));
+            }
+        }
+
+        public void ReadResultLine(string start, string end, Action<string> lambdaOrNull)
+        {
+            Debug.Assert(start != null);
+            Debug.Assert(end != null);
+
+            string line;
+
+            do
+            {
+                line = mProcessGdbOrNull.StandardOutput.ReadLine();
+                {
+                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
+                    if (lastIndex != -1)
+                    {
+                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
+                    }
+                    if (line.Length == 0)
+                    {
+                        continue;
+                    }
+                }
+#if GDBLOG
+                Log += line + Environment.NewLine;
+#endif
+            } while (!line.StartsWith(start));
+
+            while (true)
+            {
+                line = mProcessGdbOrNull.StandardOutput.ReadLine();
+                {
+                    int lastIndex = line.LastIndexOf(GdbInstructionSet.OUTPUT_HEADER);
+                    if (lastIndex != -1)
+                    {
+                        line = line.Substring(lastIndex + GdbInstructionSet.OUTPUT_HEADER.Length);
+                    }
+                    if (line.Length == 0)
+                    {
+                        continue;
+                    }
+                }
+#if GDBLOG
+                Log += line + Environment.NewLine;
+#endif
+                if (line.StartsWith(end))
+                {
+                    break;
+                }
+
+                if (lambdaOrNull != null)
+                {
+                    lambdaOrNull.Invoke(line);
+                }
+            }
+        }
+
         public void ActionLinePointer(string line)
         {
+            Debug.Assert(null != line);
+
             Regex rx = new Regex(@"^(\d+)\t(.*)");
             Match match = rx.Match(line);
 
@@ -1114,12 +1123,14 @@ namespace CppMemoryVisualizer.ViewModels
 
         private void actionAddHeap(string line)
         {
-            ulong heapKey = 0;
+            Debug.Assert(null != line);
+            Debug.Assert(17 == line.Length);
+
+            ulong heapKey;
             bool bSuccess = ulong.TryParse(line.Substring(0, 16), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out heapKey);
             Debug.Assert(bSuccess);
 
-            bool isUsed = (line[16] == '1');
-            if (isUsed)
+            if ('1' == line[16]) // is heap memory used
             {
                 HeapManagerOrNull.Add(heapKey);
             }

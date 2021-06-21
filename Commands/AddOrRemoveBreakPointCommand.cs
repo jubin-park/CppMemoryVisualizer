@@ -54,7 +54,7 @@ namespace CppMemoryVisualizer.Commands
                 selectedLineNumber = (uint)parameter;
             }
 
-            var breakpoints = mMainViewModel.BreakPointList.Indices;
+            var breakpoints = mMainViewModel.BreakPointListOrNull.Indices;
 
             Debug.Assert(selectedLineNumber > 0u);
 
@@ -75,7 +75,7 @@ namespace CppMemoryVisualizer.Commands
                         Debug.Assert(bSuccess);
                         Debug.Assert(realLineNumber > 0);
 
-                        ++mMainViewModel.BreakPointList.Count;
+                        ++mMainViewModel.BreakPointListOrNull.Count;
                         breakpoints[(int)realLineNumber] = true;
                     }
                 });

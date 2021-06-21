@@ -1,33 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace CppMemoryVisualizer.Models
 {
     sealed class StackFrame
     {
-        public bool IsInitialized = false;
-
-        private readonly List<string> mLocalVariableNames = new List<string>();
-        public List<string> LocalVariableNames
-        {
-            get
-            {
-                return mLocalVariableNames;
-            }
-        }
-
-        private Dictionary<string, LocalVariable> mLocalVariableCaches = new Dictionary<string, LocalVariable>();
-
-        private List<LocalVariable> mLocalVariables = new List<LocalVariable>();
-        public List<LocalVariable> LocalVariables
+        private readonly ObservableCollection<LocalVariable> mLocalVariables = new ObservableCollection<LocalVariable>();
+        public ObservableCollection<LocalVariable> LocalVariables
         {
             get
             {
                 return mLocalVariables;
-            }
-            set
-            {
-                mLocalVariables = value;
             }
         }
 
@@ -75,39 +59,28 @@ namespace CppMemoryVisualizer.Models
         {
             Debug.Assert(stackAddress > 0);
             Debug.Assert(functionAddress > 0);
-            Debug.Assert(functionName != null);
+            Debug.Assert(null != functionName);
 
             mStackAddress = stackAddress;
             mFunctionAddress = functionAddress;
             mName = functionName;
         }
 
-        public bool TryAdd(string localVariableName, bool isArgument)
+        public void Clear()
         {
-            Debug.Assert(localVariableName != null);
-
-            if (!mLocalVariableCaches.ContainsKey(localVariableName))
-            {
-                mLocalVariableNames.Add(localVariableName);
-
-                var local = new LocalVariable(localVariableName, isArgument);
-                mLocalVariableCaches.Add(localVariableName, local);
-                mLocalVariables.Add(local);
-
-                return true;
-            }
-
-            return false;
+            mLocalVariables.Clear();
         }
 
-        public LocalVariable GetLocalVariable(string localVariableName)
+        public void AddArgumentLocalVariable(string argumentVariableName)
         {
-            Debug.Assert(localVariableName != null);
+            Debug.Assert(null != argumentVariableName);
+            mLocalVariables.Add(new LocalVariable(argumentVariableName, true));
+        }
 
-            LocalVariable localVariable = null;
-            mLocalVariableCaches.TryGetValue(localVariableName, out localVariable);
-
-            return localVariable;
+        public void AddLocalVariable(string localVariableName)
+        {
+            Debug.Assert(null != localVariableName);
+            mLocalVariables.Add(new LocalVariable(localVariableName, false));
         }
     }
 }

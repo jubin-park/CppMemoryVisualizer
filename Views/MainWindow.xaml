@@ -454,7 +454,7 @@
                         CanContentScroll="True">
                         <ItemsControl
                             Grid.Column="0"
-                            ItemsSource="{Binding CallStack.StackFrames}">
+                            ItemsSource="{Binding CallStackOrNull.StackFrames}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel

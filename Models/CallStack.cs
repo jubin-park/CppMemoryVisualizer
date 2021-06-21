@@ -7,7 +7,7 @@ namespace CppMemoryVisualizer.Models
 {
     sealed class CallStack : INotifyPropertyChanged
     {
-        private readonly List<ulong> mStackFrameKeys = new List<ulong>();
+        private readonly List<ulong> mStackFrameKeys = new List<ulong>(); // (ulong)stackFrameAddress << 32 | functionAddress;
         public List<ulong> StackFrameKeys
         {
             get
@@ -39,19 +39,19 @@ namespace CppMemoryVisualizer.Models
             StackFrames.Clear();
         }
 
-        public void Push(uint stackAddress, uint functionAddress, string functionName)
+        public void Push(uint stackFrameAddress, uint functionAddress, string functionName)
         {
-            Debug.Assert(stackAddress > 0);
+            Debug.Assert(stackFrameAddress > 0);
             Debug.Assert(functionAddress > 0);
             Debug.Assert(functionName != null);
 
-            ulong key = (ulong)stackAddress << 32 | functionAddress;
+            ulong key = (ulong)stackFrameAddress << 32 | functionAddress;
             mStackFrameKeys.Add(key);
 
             StackFrame frame = null;
             if (!mStackFrameCaches.ContainsKey(key))
             {
-                frame = new StackFrame(stackAddress, functionAddress, functionName);
+                frame = new StackFrame(stackFrameAddress, functionAddress, functionName);
                 mStackFrameCaches.Add(key, frame);
             }
             else
