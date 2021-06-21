@@ -254,7 +254,7 @@ namespace CppMemoryVisualizer.ViewModels
                 {
                     FileName = "gdb",
                     WorkingDirectory = dirPath,
-                    Arguments = $"{fileNameWithoutExtension}.exe -q --interpreter=mi",
+                    Arguments = $"{fileNameWithoutExtension}.exe -q",
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardInput = true,
