@@ -15,16 +15,16 @@
             }
         }
 
-        protected TypeInfo mTypeInfo = new TypeInfo();
-        public TypeInfo TypeInfo
+        protected TypeInfo mTypeInfoOrNull = new TypeInfo();
+        public TypeInfo TypeInfoOrNull
         {
             get
             {
-                return mTypeInfo;
+                return mTypeInfoOrNull;
             }
             set
             {
-                mTypeInfo = value;
+                mTypeInfoOrNull = value;
             }
         }
 

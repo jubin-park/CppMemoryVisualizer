@@ -64,10 +64,10 @@ namespace CppMemoryVisualizer.Models
             var stackKeys = new Stack<StackKey>();
 
             {
-                uint totalLength = mStackMemory.TypeInfo.GetTotalLength();
-                uint sizePerSegment = mStackMemory.TypeInfo.Size / totalLength;
+                uint totalLength = mStackMemory.TypeInfoOrNull.GetTotalLength();
+                uint sizePerSegment = mStackMemory.TypeInfoOrNull.Size / totalLength;
 
-                TypeInfo elementOfArrayType = mStackMemory.TypeInfo.GetElementOfArray();
+                TypeInfo elementOfArrayType = mStackMemory.TypeInfoOrNull.GetElementOfArray();
 
                 segments = new List<MemorySegmentViewModel>((int)totalLength);
 
@@ -75,8 +75,8 @@ namespace CppMemoryVisualizer.Models
                 {
                     var vm = new MemorySegmentViewModel()
                     {
-                        TypeName = totalLength > 1 ? elementOfArrayType.FullNameOrNull : mStackMemory.TypeInfo.FullNameOrNull,
-                        MemberNameOrNull = mStackMemory.TypeInfo.MemberNameOrNull,
+                        TypeName = totalLength > 1 ? elementOfArrayType.FullNameOrNull : mStackMemory.TypeInfoOrNull.FullNameOrNull,
+                        MemberNameOrNull = mStackMemory.TypeInfoOrNull.MemberNameOrNull,
                         Memory = new ArraySegment<byte>(mStackMemory.ByteValues, (int)(i * sizePerSegment), (int)sizePerSegment),
                         Address = mStackMemory.Address + i * sizePerSegment,
                         AncestorOrNull = null,
@@ -87,7 +87,7 @@ namespace CppMemoryVisualizer.Models
                     stackKeys.Push(new StackKey()
                     {
                         ViewModel = vm,
-                        Type = mStackMemory.TypeInfo
+                        Type = mStackMemory.TypeInfoOrNull
                     });
                 }
             }

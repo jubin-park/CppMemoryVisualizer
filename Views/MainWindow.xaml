@@ -212,7 +212,7 @@
                                         <TextBlock
                                             TextWrapping="Wrap">
                                             <Run
-                                                Text="{Binding StackMemory.TypeInfo.FullNameOrNull, Mode=OneWay}"
+                                                Text="{Binding StackMemory.TypeInfoOrNull.FullNameOrNull, Mode=OneWay}"
                                                 Foreground="OrangeRed"
                                                 FontStyle="Italic" />
                                             <Run

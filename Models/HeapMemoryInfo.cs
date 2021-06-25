@@ -55,7 +55,7 @@ namespace CppMemoryVisualizer.Models
 
         public void UpdateMemorySegements()
         {
-            if (null == TypeInfo || null == TypeInfo.PureName)
+            if (null == TypeInfoOrNull || null == TypeInfoOrNull.PureName)
             {
                 return;
             }
@@ -64,8 +64,8 @@ namespace CppMemoryVisualizer.Models
             var stackKeys = new Stack<StackKey>();
 
             {
-                TypeInfo pureType = PureTypeManager.GetType(TypeInfo.PureName);
-                uint sizePerSegment = TypeInfo.PointerLevel > 0 ? TypeInfo.POINTER_SIZE : pureType.Size;
+                TypeInfo pureType = PureTypeManager.GetType(TypeInfoOrNull.PureName);
+                uint sizePerSegment = TypeInfoOrNull.PointerLevel > 0 ? TypeInfo.POINTER_SIZE : pureType.Size;
                 uint totalLength = Size / sizePerSegment;
                 uint remainSegment = Size % sizePerSegment;
 
@@ -75,8 +75,8 @@ namespace CppMemoryVisualizer.Models
                 {
                     var vm = new MemorySegmentViewModel()
                     {
-                        TypeName = TypeInfo.FullNameOrNull,
-                        MemberNameOrNull = TypeInfo.MemberNameOrNull,
+                        TypeName = TypeInfoOrNull.FullNameOrNull,
+                        MemberNameOrNull = TypeInfoOrNull.MemberNameOrNull,
                         Memory = new ArraySegment<byte>(ByteValues, (int)(i * sizePerSegment), (int)sizePerSegment),
                         Address = Address + i * sizePerSegment,
                         AncestorOrNull = null,
@@ -87,7 +87,7 @@ namespace CppMemoryVisualizer.Models
                     stackKeys.Push(new StackKey()
                     {
                         ViewModel = vm,
-                        Type = TypeInfo
+                        Type = TypeInfoOrNull
                     });
                 }
             }
