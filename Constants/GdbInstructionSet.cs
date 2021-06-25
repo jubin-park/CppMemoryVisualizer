@@ -20,7 +20,7 @@
         public static readonly string DISPLAY_ARGUMENTS = "info args -q";
         public static readonly string DISPLAY_LOCAL_VARIABLES = "info locals -q";
         public static readonly string DISPLAY_ADDRESS = "call &{0}"; // <name>
-        public static readonly string DISPLAY_TYPENAME = "whatis {0}"; // <name>
+        public static readonly string DISPLAY_TYPENAME = "whatis /r {0}"; // <name>
         public static readonly string DISPLAY_TYPEINFO = "ptype /o {0}"; // <name>
         public static readonly string DISPLAY_SIZEOF = "call sizeof({0})"; // 0xADDRESS | <name>
         public static readonly string DISPLAY_SYMBOLINFO = "info symbol {0}"; // 0xADDRESS | <name>
@@ -32,6 +32,7 @@
 
         public static readonly string PRINTF = "printf \"{0}\\n\"";
         
+        public static readonly string UNLIMITED_NESTED_TYPE = "set print type nested-type-limit unlimited";
         public static readonly string CREATE_HEAPINFO = "create_heapinfo";
         public static readonly string DISPLAY_HEAPINFO = "display_heapinfo";
         public static readonly string SET_UNWINDONSIGNAL_ON = "set unwindonsignal on";

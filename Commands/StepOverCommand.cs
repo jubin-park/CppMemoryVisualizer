@@ -36,7 +36,7 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.ProcessGdbOrNull != null && mMainViewModel.CurrentInstruction == EDebugInstructionState.STANDBY;
+            return mMainViewModel.ProcessGdbOrNull != null && EDebugInstructionState.STANDBY == mMainViewModel.CurrentInstruction;
         }
 
         public void Execute(object parameter)

@@ -99,7 +99,8 @@ namespace CppMemoryVisualizer.Commands
                 }
                 mMainViewModel.BreakPointListOrNull = new BreakPointList(lineCount + 1);
                 mMainViewModel.SourceCode = File.ReadAllText(openFileDialog.FileName);
-
+                
+                mMainViewModel.LinePointer = 0;
                 if (null != mMainViewModel.CallStackOrNull)
                 {
                     mMainViewModel.CallStackOrNull.Clear();

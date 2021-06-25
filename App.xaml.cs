@@ -7,7 +7,7 @@ namespace CppMemoryVisualizer
 {
     public partial class App : Application
     {
-        public static string WINDOW_TITLE = "C++ Memory Visualizer";
+        public static readonly string WINDOW_TITLE = "C++ Memory Visualizer";
 
         protected override void OnStartup(StartupEventArgs e)
         {

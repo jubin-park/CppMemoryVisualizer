@@ -10,13 +10,13 @@ namespace CppMemoryVisualizer.Converters
         public object Convert(object[] value, Type targetType, object parameter, CultureInfo culture)
         {
             string srcPathOrNull = value[0] as string;
-            if (srcPathOrNull == null || srcPathOrNull == string.Empty)
+            if (null == srcPathOrNull || string.Empty == srcPathOrNull)
             {
                 return App.WINDOW_TITLE;
             }
 
             Process processOrNull = value[1] as Process;
-            if (processOrNull == null)
+            if (null == processOrNull)
             {
                 return string.Format("{0} ( No Debugger ) - @[{1}]", App.WINDOW_TITLE, srcPathOrNull);
             }

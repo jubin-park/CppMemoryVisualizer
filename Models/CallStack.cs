@@ -83,7 +83,7 @@ namespace CppMemoryVisualizer.Models
 
         public bool IsEmpty()
         {
-            return mStackFrameKeys.Count == 0;
+            return 0 == mStackFrameKeys.Count;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

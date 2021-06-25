@@ -49,13 +49,13 @@ namespace CppMemoryVisualizer.Models
             mAddress = address;
             mSize = size;
 
-            uint wordCount = size / 4 + (size % 4 > 0 ? 1u : 0);
-            mByteValues = new byte[wordCount * 4];
+            uint wordCount = size / TypeInfo.POINTER_SIZE + (size % TypeInfo.POINTER_SIZE > 0 ? 1u : 0);
+            mByteValues = new byte[wordCount * TypeInfo.POINTER_SIZE];
         }
 
         public void UpdateMemorySegements()
         {
-            if (TypeInfo == null || TypeInfo.PureName == null)
+            if (null == TypeInfo || null == TypeInfo.PureName)
             {
                 return;
             }
@@ -65,7 +65,7 @@ namespace CppMemoryVisualizer.Models
 
             {
                 TypeInfo pureType = PureTypeManager.GetType(TypeInfo.PureName);
-                uint sizePerSegment = TypeInfo.PointerLevel > 0 ? 4 : pureType.Size;
+                uint sizePerSegment = TypeInfo.PointerLevel > 0 ? TypeInfo.POINTER_SIZE : pureType.Size;
                 uint totalLength = Size / sizePerSegment;
                 uint remainSegment = Size % sizePerSegment;
 

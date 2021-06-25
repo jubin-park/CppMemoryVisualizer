@@ -9,22 +9,22 @@ namespace CppMemoryVisualizer.Models
 
         public static void AddType(string typeName, TypeInfo pure)
         {
-            Debug.Assert(typeName != null);
-            Debug.Assert(pure != null);
+            Debug.Assert(null != typeName);
+            Debug.Assert(null != pure);
 
             mTypes.Add(typeName, pure);
         }
 
         public static bool HasType(string typeName)
         {
-            Debug.Assert(typeName != null);
+            Debug.Assert(null != typeName);
 
             return mTypes.ContainsKey(typeName);
         }
 
         public static TypeInfo GetType(string typeName)
         {
-            Debug.Assert(typeName != null);
+            Debug.Assert(null != typeName);
 
             TypeInfo pure = null;
             bool bSuccess = mTypes.TryGetValue(typeName, out pure);

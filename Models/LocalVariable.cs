@@ -64,8 +64,6 @@ namespace CppMemoryVisualizer.Models
             var stackKeys = new Stack<StackKey>();
 
             {
-                TypeInfo pureType = PureTypeManager.GetType(mStackMemory.TypeInfo.PureName);
-
                 uint totalLength = mStackMemory.TypeInfo.GetTotalLength();
                 uint sizePerSegment = mStackMemory.TypeInfo.Size / totalLength;
 

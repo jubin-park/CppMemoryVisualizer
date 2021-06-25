@@ -10,15 +10,13 @@ namespace CppMemoryVisualizer.Converters
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values[0] == null || values[1] == null)
+            if (null == values[0] || null == values[1])
             {
                 return null;
             }
 
-            var type = new TypeInfo()
-            {
-                FullNameOrNull = (string)values[0]
-            };
+            var type = new TypeInfo();
+            type.SetByString((string)values[0]);
 
             var segment = (ArraySegment<byte>)values[1];
             byte[] bytes = new byte[segment.Count];
@@ -32,7 +30,7 @@ namespace CppMemoryVisualizer.Converters
             if ((type.Flags & (EMemoryTypeFlags.POINTER | EMemoryTypeFlags.ARRAY_OR_FUNCTION_POINTER)) != EMemoryTypeFlags.NONE)
             {
                 uint pointer = BitConverter.ToUInt32(bytes, 0);
-                str = (pointer == 0 ? "nullptr" : string.Format("0x{0:x8}", pointer));
+                str = (0 == pointer ? "nullptr" : string.Format("0x{0:x8}", pointer));
             }
             else
             {
@@ -41,13 +39,28 @@ namespace CppMemoryVisualizer.Converters
                     case "char":
                         // intentional fallthrough
                     case "int8_t":
-                        str = string.Format("'{0}' ({1})", (char)bytes[0], (sbyte)bytes[0]);
+                        if (0 == bytes[0])
+                        {
+                            str = string.Format("'{0}' ({1})", "\\0", (sbyte)bytes[0]);
+                        }
+                        else
+                        {
+                            str = string.Format("'{0}' ({1})", (char)bytes[0], (sbyte)bytes[0]);
+                        }
                         break;
 
                     case "unsigned char":
                     // intentional fallthrough
                     case "uint8_t":
-                        str = string.Format("'{0}' ({1})", (char)bytes[0], bytes[0]);
+                        if (0 == bytes[0])
+                        {
+                            str = string.Format("'{0}' ({1})", "\\0", bytes[0]);
+                        }
+                        else
+                        {
+                            str = string.Format("'{0}' ({1})", (char)bytes[0], bytes[0]);
+                        }
+                        
                         break;
 
                     case "short":
@@ -77,6 +90,7 @@ namespace CppMemoryVisualizer.Converters
                         }
                         break;
 
+                    // intentional fallthrough
                     case "unsigned int":
                     // intentional fallthrough
                     case "uint32_t":

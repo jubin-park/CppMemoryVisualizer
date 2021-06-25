@@ -1,4 +1,5 @@
-﻿using CppMemoryVisualizer.ViewModels;
+﻿using CppMemoryVisualizer.Models;
+using CppMemoryVisualizer.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -52,7 +53,7 @@ namespace CppMemoryVisualizer.Commands
                     pop.CapturedAddress = Enums.EMemoryArea.CALL_STACK;
                     ++MainViewModel.CapturedStackMemoryAddressCount;
                 }
-                if (pop.Memory.Count == 4 && pop.TypeName.Contains('*'))
+                if (pop.Memory.Count == TypeInfo.POINTER_SIZE && null != pop.TypeName && pop.TypeName.Contains('*'))
                 {
                     uint pointer = (uint)pop.Memory.Array[pop.Memory.Offset] |
                         (uint)pop.Memory.Array[pop.Memory.Offset + 1] << 8 |
@@ -96,7 +97,7 @@ namespace CppMemoryVisualizer.Commands
                     pop.CapturedAddress = Enums.EMemoryArea.HEAP;
                     ++MainViewModel.CapturedHeapMemoryAddressCount;
                 }
-                if (pop.Memory.Count == 4 && pop.TypeName.Contains('*'))
+                if (pop.Memory.Count == TypeInfo.POINTER_SIZE && null != pop.TypeName && pop.TypeName.Contains('*'))
                 {
                     uint pointer = (uint)pop.Memory.Array[pop.Memory.Offset] |
                         (uint)pop.Memory.Array[pop.Memory.Offset + 1] << 8 |

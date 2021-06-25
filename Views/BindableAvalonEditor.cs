@@ -139,7 +139,7 @@ namespace CppMemoryVisualizer.Views
                 var caretOffset = target.CaretOffset;
                 var newValue = args.NewValue;
 
-                if (newValue == null)
+                if (null == newValue)
                 {
                     newValue = string.Empty;
                 }

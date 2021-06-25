@@ -99,17 +99,15 @@ namespace CppMemoryVisualizer.Views
         private void onMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var positionOrNull = mEditor.GetPositionFromPoint(e.GetPosition(this));
-            if (positionOrNull == null)
+            if (null != positionOrNull)
             {
-                return;
-            }
+                uint line = (uint)positionOrNull.Value.Location.Line;
 
-            uint line = (uint)positionOrNull.Value.Location.Line;
-
-            if (mMainViewModel.AddOrRemoveBreakPointCommand.CanExecute(line))
-            {
-                mMainViewModel.AddOrRemoveBreakPointCommand.Execute(line);
-                InvalidateVisual();
+                if (mMainViewModel.AddOrRemoveBreakPointCommand.CanExecute(line))
+                {
+                    mMainViewModel.AddOrRemoveBreakPointCommand.Execute(line);
+                    InvalidateVisual();
+                }
             }
         }
 

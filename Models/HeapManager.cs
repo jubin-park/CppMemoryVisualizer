@@ -73,7 +73,7 @@ namespace CppMemoryVisualizer.Models
 
         public HeapMemoryInfo GetHeapOrNull(uint heapAddress)
         {
-            if (mHeapKeys.Count == 0)
+            if (0 == mHeapKeys.Count)
             {
                 return null;
             }

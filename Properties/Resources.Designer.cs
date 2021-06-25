@@ -41,7 +41,7 @@ namespace CppMemoryVisualizer.Properties
         {
             get
             {
-                if ((resourceMan == null))
+                if ((null == resourceMan))
                 {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("CppMemoryVisualizer.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
