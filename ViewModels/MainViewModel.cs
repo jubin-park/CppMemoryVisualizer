@@ -624,7 +624,7 @@ namespace CppMemoryVisualizer.ViewModels
                         // pure type
                         if (!PureTypeManager.HasType(local.StackMemory.TypeInfoOrNull.PureName))
                         {
-                            TypeInfo newPureType = GenerateTypeRecursive(local.StackMemory.TypeInfoOrNull.PureName, 0, null);
+                            TypeInfo newPureType = generateTypeRecursive(local.StackMemory.TypeInfoOrNull.PureName, 0, null);
                             if (!PureTypeManager.HasType(newPureType.FullNameOrNull))
                             {
                                 PureTypeManager.AddType(newPureType.FullNameOrNull, newPureType);
@@ -916,7 +916,7 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        public TypeInfo GenerateTypeRecursive(string typeName, uint baseOffset, TypeInfo backupOrNull)
+        private TypeInfo generateTypeRecursive(string typeName, uint baseOffset, TypeInfo backupOrNull)
         {
             Debug.Assert(null != typeName);
             Debug.Assert(typeName.Length > 0);
@@ -1054,7 +1054,7 @@ namespace CppMemoryVisualizer.ViewModels
 
                                 for (int i = 1; i < inheritances.Length; ++i)
                                 {
-                                    GenerateTypeRecursive(inheritances[i], typeInfo.Offset); // offset
+                                    generateTypeRecursive(inheritances[i], typeInfo.Offset); // offset
                                 }
                                 */
 
@@ -1094,17 +1094,18 @@ namespace CppMemoryVisualizer.ViewModels
                             fullTypeName = fullTypeName.Substring(23);
                             fullTypeName = fullTypeName.Substring(0, fullTypeName.Length - 1).Trim();
 
-                            var childTypeInfo = GenerateTypeRecursive(fullTypeName, stack.Peek().Offset + offset, typeInfo);
+                            var childTypeInfo = generateTypeRecursive(fullTypeName, stack.Peek().Offset + offset, typeInfo);
 
                             stack.Peek().Members.Add(childTypeInfo);
 
                             if (!PureTypeManager.HasType(childTypeInfo.PureName))
                             {
-                                GenerateTypeRecursive(childTypeInfo.PureName, 0, null);
+                                generateTypeRecursive(childTypeInfo.PureName, 0, null);
                             }
                         }
                     }
                     // "                           } v;"
+                    // "                           };"
                     else if (';' == line[line.Length - 1] && line.Contains("static") == false)
                     {
                         int closingBracketIndex = line.IndexOf('}');
@@ -1127,11 +1128,6 @@ namespace CppMemoryVisualizer.ViewModels
                                 stack.Peek().SetByString(mergedTypeName);
                             }
                         }
-                        //else
-                        //{
-                            // "};"
-                            //stack.Peek().SetByString(stack.Peek().FullNameOrNull);
-                        //}
 
                         var pop = stack.Pop();
                         stack.Peek().Members.Add(pop);
