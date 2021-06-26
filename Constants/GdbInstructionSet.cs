@@ -31,7 +31,10 @@
         public static readonly string SELECT_FRAME = "select-frame {0}"; // index
 
         public static readonly string PRINTF = "printf \"{0}\\n\"";
-        
+
+        public static readonly string SET_PRINT_OBJECT_ON = "set print object on";
+        public static readonly string SET_PRINT_VIRTUAL_TABLE_ON = "set print vtbl on";
+        public static readonly string SET_PRINT_STATIC_MEMBERS_OFF = "set print static-members off";
         public static readonly string UNLIMITED_NESTED_TYPE = "set print type nested-type-limit unlimited";
         public static readonly string CREATE_HEAPINFO = "create_heapinfo";
         public static readonly string DISPLAY_HEAPINFO = "display_heapinfo";

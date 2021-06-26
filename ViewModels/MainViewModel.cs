@@ -352,6 +352,9 @@ namespace CppMemoryVisualizer.ViewModels
                 }
 
                 //RequestInstruction(GdbInstructionSet.UNLIMITED_NESTED_TYPE, null, null);
+                RequestInstruction(GdbInstructionSet.SET_PRINT_OBJECT_ON, null, null);
+                RequestInstruction(GdbInstructionSet.SET_PRINT_VIRTUAL_TABLE_ON, null, null);
+                RequestInstruction(GdbInstructionSet.SET_PRINT_STATIC_MEMBERS_OFF, null, null);
                 RequestInstruction(GdbInstructionSet.DEFINE_COMMANDS, null, null);
                 RequestInstruction(GdbInstructionSet.SET_PAGINATION_OFF, null, null);
                 RequestInstruction(GdbInstructionSet.SET_UNWINDONSIGNAL_ON, null, null);
@@ -621,15 +624,29 @@ namespace CppMemoryVisualizer.ViewModels
                             local.StackMemory.ByteValues = new byte[wordCount * TypeInfo.POINTER_SIZE];
                         });
 
+                        List<string> singleOrTwoTypeNames = new List<string>();
                         string unregisteredTypeName = null;
                         // TypeName Only
                         RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPENAME, local.Name),
                             GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE);
                         ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_TYPE, GdbInstructionSet.REQUEST_END_DISPLAY_TYPE, (string line) =>
                         {
-                            unregisteredTypeName = line.Substring("type = ".Length);
+                            singleOrTwoTypeNames.Add(line);
                         });
-                        Debug.Assert(null != unregisteredTypeName);
+                        if (singleOrTwoTypeNames.Count == 1) // [0]: type
+                        {
+                            unregisteredTypeName = singleOrTwoTypeNames[0].Substring("type = ".Length);
+                        }
+                        else if (singleOrTwoTypeNames.Count == 2) // [0]: real type, [1]: type
+                        {
+                            Match matchDerivedRealType = RegexSet.REGEX_DERIVED_REAL_TYPE.Match(singleOrTwoTypeNames[0]);
+                            Debug.Assert(matchDerivedRealType.Success);
+                            unregisteredTypeName = matchDerivedRealType.Groups[1].Value;
+                        }
+                        else
+                        {
+                            Debug.Assert(singleOrTwoTypeNames.Count > 0 && singleOrTwoTypeNames.Count <= 2, "invalid count");
+                        }
 
                         // convert raw type (ex: std::string -> std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)
                         RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPENAME, unregisteredTypeName),
@@ -951,9 +968,10 @@ namespace CppMemoryVisualizer.ViewModels
             });
             Debug.Assert(lines.Count > 0);
 
+            // single line (primitive types)
             if (1 == lines.Count)
             {
-                // convert to raw form
+                // convert to raw type
                 typeName = lines[0].Substring("type = ".Length);
 
                 if (null != backupOrNull)
@@ -985,10 +1003,10 @@ namespace CppMemoryVisualizer.ViewModels
                     return typeInfo;
                 }
             }
+            // multiple lines (struct, class, union, etc.)
             else
             {
-                Stack<TypeInfo> stack = new Stack<TypeInfo>();
-
+                Debug.Assert(lines.Count > 0);
                 {
                     Match matchTotalSize = RegexSet.REGEX_TYPE_TOTAL_SIZE.Match(lines[lines.Count - 2]);
                     Debug.Assert(matchTotalSize.Success);
@@ -1010,6 +1028,8 @@ namespace CppMemoryVisualizer.ViewModels
                         lines[0] = string.Format("/*    0      |     {0} */", size) + lines[0];
                     }
                 }
+
+                Stack<TypeInfo> stack = new Stack<TypeInfo>();
 
                 foreach (string line in lines)
                 {

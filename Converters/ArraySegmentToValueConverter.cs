@@ -29,8 +29,20 @@ namespace CppMemoryVisualizer.Converters
 
             if ((type.Flags & (EMemoryTypeFlags.POINTER | EMemoryTypeFlags.ARRAY_OR_FUNCTION_POINTER)) != EMemoryTypeFlags.NONE)
             {
-                uint pointer = BitConverter.ToUInt32(bytes, 0);
-                str = (0 == pointer ? "nullptr" : string.Format("0x{0:x8}", pointer));
+                try
+                {
+                    uint pointer = BitConverter.ToUInt32(bytes, 0);
+                    str = (0 == pointer ? "nullptr" : string.Format("0x{0:x8}", pointer));
+                }
+                catch (ArgumentException e)
+                {
+                    Console.WriteLine(e);
+                    Console.WriteLine(type.ToString());
+                    Console.WriteLine(segment);
+                    Console.WriteLine(bytes);
+
+                    return null;
+                }
             }
             else
             {
