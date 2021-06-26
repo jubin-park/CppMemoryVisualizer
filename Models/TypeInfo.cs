@@ -185,17 +185,50 @@ namespace CppMemoryVisualizer.Models
         {
             Debug.Assert(null != typeName);
 
+            int templateAngleBracketPairCount = 0;
+            int templateTypeLength = 0;
+
+            for (int i = 0; i < typeName.Length; ++i)
+            {
+                char c = typeName[i];
+                if ('<' == c)
+                {
+                    ++templateAngleBracketPairCount;
+                }
+                else if ('>' == c && --templateAngleBracketPairCount == 0)
+                {
+                    templateTypeLength = i + 1;
+                    break;
+                }
+            }
+
+            mFullNameOrNull = typeName;
+
+            string templateNameOrNull = null;
+            if (templateTypeLength > 0)
+            {
+                templateNameOrNull = typeName.Substring(0, templateTypeLength);
+                typeName = "T" + typeName.Substring(templateTypeLength);
+            }
+
             Match match = RegexSet.REGEX_ONE_LINE_TYPE.Match(typeName);
             Debug.Assert(match.Success);
 
-            mFullNameOrNull = typeName;
-            mPureName = match.Groups[1].Value.Trim();
+            if (templateNameOrNull is null)
+            {
+                mPureName = match.Groups[1].Value.Trim();
+            }
+            else
+            {
+                mPureName = templateNameOrNull + typeName.Substring(1);
+            }
+
             string pointerChars = match.Groups[3].Value;
             string arrayOrFunctionPointerChars = match.Groups[4].Value;
             string dimensions = match.Groups[5].Value;
             string reference = match.Groups[6].Value;
 
-            if (PureName.StartsWith("std::"))
+            if (mFullNameOrNull.Contains("std::"))
             {
                 mFlags |= EMemoryTypeFlags.STL;
             }
