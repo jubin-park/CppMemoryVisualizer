@@ -328,8 +328,29 @@ namespace CppMemoryVisualizer.ViewModels
             }
             #endregion
 
-            #region set main breakpoint
+            #region initialize gdb
             {
+                foreach (string primitiveTypeName in PureTypeManager.PRIMITIVE_TYPE_NAMES)
+                {
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, primitiveTypeName),
+                        GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
+                    {
+                        int index = line.LastIndexOf(' ');
+                        Debug.Assert(index > 0);
+
+                        uint size = 0;
+                        bool bSuccess = uint.TryParse(line.Substring(index + 1), out size);
+                        Debug.Assert(bSuccess);
+
+                        TypeInfo primitiveTypeInfo = new TypeInfo();
+                        primitiveTypeInfo.SetByString(primitiveTypeName);
+                        primitiveTypeInfo.Size = size;
+
+                        PureTypeManager.AddType(primitiveTypeName, primitiveTypeInfo);
+                    });
+                }
+
                 //RequestInstruction(GdbInstructionSet.UNLIMITED_NESTED_TYPE, null, null);
                 RequestInstruction(GdbInstructionSet.DEFINE_COMMANDS, null, null);
                 RequestInstruction(GdbInstructionSet.SET_PAGINATION_OFF, null, null);
