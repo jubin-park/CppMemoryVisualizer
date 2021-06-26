@@ -278,6 +278,13 @@ namespace CppMemoryVisualizer.ViewModels
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
 
             ShutdownGdb();
+
+            if (!File.Exists(Path.Combine(dirPath, fileNameWithoutExtension + ".exe")))
+            {
+                MessageBox.Show($"{fileNameWithoutExtension}.exe 파일이 존재하지 않습니다. 컴파일 에러가 발생하지 않았는지 확인하십시오.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
             ProcessGdbOrNull = new Process() { 
                 StartInfo = new ProcessStartInfo()
                 {
@@ -709,7 +716,11 @@ namespace CppMemoryVisualizer.ViewModels
 
                             if (0 == local.StackMemory.TypeInfoOrNull.PointerLevel && 0 == local.StackMemory.TypeInfoOrNull.ArrayOrFunctionPointerLevels.Count)
                             {
-                                local.StackMemory.TypeInfoOrNull.Members = PureTypeManager.GetType(local.StackMemory.TypeInfoOrNull.PureName).Members;
+                                var pureTypeOrNull = PureTypeManager.GetType(local.StackMemory.TypeInfoOrNull.PureName);
+                                if (pureTypeOrNull != null)
+                                {
+                                    local.StackMemory.TypeInfoOrNull.Members = PureTypeManager.GetType(local.StackMemory.TypeInfoOrNull.PureName).Members;
+                                }
                             }
 
                             for (uint j = 0; j < totalLength; ++j)
@@ -825,7 +836,7 @@ namespace CppMemoryVisualizer.ViewModels
                                     | ((uint)heap.ByteValues[offset + 3] << 24);
 
                                 HeapMemoryInfo anotherHeapOrNull = HeapManagerOrNull.GetHeapOrNull(address);
-                                if (anotherHeapOrNull != null && anotherHeapOrNull.TypeInfoOrNull == null)
+                                if (null != anotherHeapOrNull && null == anotherHeapOrNull.TypeInfoOrNull)
                                 {
                                     anotherHeapOrNull.TypeInfoOrNull = pop.Type.GetDereference();
                                 }
@@ -888,6 +899,7 @@ namespace CppMemoryVisualizer.ViewModels
                 }
 #if GDBLOG
                 Log += line + Environment.NewLine;
+                Console.WriteLine(line);
 #endif
             } while (!line.StartsWith(start));
 
@@ -907,6 +919,7 @@ namespace CppMemoryVisualizer.ViewModels
                 }
 #if GDBLOG
                 Log += line + Environment.NewLine;
+                Console.WriteLine(line);
 #endif
                 if (line.StartsWith(end))
                 {
