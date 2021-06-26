@@ -11,6 +11,41 @@ namespace CppMemoryVisualizer.Models
     {
         public static readonly uint POINTER_SIZE = 4;
 
+        public TypeInfo()
+        {
+
+        }
+
+        public TypeInfo(TypeInfo other) // recursive copy constructor
+        {
+            mFullNameOrNull = other.mFullNameOrNull;
+            mPureName = other.mPureName;
+            mSize = other.mSize;
+            mFlags = other.mFlags;
+            mPointerLevel = other.mPointerLevel;
+
+            mArrayOrFunctionPointerLevels = new List<uint>();
+            foreach (uint level in other.mArrayOrFunctionPointerLevels)
+            {
+                mArrayOrFunctionPointerLevels.Add(level);
+            }
+
+            mArrayLengths = new List<uint>();
+            foreach (uint length in other.mArrayLengths)
+            {
+                mArrayLengths.Add(length);
+            }
+
+            mOffset = other.mOffset;
+            mMemberNameOrNull = other.mMemberNameOrNull;
+
+            mMembers = new List<TypeInfo>();
+            foreach (var member in other.mMembers)
+            {
+                mMembers.Add(new TypeInfo(member));
+            }
+        }
+
         private string mFullNameOrNull;
         public string FullNameOrNull
         {
@@ -90,21 +125,6 @@ namespace CppMemoryVisualizer.Models
             }
         }
 
-        public uint GetTotalLength()
-        {
-            uint totalLength = 1;
-
-            if (0 == mArrayOrFunctionPointerLevels.Count)
-            {
-                foreach (uint len in mArrayLengths)
-                {
-                    totalLength *= len;
-                }
-            }
-
-            return totalLength;
-        }
-
         #region struct or class
         private uint mOffset;
         public uint Offset
@@ -145,6 +165,21 @@ namespace CppMemoryVisualizer.Models
             }
         }
         #endregion
+
+        public uint GetTotalLength()
+        {
+            uint totalLength = 1;
+
+            if (0 == mArrayOrFunctionPointerLevels.Count)
+            {
+                foreach (uint len in mArrayLengths)
+                {
+                    totalLength *= len;
+                }
+            }
+
+            return totalLength;
+        }
 
         public void SetByString(string typeName)
         {
