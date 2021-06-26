@@ -220,7 +220,7 @@ namespace CppMemoryVisualizer.Models
             }
             else
             {
-                mPureName = templateNameOrNull + typeName.Substring(1);
+                mPureName = templateNameOrNull;
             }
 
             string pointerChars = match.Groups[3].Value;
