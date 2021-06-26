@@ -982,11 +982,6 @@ namespace CppMemoryVisualizer.ViewModels
                         typeInfo.Size = size;
                     });
 
-                    if (!PureTypeManager.HasType(typeName))
-                    {
-                        PureTypeManager.AddType(typeName, typeInfo);
-                    }
-
                     return typeInfo;
                 }
             }
@@ -1120,7 +1115,7 @@ namespace CppMemoryVisualizer.ViewModels
 
                             if (!PureTypeManager.HasType(childTypeInfo.PureName))
                             {
-                                generateTypeRecursive(childTypeInfo.PureName, 0, null);
+                                PureTypeManager.AddType(childTypeInfo.PureName, generateTypeRecursive(childTypeInfo.PureName, 0, null));
                             }
                         }
                     }
