@@ -1045,18 +1045,17 @@ namespace CppMemoryVisualizer.ViewModels
                             // if inheritance exists
                             if (index >= 0)
                             {
-                                /*
-                                string inlineInheritance = matchCseu.Groups[2].Value.Substring(index + 3);
-                                inlineInheritance = RegexSet.REGEX_INHERITANCE.Replace(inlineInheritance, "|");
+                                string inheritanceFormat = matchCseu.Groups[2].Value.Substring(index + 3);
+                                string[] inheritanceTypeNames = RegexSet.REGEX_INHERITANCE.Replace(inheritanceFormat, "|").Split('|');
 
-                                string[] inheritances = inlineInheritance.Split('|');
-
-
-                                for (int i = 1; i < inheritances.Length; ++i)
+                                for (int i = 1; i < inheritanceTypeNames.Length; ++i)
                                 {
-                                    generateTypeRecursive(inheritances[i], typeInfo.Offset); // offset
+                                    TypeInfo parentType = generateTypeRecursive(inheritanceTypeNames[i], typeInfo.Offset, null);
+                                    foreach (var member in parentType.Members)
+                                    {
+                                        typeInfo.Members.Add(member);
+                                    }
                                 }
-                                */
 
                                 typeInfo.SetByString(matchCseu.Groups[2].Value.Substring(0, index));
                             }
