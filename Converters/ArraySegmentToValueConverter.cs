@@ -37,9 +37,7 @@ namespace CppMemoryVisualizer.Converters
                 catch (ArgumentException e)
                 {
                     Console.WriteLine(e);
-                    Console.WriteLine(type.ToString());
-                    Console.WriteLine(segment);
-                    Console.WriteLine(bytes);
+                    Console.WriteLine(type.FullNameOrNull);
 
                     return null;
                 }

@@ -111,14 +111,26 @@ namespace CppMemoryVisualizer.Commands
                 }
 
                 // execute gcc compiler
-                ProcessStartInfo processInfo = new ProcessStartInfo();
-                processInfo.FileName = "cmd.exe";
-                processInfo.WorkingDirectory = dirPath;
-                processInfo.CreateNoWindow = true;
-                processInfo.UseShellExecute = false;
-                processInfo.RedirectStandardInput = true;
+                ProcessStartInfo processInfo = new ProcessStartInfo()
+                {
+                    FileName = "cmd.exe",
+                    WorkingDirectory = dirPath,
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
 
-                Process process = Process.Start(processInfo);
+                Process process = new Process();
+                process.StartInfo = processInfo;
+
+                process.OutputDataReceived += p_OutputDataReceived;
+                process.ErrorDataReceived += p_ErrorDataReceived;
+
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
 
                 process.StandardInput.WriteLine(string.Format("del \"{0}.{1}\"", fileNameOnly, "exe"));
                 process.StandardInput.WriteLine(string.Format("gcc {0} -o {1} -g -lstdc++{2}", fileName, fileNameOnly, STANDARD_CPP_OPTIONS[(uint)mMainViewModel.StandardCppVersion]));
@@ -128,6 +140,16 @@ namespace CppMemoryVisualizer.Commands
                 process.WaitForExit();
                 process.Close();
             }
+        }
+
+        private void p_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            Console.WriteLine(e.Data);
+        }
+
+        private void p_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            Console.WriteLine(e.Data);
         }
     }
 }
