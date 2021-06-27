@@ -14,8 +14,6 @@ namespace CppMemoryVisualizer.Models
                 "char",
                 "signed char",
                 "unsigned char",
-                "int8_t",
-                "uint8_t",
 
                 "short",
                 "signed short",
@@ -23,15 +21,10 @@ namespace CppMemoryVisualizer.Models
                 "short int",
                 "signed short int",
                 "unsigned short int",
-                "int16_t",
-                "uint16_t",
 
                 "int",
                 "signed int",
                 "unsigned int",
-                "int32_t",
-                "uint32_t",
-
                 "long",
                 "signed long",
                 "unsigned long",
@@ -39,11 +32,35 @@ namespace CppMemoryVisualizer.Models
                 "long long",
                 "signed long long",
                 "unsigned long long",
-                "int64_t",
-                "uint64_t",
 
                 "float",
-                "double"
+                "double",
+
+                /* const */
+                "const char",
+                "const signed char",
+                "const unsigned char",
+
+                "const short",
+                "const signed short",
+                "const unsigned short",
+                "const short int",
+                "const signed short int",
+                "const unsigned short int",
+
+                "const int",
+                "const signed int",
+                "const unsigned int",
+                "const long",
+                "const signed long",
+                "const unsigned long",
+
+                "const long long",
+                "const signed long long",
+                "const unsigned long long",
+
+                "const float",
+                "const double"
             }
         );
 
@@ -67,10 +84,10 @@ namespace CppMemoryVisualizer.Models
             Debug.Assert(null != typeName);
 
             TypeInfo pure = null;
-            if (typeName.StartsWith("const "))
-            {
-                typeName = typeName.Substring("const ".Length);
-            }
+            //if (typeName.StartsWith("const "))
+            //{
+                //typeName = typeName.Substring("const ".Length);
+            //}
             bool bSuccess = mTypes.TryGetValue(typeName, out pure);
             Debug.Assert(bSuccess);
 
