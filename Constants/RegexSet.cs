@@ -25,6 +25,7 @@ namespace CppMemoryVisualizer.Constants
         public static readonly Regex REGEX_CLASS_OR_STRUCT = new Regex(@"(class|struct)\s{0,1}(.*)\s{$"); // $1 = class|struct $2 = remain including inheritance
         public static readonly Regex REGEX_INHERITANCE = new Regex(@"(^|,\s)(public|protected|private)\s");
         public static readonly Regex REGEX_ENUM = new Regex(@"enum.*\s([a-zA-Z_$][a-zA-Z_$0-9]*);$");
+        public static readonly Regex REGEX_NAMED_ENUM = new Regex(@"^enum\s(.*)\s:\s.*{(.*)}$");
         public static readonly Regex REGEX_UNION = new Regex(@"union {$");
 
         public static readonly Regex REGEX_DERIVED_REAL_TYPE = new Regex(@"^type\s=\s\/\*\sreal\stype\s=\s(.*)\s\*\/$");

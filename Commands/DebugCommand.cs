@@ -28,7 +28,7 @@ namespace CppMemoryVisualizer.Commands
 
         public bool CanExecute(object parameter)
         {
-            return mMainViewModel.SourcePathOrNull != null && (EDebugInstructionState.STANDBY == mMainViewModel.CurrentInstruction || EDebugInstructionState.DEAD == mMainViewModel.CurrentInstruction) && EDebugInstructionState.ERROR != mMainViewModel.CurrentInstruction;
+            return mMainViewModel.SourcePathOrNull != null && (EDebugInstructionState.STANDBY == mMainViewModel.CurrentInstruction || EDebugInstructionState.DEAD == mMainViewModel.CurrentInstruction);
         }
 
         public void Execute(object parameter)
@@ -38,7 +38,10 @@ namespace CppMemoryVisualizer.Commands
             mMainViewModel.CurrentInstruction = EDebugInstructionState.START_DEBUGGING;
 
             mMainViewModel.ShutdownGdb();
-            mMainViewModel.ExecuteGdb();
+            if (!mMainViewModel.ExecuteGdb())
+            {
+                mMainViewModel.CurrentInstruction = EDebugInstructionState.DEAD;
+            }
         }
     }
 }

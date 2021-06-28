@@ -269,7 +269,7 @@ namespace CppMemoryVisualizer.ViewModels
             MemorySegmentViewModel.PointerValueClickCommand = (MemorySegmentPointerValueClickCommand)MemorySegmentPointerValueClickCommand;
         }
 
-        public void ExecuteGdb()
+        public bool ExecuteGdb()
         {
             Debug.Assert(null != mSourcePathOrNull);
             Debug.Assert(mSourcePathOrNull.Length > 0);
@@ -277,12 +277,10 @@ namespace CppMemoryVisualizer.ViewModels
             string dirPath = Path.GetDirectoryName(mSourcePathOrNull);
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(mSourcePathOrNull);
 
-            ShutdownGdb();
-
             if (!File.Exists(Path.Combine(dirPath, fileNameWithoutExtension + ".exe")))
             {
                 MessageBox.Show($"{fileNameWithoutExtension}.exe 파일이 존재하지 않습니다. 컴파일 에러가 발생하지 않았는지 확인하십시오.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                return false;
             }
 
             ProcessGdbOrNull = new Process() { 
@@ -328,9 +326,8 @@ namespace CppMemoryVisualizer.ViewModels
                 if (!is32Bits)
                 {
                     MessageBox.Show("msys2 32비트 버전에서만 실행 가능합니다.", App.WINDOW_TITLE, MessageBoxButton.OK, MessageBoxImage.Error);
-                    CurrentInstruction = EDebugInstructionState.ERROR;
 
-                    return;
+                    return false;
                 }
             }
             #endregion
@@ -396,6 +393,8 @@ namespace CppMemoryVisualizer.ViewModels
             UpdateGdb();
 
             CurrentInstruction = EDebugInstructionState.STANDBY;
+
+            return true;
         }
 
         public void ShutdownGdb()
