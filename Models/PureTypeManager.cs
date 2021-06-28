@@ -31,6 +31,8 @@ namespace CppMemoryVisualizer.Models
                 "float",                "const float",
                 "double",               "const double",
                 "long double",          "const long double",
+
+                "wchar_t",              "const wchar_t",
             }
         );
 

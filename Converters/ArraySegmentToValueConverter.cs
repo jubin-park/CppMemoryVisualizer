@@ -61,6 +61,8 @@ namespace CppMemoryVisualizer.Converters
                     case "unsigned char":
                     /* intentional fallthrough */
                     case "const unsigned char":
+                    /* intentional fallthrough */
+                    case "wchar_t":
                         {
                             str = string.Format("'{0}' ({1})", 0 == bytes[0] ? "\\0" : ((char)bytes[0]).ToString(), bytes[0]);
                         }                        
