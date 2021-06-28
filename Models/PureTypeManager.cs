@@ -11,56 +11,26 @@ namespace CppMemoryVisualizer.Models
         public static readonly ReadOnlyCollection<string> PRIMITIVE_TYPE_NAMES = new ReadOnlyCollection<string>(
             new string[]
             {
-                "char",
-                "signed char",
-                "unsigned char",
+                "char",                 "const char",
+                "signed char",          "const signed char",
 
-                "short",
-                "signed short",
-                "unsigned short",
-                "short int",
-                "signed short int",
-                "unsigned short int",
+                "unsigned char",        "const unsigned char",
 
-                "int",
-                "signed int",
-                "unsigned int",
-                "long",
-                "signed long",
-                "unsigned long",
+                "short",                "const short",
+                "unsigned short",       "const unsigned short",
 
-                "long long",
-                "signed long long",
-                "unsigned long long",
+                "int",                  "const int",
+                "long",                 "const long",
 
-                "float",
-                "double",
+                "unsigned int",         "const unsigned int",
+                "unsigned long",        "const unsigned long",
 
-                /* const */
-                "const char",
-                "const signed char",
-                "const unsigned char",
+                "long long",            "const long long",
+                "unsigned long long",   "const unsigned long long",
 
-                "const short",
-                "const signed short",
-                "const unsigned short",
-                "const short int",
-                "const signed short int",
-                "const unsigned short int",
-
-                "const int",
-                "const signed int",
-                "const unsigned int",
-                "const long",
-                "const signed long",
-                "const unsigned long",
-
-                "const long long",
-                "const signed long long",
-                "const unsigned long long",
-
-                "const float",
-                "const double"
+                "float",                "const float",
+                "double",               "const double",
+                "long double",          "const long double",
             }
         );
 

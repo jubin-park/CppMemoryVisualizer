@@ -48,112 +48,65 @@ namespace CppMemoryVisualizer.Converters
                 {
                     case "char":
                     /* intentional fallthrough */
-                    case "const char":
-                    /* intentional fallthrough */
                     case "signed char":
                     /* intentional fallthrough */
+                    case "const char":
+                    /* intentional fallthrough */
                     case "const signed char":
-                        if (0 == bytes[0])
                         {
-                            str = string.Format("'{0}' ({1})", "\\0", (sbyte)bytes[0]);
-                        }
-                        else
-                        {
-                            str = string.Format("'{0}' ({1})", (char)bytes[0], (sbyte)bytes[0]);
+                            str = string.Format("'{0}' ({1})", 0 == bytes[0] ? "\\0" : ((char)bytes[0]).ToString(), (sbyte)bytes[0]);
                         }
                         break;
 
                     case "unsigned char":
                     /* intentional fallthrough */
                     case "const unsigned char":
-                        if (0 == bytes[0])
                         {
-                            str = string.Format("'{0}' ({1})", "\\0", bytes[0]);
-                        }
-                        else
-                        {
-                            str = string.Format("'{0}' ({1})", (char)bytes[0], bytes[0]);
-                        }
-                        
+                            str = string.Format("'{0}' ({1})", 0 == bytes[0] ? "\\0" : ((char)bytes[0]).ToString(), bytes[0]);
+                        }                        
                         break;
 
                     case "short":
                     /* intentional fallthrough */
                     case "const short":
-                    /* intentional fallthrough */
-                    case "signed short":
-                    /* intentional fallthrough */
-                    case "const signed short":
-                    /* intentional fallthrough */
-
-                    case "short int":
-                    /* intentional fallthrough */
-                    case "const short int":
-                    /* intentional fallthrough */
-                    case "signed short int":
-                    /* intentional fallthrough */
-                    case "const signed short int":
                         {
-                            short val = BitConverter.ToInt16(bytes, 0);
-                            str = val.ToString();
+                            str = BitConverter.ToInt16(bytes, 0).ToString();
                         }
                         break;
 
                     case "unsigned short":
                     /* intentional fallthrough */
                     case "const unsigned short":
-                    /* intentional fallthrough */
-
-                    case "unsigned short int":
-                    /* intentional fallthrough */
-                    case "const unsigned short int":
                         {
-                            ushort val = BitConverter.ToUInt16(bytes, 0);
-                            str = val.ToString();
+                            str = BitConverter.ToUInt16(bytes, 0).ToString();
                         }
                         break;
 
                     case "int":
                     /* intentional fallthrough */
-                    case "const int":
-                    /* intentional fallthrough */
-                    case "signed int":
-                    /* intentional fallthrough */
-                    case "const signed int":
-                    /* intentional fallthrough */
-
                     case "long":
                     /* intentional fallthrough */
+                    case "const int":
+                    /* intentional fallthrough */
                     case "const long":
-                    /* intentional fallthrough */
-                    case "signed long":
-                    /* intentional fallthrough */
-                    case "const signed long":
                         {
-                            int val = BitConverter.ToInt32(bytes, 0);
-                            str = val.ToString();
+                            str = BitConverter.ToInt32(bytes, 0).ToString();
                         }
                         break;
 
-                    case "const unsigned int":
-                    /* intentional fallthrough */
                     case "unsigned int":
+                    /* intentional fallthrough */
+                    case "const unsigned int":                    
                         {
-                            uint val = BitConverter.ToUInt32(bytes, 0);
-                            str = val.ToString();
+                            str = BitConverter.ToUInt32(bytes, 0).ToString();
                         }
                         break;
 
                     case "long long":
                     /* intentional fallthrough */
                     case "const long long":
-                    /* intentional fallthrough */
-                    case "signed long long":
-                    /* intentional fallthrough */
-                    case "const signed long long":
                         {
-                            long val = BitConverter.ToInt64(bytes, 0);
-                            str = val.ToString();
+                            str = BitConverter.ToInt64(bytes, 0).ToString();
                         }
                         break;
 
@@ -161,8 +114,7 @@ namespace CppMemoryVisualizer.Converters
                     /* intentional fallthrough */
                     case "const unsigned long long":
                         {
-                            ulong val = BitConverter.ToUInt64(bytes, 0);
-                            str = val.ToString();
+                            str = BitConverter.ToUInt64(bytes, 0).ToString();
                         }
                         break;
 
@@ -170,8 +122,7 @@ namespace CppMemoryVisualizer.Converters
                     /* intentional fallthrough */
                     case "const float":
                         {
-                            float val = BitConverter.ToSingle(bytes, 0);
-                            str = val.ToString();
+                            str = BitConverter.ToSingle(bytes, 0).ToString();
                         }
                         break;
 
@@ -179,8 +130,16 @@ namespace CppMemoryVisualizer.Converters
                     /* intentional fallthrough */
                     case "const double":
                         {
-                            double val = BitConverter.ToDouble(bytes, 0);
-                            str = val.ToString();
+                            str = BitConverter.ToDouble(bytes, 0).ToString();
+                        }
+                        break;
+
+                    // TODO: converting 12 bytes long double type
+                    case "long double":
+                    /* intentional fallthrough */
+                    case "const long double":
+                        {
+                            str = BitConverter.ToDouble(bytes, 0).ToString();
                         }
                         break;
 
