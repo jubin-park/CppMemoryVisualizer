@@ -399,6 +399,9 @@ namespace CppMemoryVisualizer.ViewModels
 
         public void ShutdownGdb()
         {
+            Log = string.Empty;
+            LinePointer = 0;
+
             if (null != ProcessGdbOrNull && !ProcessGdbOrNull.HasExited)
             {
                 CurrentInstruction = EDebugInstructionState.DEAD;
