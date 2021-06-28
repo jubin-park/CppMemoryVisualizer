@@ -107,6 +107,7 @@ namespace CppMemoryVisualizer.Models
                 else
                 {
                     Debug.Assert(false, "invalid range");
+                    return null;
                 }
             }
 
