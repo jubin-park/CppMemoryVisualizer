@@ -1210,7 +1210,7 @@ namespace CppMemoryVisualizer.ViewModels
                             Debug.Assert(stack.Count == 1);
                             Debug.Assert(line.Contains(';') == false);
 
-                            string mergedTypeName = (stack.Peek().FullNameOrNull + ' ' + line.Substring(closingBracketIndex + 1)).Trim();
+                            string mergedTypeName = (stack.Peek().FullNameOrNull + line.Substring(closingBracketIndex + 1)).Trim();
 
                             stack.Peek().SetByString(mergedTypeName);
                         }
