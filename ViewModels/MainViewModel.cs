@@ -1036,12 +1036,18 @@ namespace CppMemoryVisualizer.ViewModels
             {
                 Debug.Assert(lines.Count > 0);
                 {
-                    Match matchTotalSize = RegexSet.REGEX_TYPE_TOTAL_SIZE.Match(lines[lines.Count - 2]);
-                    Debug.Assert(matchTotalSize.Success);
-
                     uint size = 0;
-                    bool bSuccess = uint.TryParse(matchTotalSize.Groups[1].Value, out size);
-                    Debug.Assert(bSuccess);
+
+                    RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, typeName),
+                        GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
+                    ReadResultLine(GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF, (string line) =>
+                    {
+                        int index = line.LastIndexOf(' ');
+                        Debug.Assert(index > 0);
+
+                        bool bSuccess = uint.TryParse(line.Substring(index + 1), out size);
+                        Debug.Assert(bSuccess);
+                    });
 
                     string offsetAndSizeHeader = "/* offset    |  size */";
 
