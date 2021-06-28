@@ -1164,6 +1164,7 @@ namespace CppMemoryVisualizer.ViewModels
                             fullTypeName = fullTypeName.Substring(0, fullTypeName.Length - 1).Trim();
 
                             var childTypeInfo = generateTypeRecursive(fullTypeName, stack.Peek().Offset + offset, typeInfo);
+                            childTypeInfo.MemberNameOrNull = typeInfo.MemberNameOrNull;
 
                             stack.Peek().Members.Add(childTypeInfo);
 
