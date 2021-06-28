@@ -987,10 +987,22 @@ namespace CppMemoryVisualizer.ViewModels
                 // convert to raw type
                 typeName = lines[0].Substring("type = ".Length);
 
+                EMemoryTypeFlags enumFlag = EMemoryTypeFlags.NONE;
+                if (typeName.StartsWith("enum "))
+                {
+                    enumFlag = EMemoryTypeFlags.ENUM;
+                    // "enum std::_Rb_tree_color : unsigned int {std::_S_red, std::_S_black}"
+                    Match match = RegexSet.REGEX_NAMED_ENUM.Match(typeName);
+                    Debug.Assert(match.Success);
+
+                    typeName = match.Groups[1].Value;
+                }
+
                 if (null != backupOrNull)
                 {
                     // set type name
                     backupOrNull.SetByString(typeName);
+                    backupOrNull.Flags |= enumFlag;
 
                     return backupOrNull;
                 }
@@ -999,6 +1011,7 @@ namespace CppMemoryVisualizer.ViewModels
                     var typeInfo = new TypeInfo();
 
                     typeInfo.SetByString(typeName);
+                    typeInfo.Flags |= enumFlag;
 
                     RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_SIZEOF, typeName),
                         GdbInstructionSet.REQUEST_START_DISPLAY_SIZEOF, GdbInstructionSet.REQUEST_END_DISPLAY_SIZEOF);
