@@ -20,7 +20,8 @@ namespace CppMemoryVisualizer.Converters
 
             var segment = (ArraySegment<byte>)values[1];
             byte[] bytes = new byte[segment.Count];
-            for (uint i = 0; i < segment.Count; ++i)
+
+            for (int i = 0; i < bytes.Length; ++i)
             {
                 bytes[i] = segment.Array[segment.Offset + i];
             }
@@ -32,7 +33,7 @@ namespace CppMemoryVisualizer.Converters
                 try
                 {
                     uint pointer = BitConverter.ToUInt32(bytes, 0);
-                    str = (0 == pointer ? "nullptr" : string.Format("0x{0:x8}", pointer));
+                    str = 0 == pointer ? "nullptr" : string.Format("0x{0:x8}", pointer);
                 }
                 catch (ArgumentException e)
                 {
