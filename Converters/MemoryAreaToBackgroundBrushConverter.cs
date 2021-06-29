@@ -21,7 +21,7 @@ namespace CppMemoryVisualizer.Converters
                     return new SolidColorBrush(Colors.Yellow);
 
                 case EMemoryArea.UNKNOWN:
-                    // intentional fallthrough
+                /* intentional fallthrough */
                 default:
                     return new SolidColorBrush(Colors.Transparent);
             }
