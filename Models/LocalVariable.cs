@@ -115,7 +115,7 @@ namespace CppMemoryVisualizer.Models
                         {
                             TypeName = totalLength > 1 ? elementOfArrayType.FullNameOrNull : memberType.FullNameOrNull,
                             MemberNameOrNull = memberType.MemberNameOrNull,
-                            Memory = new ArraySegment<byte>(mStackMemory.ByteValues, popKey.ViewModel.Memory.Offset + (int)((memberType.Offset - popKey.Type.Offset) + i * sizePerSegment), (int)sizePerSegment),
+                            Memory = new ArraySegment<byte>(mStackMemory.ByteValues, popKey.ViewModel.Memory.Offset + (int)(memberType.Offset - popKey.Type.Offset + i * sizePerSegment), (int)sizePerSegment),
                             Address = popKey.ViewModel.Address + (memberType.Offset - popKey.Type.Offset) + i * sizePerSegment,
                             AncestorOrNull = popKey.ViewModel,
                             Children = new ObservableCollection<List<MemorySegmentViewModel>>()
