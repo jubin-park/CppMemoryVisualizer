@@ -671,7 +671,7 @@ namespace CppMemoryVisualizer.ViewModels
                         // pure type
                         if (!PureTypeManager.HasType(local.StackMemory.TypeInfoOrNull.PureName))
                         {
-                            TypeInfo newPureType = generateTypeRecursive(local.StackMemory.TypeInfoOrNull.PureName, 0, null);
+                            TypeInfo newPureType = generateTypeRecursiveOrNull(local.StackMemory.TypeInfoOrNull.PureName, 0, null, 0);
                             if (!PureTypeManager.HasType(newPureType.FullNameOrNull))
                             {
                                 PureTypeManager.AddType(newPureType.FullNameOrNull, newPureType);
@@ -969,10 +969,15 @@ namespace CppMemoryVisualizer.ViewModels
             }
         }
 
-        private TypeInfo generateTypeRecursive(string typeName, uint baseOffset, TypeInfo backupOrNull)
+        private TypeInfo generateTypeRecursiveOrNull(string typeName, uint baseOffset, TypeInfo backupOrNull, uint level)
         {
             Debug.Assert(null != typeName);
             Debug.Assert(typeName.Length > 0);
+
+            if (App.MAX_EXAMINING_TYPE_RECURSIVE_LEVEL == level)
+            {
+                return null;
+            }
 
             List<string> lines = new List<string>(128);
             RequestInstruction(string.Format(GdbInstructionSet.DISPLAY_TYPEINFO, typeName),
@@ -1120,7 +1125,7 @@ namespace CppMemoryVisualizer.ViewModels
 
                                 for (int i = 1; i < inheritanceTypeNames.Length; ++i)
                                 {
-                                    TypeInfo parentType = generateTypeRecursive(inheritanceTypeNames[i], typeInfo.Offset, null);
+                                    TypeInfo parentType = generateTypeRecursiveOrNull(inheritanceTypeNames[i], typeInfo.Offset, null, level + 1);
                                     foreach (var member in parentType.Members)
                                     {
                                         typeInfo.Members.Add(member);
@@ -1163,14 +1168,17 @@ namespace CppMemoryVisualizer.ViewModels
                             fullTypeName = fullTypeName.Substring(23);
                             fullTypeName = fullTypeName.Substring(0, fullTypeName.Length - 1).Trim();
 
-                            var childTypeInfo = generateTypeRecursive(fullTypeName, stack.Peek().Offset + offset, typeInfo);
-                            childTypeInfo.MemberNameOrNull = typeInfo.MemberNameOrNull;
-
-                            stack.Peek().Members.Add(childTypeInfo);
-
-                            if (!PureTypeManager.HasType(childTypeInfo.PureName))
+                            var childTypeInfoOrNull = generateTypeRecursiveOrNull(fullTypeName, stack.Peek().Offset + offset, typeInfo, level + 1);
+                            if (childTypeInfoOrNull != null)
                             {
-                                PureTypeManager.AddType(childTypeInfo.PureName, generateTypeRecursive(childTypeInfo.PureName, 0, null));
+                                childTypeInfoOrNull.MemberNameOrNull = typeInfo.MemberNameOrNull;
+
+                                stack.Peek().Members.Add(childTypeInfoOrNull);
+
+                                if (!PureTypeManager.HasType(childTypeInfoOrNull.PureName))
+                                {
+                                    PureTypeManager.AddType(childTypeInfoOrNull.PureName, generateTypeRecursiveOrNull(childTypeInfoOrNull.PureName, 0, null, level + 1));
+                                }
                             }
                         }
                     }

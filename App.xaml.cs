@@ -8,9 +8,20 @@ namespace CppMemoryVisualizer
     public partial class App : Application
     {
         public static readonly string WINDOW_TITLE = "C++ Memory Visualizer";
+        public static uint MAX_EXAMINING_TYPE_RECURSIVE_LEVEL = 6;
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            if (e.Args.Length == 1)
+            {
+                uint readLevel = MAX_EXAMINING_TYPE_RECURSIVE_LEVEL;
+                if (uint.TryParse(e.Args[0], out readLevel))
+                {
+                    MAX_EXAMINING_TYPE_RECURSIVE_LEVEL = readLevel;
+                    Console.WriteLine("MAX_EXAMINING_TYPE_RECURSIVE_LEVEL is set to {0}", MAX_EXAMINING_TYPE_RECURSIVE_LEVEL);
+                }
+            }
+
             base.OnStartup(e);
 
             List<string> shouldInstallPackageNames = new List<string>();
