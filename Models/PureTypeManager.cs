@@ -11,6 +11,8 @@ namespace CppMemoryVisualizer.Models
         public static readonly ReadOnlyCollection<string> PRIMITIVE_TYPE_NAMES = new ReadOnlyCollection<string>(
             new string[]
             {
+                "bool",                 "const bool",
+
                 "char",                 "const char",
                 "signed char",          "const signed char",
 

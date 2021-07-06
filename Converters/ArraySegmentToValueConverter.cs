@@ -47,6 +47,14 @@ namespace CppMemoryVisualizer.Converters
             {
                 switch (type.PureName)
                 {
+                    case "bool":
+                    /* intentional fallthrough */
+                    case "const bool":
+                        {
+                            str = bytes[0] != 0 ? "true" : "false";
+                        }
+                        break;
+
                     case "char":
                     /* intentional fallthrough */
                     case "signed char":
